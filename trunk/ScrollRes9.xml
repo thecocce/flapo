@@ -1,0 +1,6 @@
+<movie>
+    <library>
+      <bitmap id="Background" name="Background" import=".\gfx\Background.png"/>
+      <bitmap id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/>
+    </library>
+</movie>
