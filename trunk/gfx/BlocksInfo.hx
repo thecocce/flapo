@@ -21,9 +21,9 @@ class BlocksInfo extends TileSetData
     name = "Blocks";
     tileW = 48;
     tileH = 48;
-    numTilesX = 5;
-    numTilesY = 1;
-    numTiles = 5;
+    numTilesX = 3;
+    numTilesY = 2;
+    numTiles = 6;
     numSequences = 0;
   }
 
