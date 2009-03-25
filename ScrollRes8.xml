@@ -1,0 +1,6 @@
+<movie>
+    <library>
+      <clip id="Background" name="Background" import=".\gfx\Background.png"/>
+      <clip id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/>
+    </library>
+</movie>
