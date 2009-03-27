@@ -7,7 +7,7 @@ Ezen az oldalon a gamelib2d és kapcsolódó cuccokhoz gyűjtjük a tapasztalato
 
 = Copyright =
 
-A *gamelib2d* *Mike Wiering* szellemi terméke, amit felhasználni, pláne módosítani csak a forrás szigorú megjelölésével szabad. Amúgy szabadon felhasználható, móddosítható
+A *gamelib2d* *Mike Wiering* szellemi terméke, amit felhasználni, pláne módosítani csak a forrás szigorú megjelölésével szabad. Amúgy szabadon felhasználható, módosítható
 
 = Leírása =
 
