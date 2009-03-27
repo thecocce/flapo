@@ -25,6 +25,7 @@ class Main
 	
 	static var foregroundTiles: TileSet;
 	static var foregroundLayer: Layer;
+	static var foregroundLayer2: Layer;
 	
 	static var x: Float = 0;
 	static var y: Float = 0;
@@ -35,7 +36,7 @@ class Main
 	public static inline var KEY_RIGHT  =  flash.ui.Keyboard.RIGHT;
 	public static inline var KEY_UP     =  flash.ui.Keyboard.UP;
 	public static inline var KEY_DOWN   =  flash.ui.Keyboard.DOWN;
-	
+	public static inline var KEY_SPACE  =  flash.ui.Keyboard.SPACE;	
 	
 	function new ()
 	{
@@ -62,9 +63,11 @@ class Main
 
 		foregroundTiles = new TileSet (screen);
 		foregroundTiles.init (new BlocksInfo ());		
+		foregroundLayer2 = new Layer (screen);
+		foregroundLayer2.init (foregroundTiles, new BlocksBlocks2Info (), true, 0.8, 0.8, mrp_tile, mrp_tile, true, true );
+
 		foregroundLayer = new Layer (screen);
 		foregroundLayer.init (foregroundTiles, new BlocksMap1Info (), true, 1.0, 1.0, mrp_tile, mrp_tile, true, true);
-		
 		//flash.Lib.current.stage.addEventListener (MouseEvent.CLICK, onClick);
 	    
 		Keys.init ();
@@ -117,8 +120,11 @@ class Main
 
 		backgroundLayer.update ();
 		foregroundLayer.update ();
+		foregroundLayer2.update ();
 		backgroundLayer.moveTo (x / 2, y / 2);
 		foregroundLayer.moveTo (x, y);
+		foregroundLayer2.moveTo (x * 2 / 3, y * 2 / 3);
+				foregroundLayer2.draw ();
 		backgroundLayer.draw ();
 		foregroundLayer.draw ();
 	}

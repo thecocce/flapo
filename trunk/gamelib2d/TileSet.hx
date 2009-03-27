@@ -188,6 +188,7 @@ class TileSet
 
 	public function GetSequenceFrame (n: Int)
 	{
+		//ez hulyeseg
 		return seq[n][3 * seqCurFrame[n]];
 	}
 
