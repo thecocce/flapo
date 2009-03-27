@@ -1,5 +1,6 @@
 ﻿
 // add the folder containing gamelib2d to the projects classpaths
+import flash.geom.ColorTransform;
 import gamelib2d.Def;
 import gamelib2d.Utils;
 import gamelib2d.TileSet;
@@ -63,11 +64,18 @@ class Main
 
 		foregroundTiles = new TileSet (screen);
 		foregroundTiles.init (new BlocksInfo ());		
+		
 		foregroundLayer2 = new Layer (screen);
-		foregroundLayer2.init (foregroundTiles, new BlocksBlocks2Info (), true, 0.8, 0.8, mrp_tile, mrp_tile, true, true );
-
+		foregroundLayer2.init (foregroundTiles, new BlocksBlocks2Info (), true, 0.9, 0.9, mrp_tile, mrp_tile, true, true );
+		var colortransform : ColorTransform;
+		colortransform = new ColorTransform(0.6, 0.6, 0.6, 1, 0, 0, 0, 0);
+		foregroundLayer2.setColorTransform(colortransform);
+		
 		foregroundLayer = new Layer (screen);
 		foregroundLayer.init (foregroundTiles, new BlocksMap1Info (), true, 1.0, 1.0, mrp_tile, mrp_tile, true, true);
+		//delete colortransform;
+		//colortransform = new ColorTransform(1, 1, 1, 0.6, 0, 0, 0, 0);
+		//foregroundLayer.setColorTransform(colortransform);
 		//flash.Lib.current.stage.addEventListener (MouseEvent.CLICK, onClick);
 	    
 		Keys.init ();
