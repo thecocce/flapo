@@ -17,7 +17,7 @@ Nem kívánok részletes leírást készíteni róla, csak ami hasznos tapasztal
 
 === Def.hx ===
 
-Ehhez nem kell hozzá nyúlnunk, amíg a TileStúdióval generáljuk a map-eket.
+Ehhez nem kell hozzá nyúlnunk, amíg a *TileStudio*-val generáljuk a map-eket.
 
 === Audio ===
 
