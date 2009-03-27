@@ -34,7 +34,7 @@ A lenyomott billentyűk állapotát egy 255 elemű tömben tárolja. Ezt jelenle
 === Layer ===
 
 Ez a hagyományos *TileStudio* demóknál szerencsére sokkal többet tudó osztály kezel egy *réteget* (TileStudio-ban *map* a megfelelője). Ez az osztály valósítja meg a a *réteg* elemeinek tárolását, a réteg "kamermozgatását" és a *réteg *látható részének kirajzolását.
-Egy Layer további 3 alréteget tartalmaz a *TileStudio*nak megfelelően.
+Egy Layer további 3 alréteget tartalmaz a *TileStudio*-nak megfelelően.
 
 ==== init ====
 
@@ -84,4 +84,3 @@ Ezt örökítik a *TileStudio*-ból származó *TileSet* osztályok.
 === Utils ====
 
 Gondolom néhány flash-ből hiányzó matematikai művelet.
-
