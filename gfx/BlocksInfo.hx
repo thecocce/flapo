@@ -21,10 +21,10 @@ class BlocksInfo extends TileSetData
     name = "Blocks";
     tileW = 48;
     tileH = 48;
-    numTilesX = 3;
+    numTilesX = 4;
     numTilesY = 2;
-    numTiles = 6;
-    numSequences = 0;
+    numTiles = 8;
+    numSequences = 1;
   }
 
 #if flash9
@@ -37,6 +37,7 @@ class BlocksInfo extends TileSetData
 #end
 
   override public function seq () : Array<Array<Int>> {
-  return [ ];
+  return [
+   [6,16,4096, 7,16,4096, 8,16,4096, 7,16,4096] ];
   }
 }

@@ -678,7 +678,8 @@ class Layer
 			if (curTile < 0)
 			{
 				curSeq = -curTile - 1;
-				curTile = ts.GetSequenceFrame (curSeq);
+				//curTile = ts.GetSequenceFrame (curSeq);
+				curTile = ts.getAnimationFrame (curSeq, timeCounter);
 				curFlags = curFlags | Def.TF_SEQUENCE;
 			}
 			else
