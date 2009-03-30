@@ -5,6 +5,7 @@
     <library>
       <bitmap id="Background" name="Background" import=".\gfx\Background.png"/>
       <bitmap id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/>
+	  <clip id="swf" import =".\xrayConnector_1.6.2.swf"/>
     </library>
   </frame> 
 </movie>

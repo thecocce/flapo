@@ -70,6 +70,8 @@ class Utils
 	public static function gc ()
 	{
 		// unsupported hack that seems to force a full GC
+		// http://marcel-panse.blogspot.com/2007/09/garbage-collection.html
+		// Garbage Collection hack
 		try
 		{
 			var lc1: LocalConnection = new LocalConnection();
