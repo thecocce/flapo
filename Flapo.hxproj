@@ -23,7 +23,7 @@
     <option mainClass="Main" />
     <option override="False" />
     <option verbose="False" />
-    <option additional="-swf-lib Res.swf -D debug" />
+    <option additional="-swf-lib Res.swf -D debug -D fdb" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -47,7 +47,7 @@
   <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->
   <options>
-    <option showHiddenPaths="False" />
-    <option testMovie="NewTab" />
+    <option showHiddenPaths="True" />
+    <option testMovie="ExternalPlayer" />
   </options>
 </project>
