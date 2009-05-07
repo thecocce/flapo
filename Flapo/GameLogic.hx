@@ -40,7 +40,7 @@ class GameLogic
 	static var foregroundTiles: TileSet;
 	static var foregroundLayer: Layer;
 	static var foregroundLayer2: Layer;
-	static var leveldata: LevelData;
+	static var level: Level;
 	static var levelcontainer: LevelContainer;
 	
 	static var x: Float = 0;
@@ -103,8 +103,8 @@ class GameLogic
 	
 	public function initLevel(levelnum:Int)
 	{
-		leveldata = levelcontainer.getLevel(levelnum, screen);
-		if (leveldata != null)
+		level = levelcontainer.getLevel(levelnum, screen);
+		if (level != null)
 		{
 			//for (leveldata.
 		}
@@ -140,12 +140,21 @@ class GameLogic
 	#if debug
 		showFPS ();
 	#end
-		
+
+/*		if (x + speedX < 0 || x + speedX >= foregroundLayer.width () - Def.STAGE_W)
+			speedX = -speedX;
+		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
+			speedY = -speedY;
+*/
+		trace("2");
+		var foregroundLayer: Layer;
+		foregroundLayer = level.Layers[0].layer;
+		trace("3");
 		if (x + speedX < 0 || x + speedX >= foregroundLayer.width () - Def.STAGE_W)
 			speedX = -speedX;
 		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
 			speedY = -speedY;
-
+		trace("4");
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) / 4;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) / 4;
 			
@@ -162,12 +171,14 @@ class GameLogic
 		backgroundLayer.draw ();
 		foregroundLayer.draw ();
 		*/
-		for (d in leveldata.Layers)
+		for (d in level.Layers)
 		{
-			d.update ();
-			d.moveTo (x, y);
-			d.draw ();
+			d.layer.update ();
+			d.layer.moveTo (x*d.xscroll, y*d.yscroll);
+			d.layer.draw ();
+			//trace("lll");
 		}
+		//trace("oo");
 		
 	}
 	
