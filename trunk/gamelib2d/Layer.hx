@@ -354,6 +354,63 @@ class Layer
 	// code, par, mapx, mapy
 	public var InitObjectFunction: Int -> Int -> Int -> Int -> Void;
 
+	public function changeScale(xscale: Float, yscale: Float)
+	{
+		scaleX = xscale;
+		scaleY = yscale;
+		
+		//tileW = ts.tileW * scaleX;
+		//tileH = ts.tileH * scaleY;
+
+		#if flash8
+			//bufW = Std.int ((Def.STAGE_W + tileW - 1) / tileW) + 2;
+			//bufH = Std.int ((Def.STAGE_H + tileH - 1) / tileH) + 2;
+		#elseif flash9
+			//bufW = Std.int ((Def.STAGE_W + tileW - 1) / tileW) + 2;
+			//bufH = Std.int ((Def.STAGE_H + tileH - 1) / tileH) + 2;
+		#end
+		
+		var hscroll: Bool = canScrollHorz;
+		var vscroll: Bool = canScrollVert;
+		
+		#if flash9
+			mc00.scaleX = scaleX;
+			mc00.scaleY = scaleY;
+			/*if (hscroll)
+			{
+				mc01.scaleX = scaleX;
+				mc01.scaleY = scaleY;
+			}
+			if (vscroll)
+			{
+				mc10.scaleX = scaleX;
+				mc10.scaleY = scaleY;
+				if (hscroll)
+				{
+					mc11.scaleX = scaleX;
+					mc11.scaleY = scaleY;
+				}
+			}*/
+		#elseif flash8
+			mc00._xscale = 100 * scaleX;
+			mc00._yscale = 100 * scaleY;
+			if (hscroll)
+			{
+				mc01._xscale = 100 * scaleX;
+				mc01._yscale = 100 * scaleY;
+			}
+			if (vscroll)
+			{
+				mc10._xscale = 100 * scaleX;
+				mc10._yscale = 100 * scaleY;
+				if (hscroll)
+				{
+					mc11._xscale = 100 * scaleX;
+					mc11._yscale = 100 * scaleY;
+				}
+			}
+		#end
+	}
 
 	public function scanForNewObjects (?scanAll: Bool = false)
 	{
