@@ -359,15 +359,15 @@ class Layer
 		scaleX = xscale;
 		scaleY = yscale;
 		
-		//tileW = ts.tileW * scaleX;
-		//tileH = ts.tileH * scaleY;
+		tileW = ts.tileW * scaleX;
+		tileH = ts.tileH * scaleY;
 
 		#if flash8
-			//bufW = Std.int ((Def.STAGE_W + tileW - 1) / tileW) + 2;
-			//bufH = Std.int ((Def.STAGE_H + tileH - 1) / tileH) + 2;
+			bufW = Std.int ((Def.STAGE_W + tileW - 1) / tileW) + 2;
+			bufH = Std.int ((Def.STAGE_H + tileH - 1) / tileH) + 2;
 		#elseif flash9
-			//bufW = Std.int ((Def.STAGE_W + tileW - 1) / tileW) + 2;
-			//bufH = Std.int ((Def.STAGE_H + tileH - 1) / tileH) + 2;
+			bufW = Std.int ((Def.STAGE_W + tileW - 1) / tileW) + 2;
+			bufH = Std.int ((Def.STAGE_H + tileH - 1) / tileH) + 2;
 		#end
 		
 		var hscroll: Bool = canScrollHorz;
@@ -376,7 +376,7 @@ class Layer
 		#if flash9
 			mc00.scaleX = scaleX;
 			mc00.scaleY = scaleY;
-			/*if (hscroll)
+			if (hscroll)
 			{
 				mc01.scaleX = scaleX;
 				mc01.scaleY = scaleY;
@@ -390,7 +390,7 @@ class Layer
 					mc11.scaleX = scaleX;
 					mc11.scaleY = scaleY;
 				}
-			}*/
+			}
 		#elseif flash8
 			mc00._xscale = 100 * scaleX;
 			mc00._yscale = 100 * scaleY;
@@ -409,7 +409,7 @@ class Layer
 					mc11._yscale = 100 * scaleY;
 				}
 			}
-		#end
+		#end		
 	}
 
 	public function scanForNewObjects (?scanAll: Bool = false)

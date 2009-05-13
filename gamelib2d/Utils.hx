@@ -39,6 +39,11 @@ class Utils
 	{
 		if (X < 0) return -X else return X;
 	}
+	
+	public static function rAbs (X: Float)
+	{
+		if (X < 0) return -X else return X;
+	}
 
 	public static function iRnd (n: Int): Int
 	{

@@ -181,18 +181,23 @@ class GameLogic
 */
 		//trace("2");
 		var foregroundLayer: Layer;
-		foregroundLayer = level.Layers[0].layer;
+		foregroundLayer = level.Layers[2].layer;
 		//trace("3");
-		if (x + speedX < 0 || x + speedX >= foregroundLayer.width () - Def.STAGE_W)
-			speedX = -speedX;
-		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
-			speedY = -speedY;
+		if (x + speedX < 0)
+			speedX = Utils.rAbs( speedX );
+		if (x + speedX >= foregroundLayer.width () - Def.STAGE_W)
+			speedX = -Utils.rAbs( speedX );
+		if (y + speedY < 0)
+			speedY = Utils.rAbs( speedY );
+		if (y + speedY >= foregroundLayer.height () - Def.STAGE_H)
+			speedY = -Utils.rAbs( speedY );
+
 		//trace("4");
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) / 4;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) / 4;
 			
-		//x += speedX;
-		//y += speedY;
+		x += speedX;
+		y += speedY;
 /*
 		backgroundLayer.update ();
 		foregroundLayer.update ();
@@ -205,14 +210,19 @@ class GameLogic
 		foregroundLayer.draw ();
 		*/
 //		level.Layers[2].layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
-//		level.Layers[2].layer.changeScale(speedX, 1.0);
+		//level.Layers[2].layer.changeScale(speedX, 1.0);
 
+		var i:Int = 0;
+		
 		for (d in level.Layers)
 		{
 //			d.layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
+//			d.layer.changeScale( Utils.rAbs (speedX*(i+1)/6)+0.2, Utils.rAbs(speedY*(i+1)/6)+0.2);
+
 			d.layer.update ();
 			d.layer.moveTo (x * d.xscroll, y * d.yscroll);
 			d.layer.draw ();
+			++i;
 		}
 		//trace("oo");
 		playertiles.drawTile(surface, 0, 0, 7, 0);
