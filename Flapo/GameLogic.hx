@@ -6,6 +6,7 @@
 package flapo;
 
 // add the folder containing gamelib2d to the projects classpaths
+import flash.display.MovieClip;
 import flash.geom.ColorTransform;
 import gamelib2d.Def;
 import gamelib2d.Utils;
@@ -22,9 +23,11 @@ import flash.display.Sprite;
 
 import flapo.LevelContainer;
 import flapo.LevelData;
-
+import flash.display.Bitmap;
+import flash.display.BitmapData;
 //import com.blitzagency.Main_loadConnector;
 //import com.blitzagency.xray.logger.XrayLog;
+import BlocksInfo;
 
 class GameLogic 
 {
@@ -53,6 +56,20 @@ class GameLogic
 	public static inline var KEY_UP     =  flash.ui.Keyboard.UP;
 	public static inline var KEY_DOWN   =  flash.ui.Keyboard.DOWN;
 	public static inline var KEY_SPACE  =  flash.ui.Keyboard.SPACE;	
+
+	//player
+	public var surface: BitmapData;
+	#if flash9
+		private var mcContainer: Sprite;
+		private var mcPlayer: Sprite;
+	#elseif flash8
+		private var mcContainer: MovieClip;
+		private var mcPlayer: MovieClip;
+	#end
+	public var surfPlayer: BitmapData;
+	public var playertiles: TileSet;
+	public var plX: Int;
+	public var plY: Int;
 	
 	public function new ()
 	{
@@ -99,6 +116,22 @@ class GameLogic
 		Keys.init ();
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
+		//player init
+		playertiles = new TileSet (screen);
+		playertiles.init (new BlocksInfo ());
+		mcContainer = screen;
+		surface = new BitmapData (100, 100, true, 0x0);
+
+		#if flash9
+			mcPlayer = new Sprite ();
+			mcPlayer.addChild (new Bitmap (surface));
+			mcContainer.addChild (mcPlayer);
+		#elseif flash8
+			var Depth = flash.Lib._root.getNextHighestDepth ();
+			mcplayer = mcContainer.createEmptyMovieClip ("player", 99);
+			mcplayer.attachBitmap (surface, 99);
+		#end
+
 	}
 	
 	public function initLevel(levelnum:Int)
@@ -146,20 +179,20 @@ class GameLogic
 		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
 			speedY = -speedY;
 */
-		trace("2");
+		//trace("2");
 		var foregroundLayer: Layer;
 		foregroundLayer = level.Layers[0].layer;
-		trace("3");
+		//trace("3");
 		if (x + speedX < 0 || x + speedX >= foregroundLayer.width () - Def.STAGE_W)
 			speedX = -speedX;
 		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
 			speedY = -speedY;
-		trace("4");
+		//trace("4");
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) / 4;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) / 4;
 			
-		x += speedX;
-		y += speedY;
+		//x += speedX;
+		//y += speedY;
 /*
 		backgroundLayer.update ();
 		foregroundLayer.update ();
@@ -171,14 +204,31 @@ class GameLogic
 		backgroundLayer.draw ();
 		foregroundLayer.draw ();
 		*/
+//		level.Layers[2].layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
+//		level.Layers[2].layer.changeScale(speedX, 1.0);
+
 		for (d in level.Layers)
 		{
+//			d.layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
 			d.layer.update ();
-			d.layer.moveTo (x*d.xscroll, y*d.yscroll);
+			d.layer.moveTo (x * d.xscroll, y * d.yscroll);
 			d.layer.draw ();
-			//trace("lll");
 		}
 		//trace("oo");
+		playertiles.drawTile(surface, 0, 0, 7, 0);
+		plX += Std.int ((Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))));
+		plY += Std.int ((Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))));
+
+		#if flash8
+			mcPlayer._x = plX;
+			mcPlayer._y = plY;
+		#elseif flash9
+			mcPlayer.x = plX;
+			mcPlayer.y = plY;
+//			mcPlayer.scaleX = plX;
+//			mcPlayer.scaleY = plY;
+		#end
+		//trace("ff");
 		
 	}
 	
