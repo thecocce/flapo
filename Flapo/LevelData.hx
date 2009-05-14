@@ -6,8 +6,6 @@
 package flapo;
 
 import flash.display.BitmapData;
-//import gamelib2d.TileSet;
-//import gamelib2d.Layer;
 import gamelib2d.MapData;
 import gamelib2d.TileSetData;
 
