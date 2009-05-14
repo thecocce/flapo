@@ -23,11 +23,15 @@ import flash.display.Sprite;
 
 import flapo.LevelContainer;
 import flapo.LevelData;
-import flash.display.Bitmap;
-import flash.display.BitmapData;
+//import flash.display.Bitmap;
+//import flash.display.BitmapData;
 //import com.blitzagency.Main_loadConnector;
 //import com.blitzagency.xray.logger.XrayLog;
-import BlocksInfo;
+
+import flapo.Player;
+import ScrollSnd;
+
+
 
 class GameLogic 
 {
@@ -57,19 +61,13 @@ class GameLogic
 	public static inline var KEY_DOWN   =  flash.ui.Keyboard.DOWN;
 	public static inline var KEY_SPACE  =  flash.ui.Keyboard.SPACE;	
 
-	//player
-	public var surface: BitmapData;
-	#if flash9
-		private var mcContainer: Sprite;
-		private var mcPlayer: Sprite;
-	#elseif flash8
-		private var mcContainer: MovieClip;
-		private var mcPlayer: MovieClip;
-	#end
-	public var surfPlayer: BitmapData;
-	public var playertiles: TileSet;
+	public var player: Player;
 	public var plX: Int;
 	public var plY: Int;
+	
+	var ct100: ColorTransform;
+	var ct50: ColorTransform;
+	public var snd: ScrollSnd;
 	
 	public function new ()
 	{
@@ -112,26 +110,25 @@ class GameLogic
 		//foregroundLayer.setColorTransform(colortransform);
 		//flash.Lib.current.stage.addEventListener (MouseEvent.CLICK, onClick);
 	    */
+		ct100 = new ColorTransform(1, 1, 1, 1, 0, 0, 0, 0);
+		ct50 = new ColorTransform(1, 1, 1, 0.5, 0, 0, 0, 0);
+
+		
 		initLevel(0);
 		Keys.init ();
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
-		//player init
-		playertiles = new TileSet (screen);
-		playertiles.init (new BlocksInfo ());
-		mcContainer = screen;
-		surface = new BitmapData (100, 100, true, 0x0);
+		
+		player = new Player(screen);
 
-		#if flash9
-			mcPlayer = new Sprite ();
-			mcPlayer.addChild (new Bitmap (surface));
-			mcContainer.addChild (mcPlayer);
-		#elseif flash8
-			var Depth = flash.Lib._root.getNextHighestDepth ();
-			mcplayer = mcContainer.createEmptyMovieClip ("player", 99);
-			mcplayer.attachBitmap (surface, 99);
-		#end
-
+		plX = 50;
+		plY = 50;
+		
+		
+		ScrollSnd.init();
+		ScrollSnd.enabled = true;
+		ScrollSnd.play(ScrollSound.NiceNice);
+	
 	}
 	
 	public function initLevel(levelnum:Int)
@@ -193,11 +190,14 @@ class GameLogic
 			speedY = -Utils.rAbs( speedY );
 
 		//trace("4");
-		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) / 4;
-		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) / 4;
+//		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) / 4;
+//		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) / 4;
 			
-		x += speedX;
-		y += speedY;
+//		x += speedX;
+//		y += speedY;
+
+		x = plX;
+		y = plY;
 /*
 		backgroundLayer.update ();
 		foregroundLayer.update ();
@@ -211,6 +211,14 @@ class GameLogic
 		*/
 //		level.Layers[2].layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
 		//level.Layers[2].layer.changeScale(speedX, 1.0);
+		
+		//colortransform = new ColorTransform(1, 1, 1, plX/10, 0, 0, 0, 0);
+		if (plX < 10) 
+			level.Layers[2].layer.setColorTransform(ct100);
+		else
+			level.Layers[2].layer.setColorTransform(ct50);
+
+		//delete colortransform;
 
 		var i:Int = 0;
 		
@@ -225,19 +233,14 @@ class GameLogic
 			++i;
 		}
 		//trace("oo");
-		playertiles.drawTile(surface, 0, 0, 7, 0);
+		//playertiles.drawTile(surface, 0, 0, 7, 0);
 		plX += Std.int ((Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))));
 		plY += Std.int ((Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))));
 
-		#if flash8
-			mcPlayer._x = plX;
-			mcPlayer._y = plY;
-		#elseif flash9
-			mcPlayer.x = plX;
-			mcPlayer.y = plY;
-//			mcPlayer.scaleX = plX;
-//			mcPlayer.scaleY = plY;
-		#end
+		player.update();
+		//player.moveTo(plX, plY);
+		player.draw();
+
 		//trace("ff");
 		
 	}

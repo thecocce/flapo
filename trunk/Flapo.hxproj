@@ -15,6 +15,7 @@
   <classpaths>
     <class path="..\hx" />
     <class path="gfx" />
+    <class path="snd" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -48,6 +49,6 @@
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="True" />
-    <option testMovie="Default" />
+    <option testMovie="NewWindow" />
   </options>
 </project>
