@@ -55,7 +55,7 @@ class LevelContainer
 				tiles = new TileSet (screen);
 				tiles.init (new BlocksInfo ());
 				layer = new Layer (screen);
-				layer.init (tiles, new BlocksBlocks2Info (), true, 0.9, 0.9, mrp_tile, mrp_tile, true, true );
+				layer.init (tiles, new BlocksBlocks2Info (), true, 0.9, 0.9, mrp_tile, mrp_tile, false, false );
 				var colortransform : ColorTransform;
 				colortransform = new ColorTransform(0.6, 0.6, 0.6, 1, 0, 0, 0, 0);
 				layer.setColorTransform(colortransform);
