@@ -52,9 +52,11 @@ class GameLogic
 	
 	static var x: Float = 0;
 	static var y: Float = 0;
+	static var z: Float = 0;
 	static var speedX: Float = 1.0;
 	static var speedY: Float = 1.0;
-
+	static var speedZ: Float = 1.0;
+	
 	public static inline var KEY_LEFT   =  flash.ui.Keyboard.LEFT;
 	public static inline var KEY_RIGHT  =  flash.ui.Keyboard.RIGHT;
 	public static inline var KEY_UP     =  flash.ui.Keyboard.UP;
@@ -73,8 +75,13 @@ class GameLogic
 	var ct50: ColorTransform;
 	public var snd: ScrollSnd;
 	
-	public inline static var accelerate  =  1.5;
-	public inline static var slowdown  =  1;
+	public inline static var accelerate  =  1.8;
+	public inline static var slowdown  =  1.3;
+	public inline static var maxspeed = 7;
+
+	public inline static var accelerateZ  =  0.1;
+	public inline static var slowdownZ  =  0.07;
+	public inline static var maxspeedZ = 1.0;
 
 	
 	public function new ()
@@ -127,15 +134,20 @@ class GameLogic
 	public function initLevel(levelnum:Int)
 	{
 		level = levelcontainer.getLevel(levelnum, screen);
+
 		if (level != null)
 		{
+			level.findStartPos();
+			if (level.startposz != -1)
+			{
+				x = level.startposx * level.Layers[level.startposz].layer.ts.tileW;
+				y = level.startposy * level.Layers[level.startposz].layer.ts.tileH;
+				z = level.Layers.length - 1; //2
+			}
+		}	
 			//for (leveldata.
-		}
-		level.findStartPos();
-		x = level.startposx * level.Layers[level.startposz].layer.ts.tileW;
-		y = level.startposy * level.Layers[level.startposz].layer.ts.tileH;
 	}
-	
+
 	static var fps: Int = 0;
 	static var lastT: Int = 0;
 
@@ -145,25 +157,19 @@ class GameLogic
 	{
 		fps++;
 		var t: Int = Std.int (Date.now ().getTime () / 1000);
-		if (t != lastT)
+		//if (t != lastT)
 		{
-			Log.clear ();
+			//Log.clear ();
 			Log.setColor (0xFFFFFF);
-			trace (fps + " fps");
-			trace (Std.int (flash.system.System.totalMemory / (1024 * 1024) * 10) / 10 + " mb");
-			fps = 0;
-			trace(level.Layers[2].layer.getCurTile(0, 0));
-			trace(level.Layers[2].layer.getCurTile(1, 0));
-			trace(level.Layers[2].layer.getCurTile(2, 0));
-			trace(level.Layers[2].layer.getCurTile(3, 0));
-			trace(level.Layers[2].layer.getCurTile(0, 1));
-			trace(level.Layers[2].layer.getCurTile(1, 1));
-			trace(level.Layers[2].layer.getCurTile(2, 1));
-			trace(level.Layers[2].layer.getCurTile(3, 1));
+			//trace (fps + " fps");
+			//trace (Std.int (flash.system.System.totalMemory / (1024 * 1024) * 10) / 10 + " mb");
+			//if (t != lastT)
+				fps = 0;
+			if (z>1.9 && z<2.2)
 			trace("x:" + Utils.safeDiv (plX, 48) +
 				" y:" + Utils.safeDiv (plY, 48) +
-				" > " + level.Layers[2].layer.getCurTile
-				(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48))
+				" z:" + z +
+				" > " + speedZ
 			);
 		}
 		lastT = t;
@@ -193,11 +199,14 @@ class GameLogic
 		else speedX += speedX>0?-slowdown:slowdown;
 		if (Utils.rAbs(speedY) < slowdown) speedY = 0;
 		else speedY += speedY>0?-slowdown:slowdown;
+		//if (Utils.rAbs(speedZ) < slowdownZ) speedZ = 0;
+		//else
+	
 		
-		//trace("4");
-		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) *accelerate;
+	//	trace("4");
+		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
-
+//trace("4.2");
 		if (x + speedX < 0)
 			speedX = Utils.rAbs( speedX );
 		if (x + speedX >= foregroundLayer.width () - Def.STAGE_W)
@@ -206,13 +215,19 @@ class GameLogic
 			speedY = Utils.rAbs( speedY );
 		if (y + speedY >= foregroundLayer.height () - Def.STAGE_H)
 			speedY = -Utils.rAbs( speedY );		
-		
+//		trace("4.5");
+		if (Utils.rAbs( speedX ) > maxspeed)
+			speedX = speedX > 0?maxspeed: -maxspeed;
+		if (Utils.rAbs( speedY ) > maxspeed)
+			speedY = speedY > 0?maxspeed: -maxspeed;
+
+//			trace("5");
 		x += speedX;
 		y += speedY;
 		
 		plX = Std.int(x)+plXscreen;
 		plY = Std.int(y)+plYscreen;
-		
+//		trace("6");
 //	level.Layers[2].layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
 		//level.Layers[2].layer.changeScale(speedX, 1.0);
 		
@@ -227,35 +242,117 @@ class GameLogic
 		player.draw();
 		
 		var i:Int = 0;
-		
+	//	trace("update");
 		for (d in level.Layers)
 		{
 //			d.layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
 //			d.layer.changeScale( Utils.rAbs (speedX*(i+1)/6)+0.2, Utils.rAbs(speedY*(i+1)/6)+0.2);
-
+			d.layer.changeScale(1.0, 1.0);
 			d.layer.update ();
-			d.layer.moveTo (x * d.xscroll, y * d.yscroll);
+			//d.layer.moveTo (x * d.xscroll, y * d.yscroll);
+			d.layer.moveTo (x, y);
 			d.layer.draw ();
 			++i;
 		}
 		//trace("oo");
 		//playertiles.drawTile(surface, 0, 0, 7, 0);
-		//plX += Std.int ((Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT)))) * 4;
-		//plY += Std.int ((Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP)))) * 4;
 
 		player.update();
 		//player.moveTo(plX, plY);
 		//player.changeDepth(plX);
-		//ha atlep egy 
-/*		if (Utils.iAbs(speedz) < 0.2 && true )
+		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE))*accelerateZ*2;
+		if (Utils.rAbs(speedZ) > slowdownZ)
+			speedZ += speedZ>0?-slowdownZ:slowdownZ;
+		if (Utils.rAbs( speedZ ) > maxspeedZ)
+			speedZ = speedZ > 0?maxspeedZ: -maxspeedZ;		
+
+			var fromlayer: Int;
+			var tolayer: Int;
+			if (speedZ > 0)
+			{
+				//jump
+				fromlayer = Std.int( z ) + 1;
+				//trace(fromlayer);
+				tolayer = Std.int( z + speedZ ) + 1;
+			}
+			else
+			{
+				//fall
+				fromlayer = Std.int( z );
+				tolayer = Std.int( z + speedZ );
+			}
+			if (z < 0)
+				--fromlayer;
+			if (z + speedZ < 0)
+				--tolayer;
+
+		if ( fromlayer != tolayer )
 		{
-			var curTile = level.Layers[2].layer.getCurTile(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48));
-			
+			i = fromlayer;
+			var contact: Bool = false;
+			var curTile: Int;
+			var dist: Float;
+			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
+			while (i != tolayer && i < 10 && i > -2)
+			{
+				if (i >= 0 && i <= level.Layers.length - 1)
+				{
+
+					curTile = level.Layers[i].layer.getCurTile(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48));
+					//trace(i + " " + curTile);
+					if (curTile != 0)
+					{
+						//contact!
+						contact = true;
+						//trace("contact");
+						dist = z - i;
+						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
+							trace("rossz");
+						//visszapattan
+						speedZ = speedZ * 0.9;
+						if (Utils.rAbs(speedZ +  dist) < 1) //kovetkezo platformra ugrana
+							z = i - (speedZ +  dist);
+						else
+						{
+							z = i - (speedZ > 0?0.9: -0.9);
+							trace("nagy!!");
+						}
+						speedZ = - speedZ;
+						if (z > i && z - i < slowdownZ && Utils.rAbs(speedZ) < slowdownZ) 
+						{
+							speedZ = 0;
+							z = i;
+						}
+						//z = platform szintje - maradek mozgas (speed - dist)
+						break;
+					}
+				}
+				if (speedZ > 0)
+					++i;
+				else
+					--i;
+			}
+			//kulonben z+=speedZ
+			if (contact == false)
+				z += speedZ;
 			//nekem a kod fog kelleni curtile >> 8
 			//player.draw();
-		}*/
+		}
+		else
+			z += speedZ;
+		if (z < -5)
+			z = -5;
+		//if (i<=-2 || i>=10)
+			//trace("dbg");
+		if (z >= -1)
+			player.changeScale((z+1) / (level.Layers.length ));
 		dbg.update();
-		dbg.draw(level.Layers[2].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
+		var i:Int;
+		i = Std.int(z);
+		if (i >= 0 && i <= level.Layers.length - 1)
+			dbg.draw(level.Layers[i].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
+		else
+			dbg.draw(0);
 		//dbg.draw(level.Layers[2].layer.mapScreenTiles[Utils.safeDiv (plY, 48)][ Utils.safeDiv (plX, 48)]);
 		//dbg.draw(level.Layers[2].layer.getCurTile(Utils.safeDiv(plX,48),0));
 		
@@ -276,3 +373,9 @@ class GameLogic
 	}
 	
 }
+
+/*
+map amiben a tile-ok kodjai vannak
+egy fv, amimplements a kodot rarakja a tileokra (write code)
+de jobb lenne nelkule a tutorial szovegek miatt
+*/
