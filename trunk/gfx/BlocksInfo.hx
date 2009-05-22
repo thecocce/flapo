@@ -21,9 +21,9 @@ class BlocksInfo extends TileSetData
     name = "Blocks";
     tileW = 48;
     tileH = 48;
-    numTilesX = 4;
+    numTilesX = 5;
     numTilesY = 2;
-    numTiles = 8;
+    numTiles = 9;
     numSequences = 1;
   }
 
@@ -38,6 +38,6 @@ class BlocksInfo extends TileSetData
 
   override public function seq () : Array<Array<Int>> {
   return [
-   [6,16,4096, 7,16,4096, 8,16,4096, 7,16,4096] ];
+   [7,16,4096, 8,16,4096, 9,16,4096, 8,16,4096] ];
   }
 }

@@ -83,6 +83,10 @@ class GameLogic
 	public inline static var slowdownZ  =  0.07;
 	public inline static var maxspeedZ = 1.0;
 
+	var scale: Float;
+	var scalefactor: Float;
+	var scaleoffset: Float;
+
 	
 	public function new ()
 	{
@@ -133,7 +137,9 @@ class GameLogic
 	
 	public function initLevel(levelnum:Int)
 	{
-		level = levelcontainer.getLevel(levelnum, screen);
+		scalefactor = 0.2;
+		scaleoffset = 1 - (3 -1) * scalefactor;		
+		level = levelcontainer.getLevel(levelnum, screen, scalefactor, scaleoffset);
 
 		if (level != null)
 		{
@@ -145,7 +151,6 @@ class GameLogic
 				z = level.Layers.length - 1; //2
 			}
 		}	
-			//for (leveldata.
 	}
 
 	static var fps: Int = 0;
@@ -160,7 +165,11 @@ class GameLogic
 		//if (t != lastT)
 		{
 			//Log.clear ();
-			Log.setColor (0xFFFFFF);
+#if inverse
+			Log.setColor (0x000000);
+#else
+			Log.setColor (0xffffff);
+#end
 			//trace (fps + " fps");
 			//trace (Std.int (flash.system.System.totalMemory / (1024 * 1024) * 10) / 10 + " mb");
 			//if (t != lastT)
@@ -222,8 +231,9 @@ class GameLogic
 			speedY = speedY > 0?maxspeed: -maxspeed;
 
 //			trace("5");
-		x += speedX;
-		y += speedY;
+		scale = scalefactor * z + scaleoffset;
+		x += speedX * scale;
+		y += speedY * scale;
 		
 		plX = Std.int(x)+plXscreen;
 		plY = Std.int(y)+plYscreen;
@@ -243,14 +253,18 @@ class GameLogic
 		
 		var i:Int = 0;
 	//	trace("update");
+
+		//trace(scaleoffset);
 		for (d in level.Layers)
 		{
 //			d.layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
 //			d.layer.changeScale( Utils.rAbs (speedX*(i+1)/6)+0.2, Utils.rAbs(speedY*(i+1)/6)+0.2);
-			d.layer.changeScale(1.0, 1.0);
+			//d.layer.changeScale(1.0, 1.0);
 			d.layer.update ();
-			//d.layer.moveTo (x * d.xscroll, y * d.yscroll);
-			d.layer.moveTo (x, y);
+			scale = scalefactor * i + scaleoffset;
+			trace(scale);
+			d.layer.moveTo ((x - ( Def.STAGE_W/2 * (1 - scale) ))*scale, (y - ( Def.STAGE_W/2 * (1 - scale) ))*scale);
+			//d.layer.moveTo (x, y);
 			d.layer.draw ();
 			++i;
 		}
@@ -295,7 +309,7 @@ class GameLogic
 			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
 			while (i != tolayer && i < 10 && i > -2)
 			{
-				if (i >= 0 && i <= level.Layers.length - 1)
+				if (i >= 1 && i <= level.Layers.length - 1)
 				{
 
 					curTile = level.Layers[i].layer.getCurTile(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48));
@@ -340,12 +354,11 @@ class GameLogic
 		}
 		else
 			z += speedZ;
-		if (z < -5)
-			z = -5;
+		if (z < -2)
+			z = -2;
 		//if (i<=-2 || i>=10)
 			//trace("dbg");
-		if (z >= -1)
-			player.changeScale((z+1) / (level.Layers.length ));
+
 		dbg.update();
 		var i:Int;
 		i = Std.int(z);
@@ -353,6 +366,13 @@ class GameLogic
 			dbg.draw(level.Layers[i].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
 		else
 			dbg.draw(0);
+		if (z >= -2)
+		{
+			scale = scalefactor * z + scaleoffset;
+			player.changeScale(scale);
+			if (i >= 0)
+				player.moveTo(plXscreen - 21 * scale, plYscreen - 21 * scale);
+		}
 		//dbg.draw(level.Layers[2].layer.mapScreenTiles[Utils.safeDiv (plY, 48)][ Utils.safeDiv (plX, 48)]);
 		//dbg.draw(level.Layers[2].layer.getCurTile(Utils.safeDiv(plX,48),0));
 		

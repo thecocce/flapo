@@ -223,9 +223,11 @@ class Layer
 			for (i in 0...bufW)
 			mapScreenTiles[j][i] = 0;
 		}
-
-		surface = new BitmapData (bufW * ts.tileW, bufH * ts.tileH, transparent, 0x0);
-
+#if inverse
+		surface = new BitmapData (bufW * ts.tileW, bufH * ts.tileH, transparent, 0xffffff);
+#else
+		surface = new BitmapData (bufW * ts.tileW, bufH * ts.tileH, transparent, 0x000000);
+#end
 		#if flash9
 			mc00 = new Sprite ();
 			mc00.addChild (new Bitmap (surface));
@@ -943,8 +945,11 @@ class Layer
 									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m);
 								else
 									if (oldtile != 0)
-										surface.fillRect (new Rectangle (bufx * ts.tileW, bufy * ts.tileH, ts.tileW, ts.tileH), 0);
-
+#if inverse									
+										surface.fillRect (new Rectangle (bufx * ts.tileW, bufy * ts.tileH, ts.tileW, ts.tileH), 0xffffff);
+#else
+										surface.fillRect (new Rectangle (bufx * ts.tileW, bufy * ts.tileH, ts.tileW, ts.tileH), 0x000000);
+#end
 								oldtile = curTile | curFlags;
 								mapScreenTiles[bufy][bufx] = oldtile;
 
