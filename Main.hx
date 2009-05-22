@@ -1,5 +1,8 @@
-﻿
+﻿//pre-build
 //"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
+//define
+//-D inverse
+
 
 // add the folder containing gamelib2d to the projects classpaths
 /*import flash.geom.ColorTransform;

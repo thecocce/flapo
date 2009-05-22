@@ -76,7 +76,7 @@ class Player
 		}
 		var t: Int;
 		if (tile == null)
-			t = 6;
+			t = 5;
 		else
 		{
 			//trace(tile);
