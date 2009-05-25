@@ -29,6 +29,7 @@ import flapo.LevelData;
 //import com.blitzagency.xray.logger.XrayLog;
 
 import flapo.Player;
+import flapo.Effect;
 import ScrollSnd;
 
 
@@ -86,8 +87,12 @@ class GameLogic
 	var scale: Float;
 	var scalefactor: Float;
 	var scaleoffset: Float;
+	static var po: Int = 21;
+	public var effect: Effect;
 
-	
+	//effects
+	public var effectsClearTiles: List<Effect>;
+	public var effectsToRemove: List<Effect>;
 	public function new ()
 	{
 		// new should not use the stage
@@ -124,15 +129,17 @@ class GameLogic
 		plZ = 0;
 		plXscreen = Std.int(Def.STAGE_W/2);
 		plYscreen = Std.int(Def.STAGE_H/2);
-		player.moveTo(plXscreen-21, plYscreen-21);
+		//po = Utils.safeMod(plXscreen, level.Layers[level.Layers.length - 1].layer.ts.TileW);
+		player.moveTo(plXscreen-po, plYscreen-po);
 		
 		dbg = new Player(screen);
-		dbg.moveTo(plXscreen + 60, plYscreen-21);
+		dbg.moveTo(plXscreen + 60, plYscreen-po);
 		//sound
 		ScrollSnd.init();
 		ScrollSnd.enabled = true;
 		ScrollSnd.play(ScrollSound.NiceNice);
-	
+		effectsClearTiles = new List<Effect>();
+		effectsToRemove = new List<Effect>();	
 	}
 	
 	public function initLevel(levelnum:Int)
@@ -216,14 +223,14 @@ class GameLogic
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
 //trace("4.2");
-		if (x + speedX < 0)
+	/*	if (x + speedX < 0)
 			speedX = Utils.rAbs( speedX );
 		if (x + speedX >= foregroundLayer.width () - Def.STAGE_W)
 			speedX = -Utils.rAbs( speedX );
 		if (y + speedY < 0)
 			speedY = Utils.rAbs( speedY );
 		if (y + speedY >= foregroundLayer.height () - Def.STAGE_H)
-			speedY = -Utils.rAbs( speedY );		
+			speedY = -Utils.rAbs( speedY );		*/
 //		trace("4.5");
 		if (Utils.rAbs( speedX ) > maxspeed)
 			speedX = speedX > 0?maxspeed: -maxspeed;
@@ -232,23 +239,12 @@ class GameLogic
 
 //			trace("5");
 		scale = scalefactor * z + scaleoffset;
-		x += speedX * scale;
-		y += speedY * scale;
+		x += speedX;
+		y += speedY;
 		
 		plX = Std.int(x)+plXscreen;
 		plY = Std.int(y)+plYscreen;
-//		trace("6");
-//	level.Layers[2].layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
-		//level.Layers[2].layer.changeScale(speedX, 1.0);
-		
-		//colortransform = new ColorTransform(1, 1, 1, plX/10, 0, 0, 0, 0);
-	/*	if (plX < 10) 
-			level.Layers[2].layer.setColorTransform(ct100);
-		else
-			level.Layers[2].layer.setColorTransform(ct50);
-*/
-		//delete colortransform;
-	//	player.changeScale( x / 21);
+
 		player.draw();
 		
 		var i:Int = 0;
@@ -260,17 +256,43 @@ class GameLogic
 //			d.layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
 //			d.layer.changeScale( Utils.rAbs (speedX*(i+1)/6)+0.2, Utils.rAbs(speedY*(i+1)/6)+0.2);
 			//d.layer.changeScale(1.0, 1.0);
+			
+			if (z < i) 
+				level.Layers[i].layer.setColorTransform(ct50);
+			else
+				level.Layers[i].layer.setColorTransform(ct100);
+
 			d.layer.update ();
 			scale = scalefactor * i + scaleoffset;
-			trace(scale);
+			//trace(scale);
 			d.layer.moveTo ((x - ( Def.STAGE_W/2 * (1 - scale) ))*scale, (y - ( Def.STAGE_W/2 * (1 - scale) ))*scale);
 			//d.layer.moveTo (x, y);
 			d.layer.draw ();
 			++i;
 		}
 		//trace("oo");
-		//playertiles.drawTile(surface, 0, 0, 7, 0);
 
+		for (e in effectsClearTiles)
+		{
+			e.update();
+			if (e.timeCounter >= e.length)
+			{
+				level.Layers[e.numLayer].layer.writeMap(
+					Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
+					Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
+					0);
+				//effectsClearTiles.remove(e);
+				effectsToRemove.add(e);
+				//continue;
+			}
+		}
+		for (e in effectsToRemove)
+		{
+			effectsClearTiles.remove(e);
+		}
+		effectsToRemove.clear();
+		trace("ooo");
+		//Utils.gc(); //garbage collector
 		player.update();
 		//player.moveTo(plX, plY);
 		//player.changeDepth(plX);
@@ -304,6 +326,7 @@ class GameLogic
 		{
 			i = fromlayer;
 			var contact: Bool = false;
+			var contact2: Bool = false;
 			var curTile: Int;
 			var dist: Float;
 			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
@@ -324,18 +347,21 @@ class GameLogic
 							trace("rossz");
 						//visszapattan
 						speedZ = speedZ * 0.9;
-						if (Utils.rAbs(speedZ +  dist) < 1) //kovetkezo platformra ugrana
+						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
+							z = speedZ>0?i-0.01:i;
+						else if (Utils.rAbs(speedZ +  dist) < 1) //kovetkezo platformra ugrana
 							z = i - (speedZ +  dist);
 						else
 						{
 							z = i - (speedZ > 0?0.9: -0.9);
 							trace("nagy!!");
 						}
-						speedZ = - speedZ;
+						speedZ = - speedZ ;
 						if (z > i && z - i < slowdownZ && Utils.rAbs(speedZ) < slowdownZ) 
 						{
 							speedZ = 0;
 							z = i;
+							contact2 = true;
 						}
 						//z = platform szintje - maradek mozgas (speed - dist)
 						break;
@@ -349,6 +375,24 @@ class GameLogic
 			//kulonben z+=speedZ
 			if (contact == false)
 				z += speedZ;
+			if (contact && contact2)
+			{
+				//megkeresni
+				var found: Effect = null;
+				found = findEffectInXYZ(effectsClearTiles,
+					Utils.safeDiv (plX, 48),
+					Utils.safeDiv (plY, 48),
+					i);
+				if (found == null)
+				{
+					effect = new Effect(Utils.safeDiv (plX, 48),
+						Utils.safeDiv (plY, 48),
+						i, 0, 30);
+					effect.setState(1, 0, 10);
+					effectsClearTiles.add( effect );
+				}
+			}
+
 			//nekem a kod fog kelleni curtile >> 8
 			//player.draw();
 		}
@@ -371,7 +415,7 @@ class GameLogic
 			scale = scalefactor * z + scaleoffset;
 			player.changeScale(scale);
 			if (i >= 0)
-				player.moveTo(plXscreen - 21 * scale, plYscreen - 21 * scale);
+				player.moveTo(plXscreen - po * scale, plYscreen - po * scale);
 		}
 		//dbg.draw(level.Layers[2].layer.mapScreenTiles[Utils.safeDiv (plY, 48)][ Utils.safeDiv (plX, 48)]);
 		//dbg.draw(level.Layers[2].layer.getCurTile(Utils.safeDiv(plX,48),0));
@@ -392,6 +436,19 @@ class GameLogic
 		Keys.setKeyStatus (event.keyCode, false);
 	}
 	
+	function findEffectInXYZ(effects: List<Effect>, x: Int, y: Int, z: Int)
+	{
+		var res : Effect = null;
+		for (e in effects)
+		{
+			if ((e.x == x) && (e.y == y) && (e.numLayer == z))
+			{
+				res = e;
+				return e;
+			}	
+		}
+		return null;
+	}
 }
 
 /*
