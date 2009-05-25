@@ -66,7 +66,7 @@ class LevelContainer
 #if inverse
 				colortransform = new ColorTransform(2.0, 2.0, 2.0, 1, 0, 0, 0, 0);
 #else
-				colortransform = new ColorTransform(scale, scale, scale, 1, 0, 0, 0, 0);
+				colortransform = new ColorTransform(0.6, 0.6, 0.6, 1, 0, 0, 0, 0);
 #end
 				layer.setColorTransform(colortransform);
 				retval.AddLayer(layer, 8/10, 8/10);
