@@ -16,6 +16,8 @@
     <class path="..\hx" />
     <class path="gfx" />
     <class path="snd" />
+    <class path="Flapo" />
+    <class path="gamelib2d" />
   </classpaths>
   <!-- Build options -->
   <build>

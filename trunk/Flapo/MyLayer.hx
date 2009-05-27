@@ -5,19 +5,28 @@
 
 package flapo;
 
+import flash.geom.ColorTransform;
 import gamelib2d.Layer;
 
 class MyLayer 
 {
 
 	public var layer: Layer;
+	public var colort: ColorTransform;
 	public var xscroll: Float;
 	public var yscroll: Float;
 		
-	public function new(gl: Layer, xs: Float, ys: Float)
+	public function new(gl: Layer, xs: Float, ys: Float, ct: ColorTransform)
 	{
 		layer = gl;
 		xscroll = xs;
 		yscroll = ys;
+		if (ct != null) colort = ct;
+	}
+	
+	public function setAlpha(alpha: Float)
+	{
+		//colort.alphaMultiplier = alpha;
+		layer.setAlpha(alpha);
 	}
 }

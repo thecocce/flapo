@@ -122,6 +122,11 @@ class Player
 		#end
 	}
 	
+	public function changeAlpha(galpha: Float)
+	{
+		mcPlayer.alpha = galpha;
+	}
+	
 	public function changeDepth(depth: Int)
 	{
 		#if flash10

@@ -7,7 +7,9 @@ package flapo;
 
 // add the folder containing gamelib2d to the projects classpaths
 import flash.display.MovieClip;
+import flash.filters.GlowFilter;
 import flash.geom.ColorTransform;
+import flash.text.TextFormat;
 import gamelib2d.Def;
 import gamelib2d.Utils;
 import gamelib2d.TileSet;
@@ -32,7 +34,11 @@ import flapo.Player;
 import flapo.Effect;
 import ScrollSnd;
 
-
+//String
+import flash.events.MouseEvent;
+//import flash.events.Event;
+import flash.text.TextField;
+import flash.text.AntiAliasType;
 
 class GameLogic 
 {
@@ -54,9 +60,9 @@ class GameLogic
 	static var x: Float = 0;
 	static var y: Float = 0;
 	static var z: Float = 0;
-	static var speedX: Float = 1.0;
-	static var speedY: Float = 1.0;
-	static var speedZ: Float = 1.0;
+	static var speedX: Float = 0;
+	static var speedY: Float = 0;
+	static var speedZ: Float = 0;
 	
 	public static inline var KEY_LEFT   =  flash.ui.Keyboard.LEFT;
 	public static inline var KEY_RIGHT  =  flash.ui.Keyboard.RIGHT;
@@ -78,7 +84,7 @@ class GameLogic
 	
 	public inline static var accelerate  =  1.8;
 	public inline static var slowdown  =  1.3;
-	public inline static var maxspeed = 7;
+	public inline static var maxspeed = 6;
 
 	public inline static var accelerateZ  =  0.1;
 	public inline static var slowdownZ  =  0.07;
@@ -93,6 +99,20 @@ class GameLogic
 	//effects
 	public var effectsClearTiles: List<Effect>;
 	public var effectsToRemove: List<Effect>;
+
+	//String
+        var szoveg:TextField;
+
+        // the font to use for the letters
+        var defaultFont:String;
+		var tfZene: TextField;
+		var tfBlocks: TextField;
+		var tsBlocks: TextFormat;
+		
+		public static var allBlocks: Int;
+		public static var curBlocks: Int;
+		public static var mode: Int;
+	
 	public function new ()
 	{
 		// new should not use the stage
@@ -100,9 +120,14 @@ class GameLogic
 		screen.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 	}
 	
+//	private function doComplete()
+//	{
+//		flash.external.ExternalInterface.call("s = function(){document.getElementById('"+this.id+"').focus(); }");
+//	}		
 	
 	function init ()
 	{
+		//doComplete();
 		flash.Lib.current.addChild (screen);
 
 		//Def.STAGE_W = 480;
@@ -117,7 +142,7 @@ class GameLogic
 		ct50 = new ColorTransform(1, 1, 1, 0.5, 0, 0, 0, 0);
 
 
-		initLevel(0);
+		initLevel(1);
 		Keys.init ();
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
@@ -131,7 +156,8 @@ class GameLogic
 		plYscreen = Std.int(Def.STAGE_H/2);
 		//po = Utils.safeMod(plXscreen, level.Layers[level.Layers.length - 1].layer.ts.TileW);
 		player.moveTo(plXscreen-po, plYscreen-po);
-		
+		x -= plXscreen;
+		y -= plYscreen;
 		dbg = new Player(screen);
 		dbg.moveTo(plXscreen + 60, plYscreen-po);
 		//sound
@@ -139,8 +165,126 @@ class GameLogic
 		ScrollSnd.enabled = true;
 		ScrollSnd.play(ScrollSound.NiceNice);
 		effectsClearTiles = new List<Effect>();
-		effectsToRemove = new List<Effect>();	
-	}
+		effectsToRemove = new List<Effect>();
+		
+		//Strings
+                defaultFont="Times New Roman";
+                //decompose_string("Anne-Laure & Fabrice");
+                //apply_animation();
+                        szoveg = new flash.text.TextField();
+                        var ts = new flash.text.TextFormat();
+                        ts.font=defaultFont;
+                        ts.size = 12;
+                        ts.color = 0xaaaaff;
+                        szoveg.appendText("dobosbence.extra.hu");
+						//szoveg.appendText(" Click");
+                        szoveg.setTextFormat(ts);
+						szoveg.x = Def.STAGE_W - 100;
+						szoveg.y = Def.STAGE_H - 15;
+						szoveg.filters = [
+							new GlowFilter(0x6666ff, 0.5, 2, 2, 2, 3, false, false)
+						];
+						screen.addChild(szoveg);
+						
+                        ts = new flash.text.TextFormat();
+                        ts.font = defaultFont;
+                        ts.size = 30;
+                        ts.color = 0xaaaaff;
+						tfZene = new TextField();
+						tfZene.appendText("Zene");
+						tfZene.setTextFormat(ts);
+						tfZene.x = Def.STAGE_W - 100;
+						tfZene.filters = [
+							new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+						];
+						screen.addChild(tfZene);
+
+                        tsBlocks = new flash.text.TextFormat();
+                        tsBlocks.font=defaultFont;
+                        tsBlocks.size = 30;
+                        tsBlocks.color = 0xaaaaff;
+						tfBlocks = new TextField();
+						tfBlocks.appendText("n/a");
+						tfBlocks.setTextFormat(tsBlocks);
+						tfBlocks.x = Def.STAGE_W / 2 - 50;
+						tfBlocks.filters = [
+							new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+						];
+						screen.addChild(tfBlocks);
+
+				// sets the first click zone
+                var background:Sprite = new Sprite ();
+                background.graphics.beginFill(0xffaaaa);
+                background.graphics.drawRect(Def.STAGE_W-100,Def.STAGE_H-15,100,15);
+                screen.addChild(background);
+                background.alpha=0;
+                background.addEventListener(MouseEvent.MOUSE_OVER,this.highlightFab);
+                background.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightFab);
+                background.addEventListener(flash.events.MouseEvent.CLICK,this.goToAnne);
+                background = new Sprite ();
+                background.graphics.beginFill(0xffaaaa);
+                background.graphics.drawRect(Def.STAGE_W-100,0,100,40);
+                screen.addChild(background);
+                background.alpha=0;
+                background.addEventListener(MouseEvent.MOUSE_OVER,this.highlightZene);
+                background.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightZene);
+                background.addEventListener(flash.events.MouseEvent.CLICK,this.togleZene);
+
+		}
+        
+        // function to follow the link when clicking on the first zone
+        public function goToAnne(e:flash.events.MouseEvent): Void {
+                try {
+                        flash.Lib.getURL(new flash.net.URLRequest("http://dobosbence.extra.hu"),"_top");
+                } catch (e:Dynamic) {
+                        trace (e);
+                }
+        }
+
+		public function togleZene(e:flash.events.MouseEvent): Void {
+			if (ScrollSnd.snd_NiceNicePlaying)
+				ScrollSnd.stop(ScrollSound.NiceNice);
+			else
+				ScrollSnd.play(ScrollSound.NiceNice);
+		}
+        
+        // function to highlight the letters 13 to 19
+        public function highlightFab(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 12;
+                ts.color=0xffffff;
+                var i=0;
+                szoveg.setTextFormat(ts);
+        }
+        // function to un-highlight the letters 13 to 19
+        public function unhighlightFab(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 12;
+                ts.color=0xaaaaff;
+                szoveg.setTextFormat(ts);
+        }
+        
+        // function to highlight the letters 0 to 9
+        public function highlightZene(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xffffff;
+                tfZene.setTextFormat(ts);
+        }
+        
+        // function to un-highlight the letters 0 to 9
+        public function unhighlightZene(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xaaaaff;
+                tfZene.setTextFormat(ts);
+        }
+		
+	
 	
 	public function initLevel(levelnum:Int)
 	{
@@ -153,42 +297,56 @@ class GameLogic
 			level.findStartPos();
 			if (level.startposz != -1)
 			{
-				x = level.startposx * level.Layers[level.startposz].layer.ts.tileW;
-				y = level.startposy * level.Layers[level.startposz].layer.ts.tileH;
-				z = level.Layers.length - 1; //2
+				x = (level.startposx+0.5) * level.Layers[level.startposz].layer.ts.tileW;
+				y = (level.startposy+0.5) * level.Layers[level.startposz].layer.ts.tileH;
+				z = level.startposz;
+			}
+			allBlocks = 0;
+			curBlocks = 0;
+			for (d in level.Layers)
+			{
+				allBlocks += d.layer.countMapCode(0x10);
 			}
 		}	
 	}
 
+	static var lastrealfps: Int = 0;
+	static var realfps: Int = 0;
 	static var fps: Int = 0;
 	static var lastT: Int = 0;
+	static var skipframerate: Float = 0;
+	static var skipframecumulative: Float = 0;
+	public inline static var maxfps = 27;
 
 #if debug
+	public static var lastfps: Int;
 	// compile with -D debug to see this
 	function showFPS ()
 	{
-		fps++;
-		var t: Int = Std.int (Date.now ().getTime () / 1000);
 		//if (t != lastT)
 		{
-			//Log.clear ();
+			Log.clear ();
 #if inverse
 			Log.setColor (0x000000);
 #else
 			Log.setColor (0xffffff);
 #end
-			//trace (fps + " fps");
-			//trace (Std.int (flash.system.System.totalMemory / (1024 * 1024) * 10) / 10 + " mb");
-			//if (t != lastT)
-				fps = 0;
-			if (z>1.9 && z<2.2)
+			trace (lastrealfps + " realfps");
+			trace (lastfps + " fps");
+			trace (maxfps + " maxfps");
+			trace (skipframerate + " skipfps");
+			trace (Std.int (flash.system.System.totalMemory / (1024 * 1024) * 10) / 10 + " mb");
+			//trace (curBlocks + " / " + allBlocks);
+			//if (z>1.9 && z<2.2)
 			trace("x:" + Utils.safeDiv (plX, 48) +
 				" y:" + Utils.safeDiv (plY, 48) +
 				" z:" + z +
 				" > " + speedZ
 			);
+			trace("start x:" + level.startposx +
+				" y:" + level.startposy +
+				" z:" + level.startposz);
 		}
-		lastT = t;
 	}
 #end
 	
@@ -197,11 +355,37 @@ class GameLogic
 		frame++;
 		if (frame == 0)
 			init ();
-			
+		++realfps;
+		var t: Int = Std.int (Date.now ().getTime () / 1000);
+		if (t != lastT)
+		{
+			lastfps = fps;
+			fps = 0;
+			lastrealfps = realfps;
+			if (lastrealfps > maxfps)
+			{
+				trace("..");
+				skipframerate = (realfps - maxfps) / maxfps;
+			}
+			else
+			{
+				skipframerate = 0;
+			}
+			realfps = 0;
+			lastT = t;
+			//skipframecumulative = 0;
+		}
 	#if debug
 		showFPS ();
 	#end
-
+		if (skipframecumulative < 1)
+			fps++;
+		else
+		{
+			skipframecumulative--;
+			return;
+		}
+		skipframecumulative += skipframerate;
 /*		if (x + speedX < 0 || x + speedX >= foregroundLayer.width () - Def.STAGE_W)
 			speedX = -speedX;
 		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
@@ -209,7 +393,7 @@ class GameLogic
 */
 		//trace("2");
 		var foregroundLayer: Layer;
-		foregroundLayer = level.Layers[2].layer;
+		//foregroundLayer = level.Layers[2].layer;
 
 		if (Utils.rAbs(speedX) < slowdown) speedX = 0;
 		else speedX += speedX>0?-slowdown:slowdown;
@@ -249,19 +433,17 @@ class GameLogic
 		
 		var i:Int = 0;
 	//	trace("update");
-
+//ct100.redMultiplier = 0.5;
 		//trace(scaleoffset);
-		for (d in level.Layers)
-		{
-//			d.layer.changeScale(1.0+Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT))*0.1, 1.0);
-//			d.layer.changeScale( Utils.rAbs (speedX*(i+1)/6)+0.2, Utils.rAbs(speedY*(i+1)/6)+0.2);
-			//d.layer.changeScale(1.0, 1.0);
-			
-			if (z < i) 
-				level.Layers[i].layer.setColorTransform(ct50);
-			else
-				level.Layers[i].layer.setColorTransform(ct100);
+				//level.Layers[1].colort.redMultiplier = 0.5;
+				//ct
 
+		for (d in level.Layers)
+		{			
+			if (z < i)
+				level.Layers[i].setAlpha( 0.5 );
+			else
+				level.Layers[i].setAlpha( 1.0 );
 			d.layer.update ();
 			scale = scalefactor * i + scaleoffset;
 			//trace(scale);
@@ -291,12 +473,16 @@ class GameLogic
 			effectsClearTiles.remove(e);
 		}
 		effectsToRemove.clear();
-		trace("ooo");
+		//trace("ooo");
 		//Utils.gc(); //garbage collector
 		player.update();
 		//player.moveTo(plX, plY);
 		//player.changeDepth(plX);
-		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE))*accelerateZ*2;
+#if debug
+		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
+#else
+		speedZ += -accelerateZ;
+#end
 		if (Utils.rAbs(speedZ) > slowdownZ)
 			speedZ += speedZ>0?-slowdownZ:slowdownZ;
 		if (Utils.rAbs( speedZ ) > maxspeedZ)
@@ -327,7 +513,7 @@ class GameLogic
 			i = fromlayer;
 			var contact: Bool = false;
 			var contact2: Bool = false;
-			var curTile: Int;
+			var curTile: Int = 0;
 			var dist: Float;
 			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
 			while (i != tolayer && i < 10 && i > -2)
@@ -375,21 +561,36 @@ class GameLogic
 			//kulonben z+=speedZ
 			if (contact == false)
 				z += speedZ;
-			if (contact && contact2)
+			if (contact && z >= i)
 			{
-				//megkeresni
-				var found: Effect = null;
-				found = findEffectInXYZ(effectsClearTiles,
-					Utils.safeDiv (plX, 48),
-					Utils.safeDiv (plY, 48),
-					i);
-				if (found == null)
+				var curCode: Int;
+				curCode = level.Layers[i].layer.readBoundMap(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48)) >> 8;
+				//trace("curTile: " + curTile + " curCode: " + curCode);
+				if (curCode >= 0x10 && curCode <= 0x60)
 				{
-					effect = new Effect(Utils.safeDiv (plX, 48),
+					//rombolhato tile
+					//megkeresni
+					var found: Effect = null;
+					found = findEffectInXYZ(effectsClearTiles,
+						Utils.safeDiv (plX, 48),
 						Utils.safeDiv (plY, 48),
-						i, 0, 30);
-					effect.setState(1, 0, 10);
-					effectsClearTiles.add( effect );
+						i);
+					if (found == null)
+					{
+						effect = new Effect(Utils.safeDiv (plX, 48),
+							Utils.safeDiv (plY, 48),
+							i, 0, 30);
+						effect.setState(1, 0, 10);
+						effectsClearTiles.add( effect );
+						++curBlocks;
+						if (curBlocks >= allBlocks)
+							mode = 9; //win
+					}
+				}
+				if (curCode == 0x80)
+				{
+					//jump
+					speedZ += 1;
 				}
 			}
 
@@ -398,6 +599,16 @@ class GameLogic
 		}
 		else
 			z += speedZ;
+		if (z < 0)
+		{
+			player.changeAlpha((2 + z) / 2);
+			if (mode != 9)
+				mode = 8; //fallen
+		}
+		else if (mode != 9)
+		{
+			player.changeAlpha(1.0);
+		}
 		if (z < -2)
 			z = -2;
 		//if (i<=-2 || i>=10)
@@ -419,7 +630,8 @@ class GameLogic
 		}
 		//dbg.draw(level.Layers[2].layer.mapScreenTiles[Utils.safeDiv (plY, 48)][ Utils.safeDiv (plX, 48)]);
 		//dbg.draw(level.Layers[2].layer.getCurTile(Utils.safeDiv(plX,48),0));
-		
+		tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks);
+		tfBlocks.setTextFormat(tsBlocks);
 	}
 	
 	
