@@ -27,9 +27,14 @@ class Level
 		Layers = new Array<MyLayer>();
 	}
 	
-	public function AddLayer(layer: Layer, xs: Float, ys: Float)
+	public function addLayer(layer: Layer, xs: Float, ys: Float)
 	{
-		var mylayer = new MyLayer(layer, xs, ys);
+		var mylayer = new MyLayer(layer, xs, ys, null);
+		Layers.push(mylayer);
+	}
+	
+	public function addMyLayer(mylayer: MyLayer)
+	{
 		Layers.push(mylayer);
 	}
 	
