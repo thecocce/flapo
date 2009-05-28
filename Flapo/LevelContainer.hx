@@ -45,12 +45,18 @@ class LevelContainer
 		numlayer = 0;
 		switch (levelnum)
 		{
+			case -2: //win
+				retval = new Level();
+				tiles = new TileSet (screen);
+				tiles.init (new BlocksInfo ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new BlocksloseInfo(),
+					8/10, 8/10, true, 0.2, 1.0, 1.0)); 			
 			case -1: //win
 				retval = new Level();
 				tiles = new TileSet (screen);
 				tiles.init (new BlocksInfo ());
 				retval.addMyLayer(addNewLayer(true, screen, tiles, new BlockswinInfo(),
-					8/10, 8/10, true, 1.0, 1.0, 1.0)); 
+					8/10, 8/10, true, 0.2, 1.0, 1.0)); 
 
 			case 0:
 				retval = new Level();
@@ -85,6 +91,12 @@ class LevelContainer
 				tiles.init (new Abstract1Info ());
 				retval.addMyLayer(addNewLayer(true, screen, tiles, new Abstract1m1Info(), 0.5, 0.5, false)); 
 				
+				++numlayer;		
+				tiles = new TileSet (screen);
+				tiles.init (new Clouds1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
+					0.5, 0.5, true, 1.0, 0.6));
+					
 				++numlayer;
 				trace(1);
 				scale = scalefactor * numlayer + scaleoffset;

@@ -350,7 +350,7 @@ class GameLogic
 	}
 #end
 	
-	function onEnterFrame (d: Dynamic)
+	function calculateFps()
 	{
 		frame++;
 		if (frame == 0)
@@ -375,36 +375,39 @@ class GameLogic
 			lastT = t;
 			//skipframecumulative = 0;
 		}
-	#if debug
-		showFPS ();
-	#end
+	}
+
+	function checkSkipFrame(): Bool
+	{
 		if (skipframecumulative < 1)
 			fps++;
 		else
 		{
 			skipframecumulative--;
-			return;
+			return true;
 		}
 		skipframecumulative += skipframerate;
-
-		//trace("2");
-		var foregroundLayer: Layer;
-
-		if (Utils.rAbs(speedX) < slowdown) speedX = 0;
+		return false;
+	}
+	
+	function slowdownSpeeds()
+	{
+			if (Utils.rAbs(speedX) < slowdown) speedX = 0;
 		else speedX += speedX>0?-slowdown:slowdown;
 		if (Utils.rAbs(speedY) < slowdown) speedY = 0;
 		else speedY += speedY>0?-slowdown:slowdown;
-		//if (Utils.rAbs(speedZ) < slowdownZ) speedZ = 0;
-		//else
 	
-		
-	//	trace("4");
-	if (mode < 8)
+	}
+
+	function calculateSpeeds()
 	{
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
 	}
-	//trace("4.2");
+	
+	function checkSpeeds()
+	{
+		//trace("4.2");
 	/*	if (x + speedX < 0)
 			speedX = Utils.rAbs( speedX );
 		if (x + speedX >= foregroundLayer.width () - Def.STAGE_W)
@@ -420,23 +423,24 @@ class GameLogic
 			speedY = speedY > 0?maxspeed: -maxspeed;
 
 //			trace("5");
-		scale = scalefactor * z + scaleoffset;
-		if (mode == 9)
-		{
-			speedX = maxspeed;
-			speedY = maxspeed;
-		}
+	}
+	
+	function getScale(level: Float)
+	{
+		return scalefactor * z + scaleoffset;
+	}
+	
+	function calculateNewCoordinates()
+	{
 		x += speedX;
 		y += speedY;
-		
 		plX = Std.int(x)+plXscreen;
-		plY = Std.int(y)+plYscreen;
-
-		player.draw();
-		
+		plY = Std.int(y)+plYscreen;		
+	}
+	
+	function processLevel()
+	{
 		var i:Int = 0;
-	//	trace("update");
-
 		for (d in level.Layers)
 		{
 			if (level.isBackground(i) == false)
@@ -448,14 +452,14 @@ class GameLogic
 			}
 			d.layer.update ();
 			scale = scalefactor * i + scaleoffset;
-			//trace(scale);
 			d.layer.moveTo ((x - ( Def.STAGE_W/2 * (1 - scale) ))*scale, (y - ( Def.STAGE_W/2 * (1 - scale) ))*scale);
-			//d.layer.moveTo (x, y);
 			d.layer.draw ();
 			++i;
 		}
-		//trace("oo");
-
+	}
+	
+	function ProcessEffectsClearTiles()
+	{
 		for (e in effectsClearTiles)
 		{
 			e.update();
@@ -476,11 +480,44 @@ class GameLogic
 			effectsClearTiles.remove(e);
 		}
 		effectsToRemove.clear();
+	}
+	
+	function onEnterFrame (d: Dynamic)
+	{
+		calculateFps();
+	#if debug
+		showFPS ();
+	#end
+		if (checkSkipFrame())
+			return;
+		slowdownSpeeds();
+
+		if (mode < 8)
+		{
+			calculateSpeeds();
+		}
+		checkSpeeds();
+//			trace("5");
+		scale = getScale(z);
+		if (mode == 9 || mode == 8)
+		{
+			speedX = maxspeed;
+			speedY = maxspeed;
+		}
+		calculateNewCoordinates();
+		
+		var i:Int = 0;
+
+		processLevel();
+		//trace("oo");
+
+		ProcessEffectsClearTiles();
+
 		//trace("ooo");
 		//Utils.gc(); //garbage collector
 		player.update();
-		//player.moveTo(plX, plY);
-		//player.changeDepth(plX);
+		player.draw();
+		
 #if debug
 		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
 #else
@@ -614,8 +651,11 @@ class GameLogic
 		if (z < 0)
 		{
 			player.changeAlpha((2 + z) / 2);
-			if (mode != 9)
+			if (mode != 9 && mode != 8)
+			{
 				mode = 8; //fallen
+				initLevel( -2);
+			}
 		}
 		else if (mode != 9)
 		{
