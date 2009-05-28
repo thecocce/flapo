@@ -58,4 +58,11 @@ class Level
 			++i;
 		}		
 	}
+	
+	public function isBackground(layernum: Int): Bool
+	{
+		if ((layernum<0) || (layernum>Layers.length-1))
+			return true;
+		return Layers[layernum].isBackground;
+	}
 }

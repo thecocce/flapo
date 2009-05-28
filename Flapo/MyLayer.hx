@@ -15,6 +15,7 @@ class MyLayer
 	public var colort: ColorTransform;
 	public var xscroll: Float;
 	public var yscroll: Float;
+	public var isBackground: Bool;
 		
 	public function new(gl: Layer, xs: Float, ys: Float, ct: ColorTransform)
 	{
@@ -22,6 +23,7 @@ class MyLayer
 		xscroll = xs;
 		yscroll = ys;
 		if (ct != null) colort = ct;
+		isBackground = false;
 	}
 	
 	public function setAlpha(alpha: Float)
