@@ -386,14 +386,9 @@ class GameLogic
 			return;
 		}
 		skipframecumulative += skipframerate;
-/*		if (x + speedX < 0 || x + speedX >= foregroundLayer.width () - Def.STAGE_W)
-			speedX = -speedX;
-		if (y + speedY < 0 || y + speedY >= foregroundLayer.height () - Def.STAGE_H)
-			speedY = -speedY;
-*/
+
 		//trace("2");
 		var foregroundLayer: Layer;
-		//foregroundLayer = level.Layers[2].layer;
 
 		if (Utils.rAbs(speedX) < slowdown) speedX = 0;
 		else speedX += speedX>0?-slowdown:slowdown;
@@ -404,9 +399,12 @@ class GameLogic
 	
 		
 	//	trace("4");
+	if (mode < 8)
+	{
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
-//trace("4.2");
+	}
+	//trace("4.2");
 	/*	if (x + speedX < 0)
 			speedX = Utils.rAbs( speedX );
 		if (x + speedX >= foregroundLayer.width () - Def.STAGE_W)
@@ -423,6 +421,11 @@ class GameLogic
 
 //			trace("5");
 		scale = scalefactor * z + scaleoffset;
+		if (mode == 9)
+		{
+			speedX = maxspeed;
+			speedY = maxspeed;
+		}
 		x += speedX;
 		y += speedY;
 		
@@ -433,17 +436,16 @@ class GameLogic
 		
 		var i:Int = 0;
 	//	trace("update");
-//ct100.redMultiplier = 0.5;
-		//trace(scaleoffset);
-				//level.Layers[1].colort.redMultiplier = 0.5;
-				//ct
 
 		for (d in level.Layers)
-		{			
-			if (z < i)
-				level.Layers[i].setAlpha( 0.5 );
-			else
-				level.Layers[i].setAlpha( 1.0 );
+		{
+			if (level.isBackground(i) == false)
+			{
+				if (z < i)
+					level.Layers[i].setAlpha( 0.5 );
+				else
+					level.Layers[i].setAlpha( 1.0 );
+			}
 			d.layer.update ();
 			scale = scalefactor * i + scaleoffset;
 			//trace(scale);
@@ -459,10 +461,11 @@ class GameLogic
 			e.update();
 			if (e.timeCounter >= e.length)
 			{
-				level.Layers[e.numLayer].layer.writeMap(
-					Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
-					Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
-					0);
+				if (e.numLayer>=0 && e.numLayer<=level.Layers.length-1)
+					level.Layers[e.numLayer].layer.writeMap(
+						Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
+						Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
+						0);
 				//effectsClearTiles.remove(e);
 				effectsToRemove.add(e);
 				//continue;
@@ -518,7 +521,7 @@ class GameLogic
 			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
 			while (i != tolayer && i < 10 && i > -2)
 			{
-				if (i >= 1 && i <= level.Layers.length - 1)
+				if (level.isBackground(i) == false)
 				{
 
 					curTile = level.Layers[i].layer.getCurTile(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48));
@@ -561,7 +564,7 @@ class GameLogic
 			//kulonben z+=speedZ
 			if (contact == false)
 				z += speedZ;
-			if (contact && z >= i)
+			if (contact && z >= 0)
 			{
 				var curCode: Int;
 				curCode = level.Layers[i].layer.readBoundMap(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48)) >> 8;
@@ -584,13 +587,22 @@ class GameLogic
 						effectsClearTiles.add( effect );
 						++curBlocks;
 						if (curBlocks >= allBlocks)
-							mode = 9; //win
+							mode = 7; //cleared all blocks
 					}
 				}
 				if (curCode == 0x80)
 				{
 					//jump
 					speedZ += 1;
+				}
+				if (curCode == 0x02)
+				{
+					//finish
+					if (mode == 7)
+					{
+						mode = 9;
+						initLevel( -1);
+					}
 				}
 			}
 
@@ -613,14 +625,14 @@ class GameLogic
 			z = -2;
 		//if (i<=-2 || i>=10)
 			//trace("dbg");
-
-		dbg.update();
 		var i:Int;
 		i = Std.int(z);
+		/*dbg.update();
+
 		if (i >= 0 && i <= level.Layers.length - 1)
 			dbg.draw(level.Layers[i].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
 		else
-			dbg.draw(0);
+			dbg.draw(0);*/
 		if (z >= -2)
 		{
 			scale = scalefactor * z + scaleoffset;
@@ -628,8 +640,7 @@ class GameLogic
 			if (i >= 0)
 				player.moveTo(plXscreen - po * scale, plYscreen - po * scale);
 		}
-		//dbg.draw(level.Layers[2].layer.mapScreenTiles[Utils.safeDiv (plY, 48)][ Utils.safeDiv (plX, 48)]);
-		//dbg.draw(level.Layers[2].layer.getCurTile(Utils.safeDiv(plX,48),0));
+
 		tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks);
 		tfBlocks.setTextFormat(tsBlocks);
 	}
