@@ -159,7 +159,7 @@ class Layer
 	public function clear ()
 	{
 		layers.remove (this);
-		if (ts != null)  { ts.clear ();  ts = null; } 
+		if (ts != null)  { ts.clear ();  ts = null; }
 		mapScreenTiles = null;
 		mapData = null;
 		boundMapData = null;
@@ -576,7 +576,14 @@ class Layer
 	#end
 	}
 
-
+	public function setVisible (a: Bool)
+	{
+		mc00.visible = a;
+		if (mc01 != null) mc01.visible = a;
+		if (mc10 != null) mc10.visible = a;
+		if (mc11 != null) mc11.visible = a;
+	}
+	
 	public function setAlpha (a: Float)
 	{
 	#if flash9

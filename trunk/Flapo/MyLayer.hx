@@ -7,11 +7,13 @@ package flapo;
 
 import flash.geom.ColorTransform;
 import gamelib2d.Layer;
+import flash.display.Sprite;
 
 class MyLayer 
 {
 
 	public var layer: Layer;
+	public var playerlayer: Sprite;
 	public var colort: ColorTransform;
 	public var xscroll: Float;
 	public var yscroll: Float;
@@ -30,5 +32,13 @@ class MyLayer
 	{
 		//colort.alphaMultiplier = alpha;
 		layer.setAlpha(alpha);
+	}
+	
+	public function clear()
+	{
+		layer.clear();
+		layer = null;
+		playerlayer = null;
+		colort = null;
 	}
 }

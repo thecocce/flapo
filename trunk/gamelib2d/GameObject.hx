@@ -34,7 +34,8 @@ enum MsgTarget
 	mtName (s: String);
 	mtNameC (s: String, mt: MsgTarget);
 	mtGroup (i: Int);
-	mtGroupC (i: Int, mt: MsgTarget);
+	mtGroupC (i: Int, mt: Ms
+	gTarget);
 }
 
 typedef Msg =

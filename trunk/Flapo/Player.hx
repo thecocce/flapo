@@ -26,6 +26,7 @@ class Player
 		private var mcPlayer: MovieClip;
 	#end
 	public var surfPlayer: BitmapData;
+	public var bitmap: Bitmap;
 	public var playertiles: TileSet;
 	public var plX: Int; //Draw here (screen coordinates)
 	public var plY: Int;
@@ -46,15 +47,17 @@ class Player
 		mcContainer = screen;
 		surface = new BitmapData (100, 100, true, 0x0);
 
-		#if flash9
+	//	#if flash9
 			mcPlayer = new Sprite ();
-			mcPlayer.addChild (new Bitmap (surface));
+			bitmap = new Bitmap(surface);
+			mcPlayer.addChild (bitmap);
 			mcContainer.addChild (mcPlayer);
-		#elseif flash8
+			//mcContainer.addChild (bitmap);
+	/*	#elseif flash8
 			var Depth = flash.Lib._root.getNextHighestDepth ();
 			mcplayer = mcContainer.createEmptyMovieClip ("player", 2);
 			mcplayer.attachBitmap (surface, 99);
-		#end
+		#end*/
 		
 		timeCounter = 0;
 		scale = 1.0;
@@ -68,6 +71,8 @@ class Player
 	
 	public function draw(?tile:Int)
 	{
+		mcPlayer.x = x;
+		mcPlayer.y = y;
 		var curSeq: Int;
 		if (tile != null && tile == 0)
 		{
@@ -103,6 +108,8 @@ class Player
 			mcPlayer.x = fNewX;
 			mcPlayer.y = fNewY;
 		#end
+		x = fNewX;
+		y = fNewY;
 	}
 	
 	public function update ()
@@ -133,6 +140,27 @@ class Player
 			mcPlayer.z = depth;
 		#end
 	}
+	
+	public function setDepth0 (newContainer: Sprite)
+	{
+		mcContainer.removeChild (mcPlayer);
+		mcContainer = newContainer;
+		mcContainer.addChild (mcPlayer);
+	}
+	
+	public function setDepth (newContainer: Sprite)
+	{
+		mcContainer.removeChild (bitmap);
+		mcContainer = newContainer;
+		mcContainer.addChild (bitmap);
+	}	
+
+	public function setDepth2 (newContainer: Sprite)
+	{
+		mcPlayer.removeChild (bitmap);
+		mcPlayer = newContainer;
+		mcPlayer.addChild (bitmap);
+	}		
 	
 	public function changexyz(gx: Float, gy: Float, ?gz: Float)
 	{

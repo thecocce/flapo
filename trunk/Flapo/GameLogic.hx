@@ -55,6 +55,7 @@ class GameLogic
 	static var foregroundLayer: Layer;
 	static var foregroundLayer2: Layer;
 	static var level: Level;
+	static var levelwinlose: Level;
 	static var levelcontainer: LevelContainer;
 	
 	static var x: Float = 0;
@@ -142,7 +143,11 @@ class GameLogic
 		ct50 = new ColorTransform(1, 1, 1, 0.5, 0, 0, 0, 0);
 
 
-		initLevel(1);
+		initLevel(2);
+		levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
+		for (d in levelwinlose.Layers)
+			d.layer.setVisible(false);
+
 		Keys.init ();
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
@@ -392,17 +397,23 @@ class GameLogic
 	
 	function slowdownSpeeds()
 	{
-			if (Utils.rAbs(speedX) < slowdown) speedX = 0;
+		if (Utils.rAbs(speedX) < slowdown) speedX = 0;
 		else speedX += speedX>0?-slowdown:slowdown;
 		if (Utils.rAbs(speedY) < slowdown) speedY = 0;
-		else speedY += speedY>0?-slowdown:slowdown;
-	
+		else speedY += speedY > 0? -slowdown:slowdown;
+		if (Utils.rAbs(speedZ) > slowdownZ)
+			speedZ += speedZ>0?-slowdownZ:slowdownZ;		
 	}
 
 	function calculateSpeeds()
 	{
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
+#if debug
+		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
+#else
+		speedZ += -accelerateZ;
+#end		
 	}
 	
 	function checkSpeeds()
@@ -421,8 +432,8 @@ class GameLogic
 			speedX = speedX > 0?maxspeed: -maxspeed;
 		if (Utils.rAbs( speedY ) > maxspeed)
 			speedY = speedY > 0?maxspeed: -maxspeed;
-
-//			trace("5");
+		if (Utils.rAbs( speedZ ) > maxspeedZ)
+			speedZ = speedZ > 0?maxspeedZ: -maxspeedZ;		
 	}
 	
 	function getScale(level: Float)
@@ -456,6 +467,15 @@ class GameLogic
 			d.layer.draw ();
 			++i;
 		}
+		if (mode == 9 || mode == 8)
+		{
+			for (d in levelwinlose.Layers)
+			{
+				d.layer.update ();
+				d.layer.moveTo (1.0,1.0);
+				d.layer.draw ();
+			}
+		}
 	}
 	
 	function ProcessEffectsClearTiles()
@@ -463,6 +483,22 @@ class GameLogic
 		for (e in effectsClearTiles)
 		{
 			e.update();
+			if (e.state == 0)
+			{
+				if (e.numLayer >= 0 && e.numLayer <= level.Layers.length - 1)
+				{
+					var layer: Layer = level.Layers[e.numLayer].layer;
+					var curTile: Int;
+					curTile = layer.ts.getAnimationFrame (2, e.timeCounter - e.changeState);
+					//curSeq = (tile ^ gamelib2d.Def.TF_SEQUENCE) - 1;
+					//t = curSeq;//playertiles.getAnimationFrame (curSeq, timeCounter);
+
+					layer.writeMap(
+						Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
+						Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
+						curTile);
+				}
+			}
 			if (e.timeCounter >= e.length)
 			{
 				if (e.numLayer>=0 && e.numLayer<=level.Layers.length-1)
@@ -482,74 +518,11 @@ class GameLogic
 		effectsToRemove.clear();
 	}
 	
-	function onEnterFrame (d: Dynamic)
+	function calculateNewZAndContact(fromlayer: Int, tolayer: Int)
 	{
-		calculateFps();
-	#if debug
-		showFPS ();
-	#end
-		if (checkSkipFrame())
-			return;
-		slowdownSpeeds();
-
-		if (mode < 8)
-		{
-			calculateSpeeds();
-		}
-		checkSpeeds();
-//			trace("5");
-		scale = getScale(z);
-		if (mode == 9 || mode == 8)
-		{
-			speedX = maxspeed;
-			speedY = maxspeed;
-		}
-		calculateNewCoordinates();
-		
-		var i:Int = 0;
-
-		processLevel();
-		//trace("oo");
-
-		ProcessEffectsClearTiles();
-
-		//trace("ooo");
-		//Utils.gc(); //garbage collector
-		player.update();
-		player.draw();
-		
-#if debug
-		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
-#else
-		speedZ += -accelerateZ;
-#end
-		if (Utils.rAbs(speedZ) > slowdownZ)
-			speedZ += speedZ>0?-slowdownZ:slowdownZ;
-		if (Utils.rAbs( speedZ ) > maxspeedZ)
-			speedZ = speedZ > 0?maxspeedZ: -maxspeedZ;		
-
-			var fromlayer: Int;
-			var tolayer: Int;
-			if (speedZ > 0)
-			{
-				//jump
-				fromlayer = Std.int( z ) + 1;
-				//trace(fromlayer);
-				tolayer = Std.int( z + speedZ ) + 1;
-			}
-			else
-			{
-				//fall
-				fromlayer = Std.int( z );
-				tolayer = Std.int( z + speedZ );
-			}
-			if (z < 0)
-				--fromlayer;
-			if (z + speedZ < 0)
-				--tolayer;
-
 		if ( fromlayer != tolayer )
 		{
+			var i: Int;
 			i = fromlayer;
 			var contact: Bool = false;
 			var contact2: Bool = false;
@@ -600,7 +573,11 @@ class GameLogic
 			}
 			//kulonben z+=speedZ
 			if (contact == false)
+			{
 				z += speedZ;
+				if (z >= 0 && z < level.Layers.length)
+					player.setDepth2(level.Layers[Std.int(z)].playerlayer);
+			}
 			if (contact && z >= 0)
 			{
 				var curCode: Int;
@@ -622,6 +599,8 @@ class GameLogic
 							i, 0, 30);
 						effect.setState(1, 0, 10);
 						effectsClearTiles.add( effect );
+						level.Layers[i].layer.writeMap(Utils.safeDiv (plX, 48),
+							Utils.safeDiv (plY, 48),-2); 
 						++curBlocks;
 						if (curBlocks >= allBlocks)
 							mode = 7; //cleared all blocks
@@ -638,7 +617,8 @@ class GameLogic
 					if (mode == 7)
 					{
 						mode = 9;
-						initLevel( -1);
+						//initLevel( -1);
+						levelwinlose.Layers[0].layer.setVisible(true);
 					}
 				}
 			}
@@ -648,13 +628,66 @@ class GameLogic
 		}
 		else
 			z += speedZ;
+	}
+	
+	function onEnterFrame (d: Dynamic)
+	{
+		calculateFps();
+	#if debug
+		showFPS ();
+	#end
+		if (checkSkipFrame())
+			return;
+
+		if (mode < 8)
+		{
+			calculateSpeeds();
+		}
+		slowdownSpeeds();		
+		checkSpeeds();
+//			trace("5");
+		scale = getScale(z);
+		if (mode == 9 || mode == 8)
+		{
+			speedX = maxspeed;
+			speedY = maxspeed;
+		}
+		calculateNewCoordinates();
+		
+		//var i:Int = 0;
+
+		processLevel();
+		//trace("oo");
+
+		ProcessEffectsClearTiles();
+
+		//trace("ooo");
+		//Utils.gc(); //garbage collector
+		player.update();
+		player.draw();
+	
+		var fromlayer: Int = Std.int( z );
+		var tolayer: Int = Std.int( z + speedZ );
+		if (speedZ > 0)
+		{
+			//jump
+			++fromlayer;
+			//trace(fromlayer);
+			++tolayer;
+		}
+		if (z < 0)
+			--fromlayer;
+		if (z + speedZ < 0)
+			--tolayer;
+		calculateNewZAndContact(fromlayer, tolayer);
 		if (z < 0)
 		{
 			player.changeAlpha((2 + z) / 2);
 			if (mode != 9 && mode != 8)
 			{
 				mode = 8; //fallen
-				initLevel( -2);
+				//initLevel( -2);
+				levelwinlose.Layers[1].layer.setVisible(true);
 			}
 		}
 		else if (mode != 9)
@@ -663,8 +696,7 @@ class GameLogic
 		}
 		if (z < -2)
 			z = -2;
-		//if (i<=-2 || i>=10)
-			//trace("dbg");
+
 		var i:Int;
 		i = Std.int(z);
 		/*dbg.update();
