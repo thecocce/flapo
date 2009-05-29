@@ -46,4 +46,11 @@ class Effect
 		if (timeCounter == changeState)
 			state = endState;
 	}
+	
+	public function isChange(): Bool
+	{
+		if (timeCounter == changeState)
+			return true;
+		return false;
+	}
 }
