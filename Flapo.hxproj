@@ -5,9 +5,9 @@
     <movie disabled="False" />
     <movie input="" />
     <movie path="bin\Flapo.swf" />
-    <movie fps="60" />
-    <movie width="480" />
-    <movie height="360" />
+    <movie fps="30" />
+    <movie width="550" />
+    <movie height="400" />
     <movie version="9" />
     <movie background="#000000" />
   </output>
@@ -45,12 +45,12 @@
     <!-- example: <hidden path="..." /> -->
   </hiddenPaths>
   <!-- Executed before build -->
-  <preBuildCommand>"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf</preBuildCommand>
+  <preBuildCommand />
   <!-- Executed after build -->
   <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="True" />
-    <option testMovie="NewWindow" />
+    <option testMovie="ExternalPlayer" />
   </options>
 </project>

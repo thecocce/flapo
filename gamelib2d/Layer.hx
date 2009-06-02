@@ -583,6 +583,11 @@ class Layer
 		if (mc10 != null) mc10.visible = a;
 		if (mc11 != null) mc11.visible = a;
 	}
+
+	public function getVisible (): Bool
+	{
+		return mc00.visible;
+	}
 	
 	public function setAlpha (a: Float)
 	{

@@ -75,10 +75,12 @@ class Level
 			if (obj.layer != null)
 			{
 				if (obj.playerlayer != null)
+				{
 					mcContainer.removeChild (obj.playerlayer);
-				obj.playerlayer = null;
+					obj.playerlayer = null;
+				}
 				obj.layer.clear();
-//				obj.layer = null;
+				//obj.layer = null;
 			}
 		Layers = null;
 	}

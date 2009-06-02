@@ -2,7 +2,7 @@
  * ...
  * @author Bence Dobos
  */
-
+//"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
 package flapo;
 
 // add the folder containing gamelib2d to the projects classpaths
@@ -11,6 +11,7 @@ import flash.filters.GlowFilter;
 import flash.geom.ColorTransform;
 import flash.text.TextFormat;
 import gamelib2d.Def;
+import gamelib2d.TileSetData;
 import gamelib2d.Utils;
 import gamelib2d.TileSet;
 import gamelib2d.Layer;
@@ -25,8 +26,8 @@ import flash.display.Sprite;
 
 import flapo.LevelContainer;
 import flapo.LevelData;
-//import flash.display.Bitmap;
-//import flash.display.BitmapData;
+import flash.display.Bitmap;
+import flash.display.BitmapData;
 //import com.blitzagency.Main_loadConnector;
 //import com.blitzagency.xray.logger.XrayLog;
 
@@ -39,6 +40,14 @@ import flash.events.MouseEvent;
 //import flash.events.Event;
 import flash.text.TextField;
 import flash.text.AntiAliasType;
+/*
+class Winback extends BitmapData
+{
+	public function new()
+	{
+		super(0,0);
+	}
+}*/
 
 class GameLogic 
 {
@@ -57,6 +66,9 @@ class GameLogic
 	static var level: Level;
 	static var levelwinlose: Level;
 	static var levelcontainer: LevelContainer;
+
+	static var winloseX: Float = 0;
+	static var winloseY: Float = 0;
 	
 	static var x: Float = 0;
 	static var y: Float = 0;
@@ -102,6 +114,7 @@ class GameLogic
 	public var effectsToRemove: List<Effect>;
 
 	//String
+		var mcText: Sprite;
         var szoveg:TextField;
 
         // the font to use for the letters
@@ -109,10 +122,22 @@ class GameLogic
 		var tfZene: TextField;
 		var tfBlocks: TextField;
 		var tsBlocks: TextFormat;
+		var tfMessage: TextField;
+		var tfMessage2: TextField;
+		static var msg2Timeout : Int = 0;
+		var tfInfo: TextField;
 		
 		public static var allBlocks: Int;
 		public static var curBlocks: Int;
 		public static var mode: Int;
+		
+		public static var levelnum: Int = 0;
+		public static var infomode: Bool = false;
+		public static var infowin: Sprite;
+		var tfInfowin: TextField;
+		var tsInfowin: TextFormat;
+		var tfInfowinWinner: TextField;
+		var tsInfowinWinner: TextFormat;
 	
 	public function new ()
 	{
@@ -125,118 +150,274 @@ class GameLogic
 //	{
 //		flash.external.ExternalInterface.call("s = function(){document.getElementById('"+this.id+"').focus(); }");
 //	}		
+
+	function textInit()
+	{
+		mcText = screen;
+		//Strings
+		defaultFont="Times New Roman";
+		//decompose_string("Anne-Laure & Fabrice");
+		//apply_animation();
+		var ts = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 12;
+		ts.color = 0xaaaaff;
+		szoveg = new flash.text.TextField();
+		szoveg.height = 40;
+		szoveg.appendText("dobosbence.extra.hu");
+		//szoveg.appendText(" Click");
+		szoveg.setTextFormat(ts);
+		szoveg.x = Def.STAGE_W - 100;
+		szoveg.y = Def.STAGE_H - 15;
+		szoveg.filters = [
+			new GlowFilter(0x6666ff, 0.5, 2, 2, 2, 3, false, false)
+		];
+		szoveg.addEventListener(MouseEvent.MOUSE_OVER,this.highlightFab);
+		szoveg.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightFab);
+		szoveg.addEventListener(flash.events.MouseEvent.CLICK,this.goToAnne);
+		mcText.addChild(szoveg);
+		
+		ts = new flash.text.TextFormat();
+		ts.font = defaultFont;
+		ts.size = 30;
+		ts.color = 0xaaaaff;
+		tfZene = new TextField();
+		tfZene.height = 40;
+		tfZene.appendText("Music");
+		tfZene.setTextFormat(ts);
+		tfZene.x = Def.STAGE_W - 100;
+		tfZene.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		tfZene.addEventListener(MouseEvent.MOUSE_OVER,this.highlightZene);
+		tfZene.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightZene);
+		tfZene.addEventListener(flash.events.MouseEvent.CLICK, this.togleZene);
+		mcText.addChild(tfZene);
+
+		ts = new flash.text.TextFormat();
+		ts.font = defaultFont;
+		ts.size = 30;
+		ts.color = 0xaaaaff;
+		tfInfo = new TextField();
+		tfInfo.height = 40;
+		tfInfo.appendText("Info");
+		tfInfo.setTextFormat(ts);
+		tfInfo.x = 0;
+		tfInfo.y = Def.STAGE_H - 40;
+		tfInfo.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		tfInfo.addEventListener(MouseEvent.MOUSE_OVER,this.highlightInfo);
+		tfInfo.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightInfo);
+		tfInfo.addEventListener(flash.events.MouseEvent.CLICK, this.togleInfo);
+		mcText.addChild(tfInfo);		
+		
+		tsBlocks = new flash.text.TextFormat();
+		tsBlocks.font=defaultFont;
+		tsBlocks.size = 30;
+		tsBlocks.color = 0xaaaaff;
+		tfBlocks = new TextField();
+		tfBlocks.height = 40;
+		tfBlocks.appendText("n/a");
+		tfBlocks.setTextFormat(tsBlocks);
+		tfBlocks.x = Def.STAGE_W / 2 - 50;
+		tfBlocks.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		mcText.addChild(tfBlocks);
+		
+		ts = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 30;
+		ts.color = 0xaaaaff;
+		tfMessage = new TextField();
+		tfMessage.width = 150;
+		tfMessage.height = 40;
+		tfMessage.appendText("Continue");
+		tfMessage.setTextFormat(ts);
+		tfMessage.x = Def.STAGE_W / 2 - 50;
+		tfMessage.y = Def.STAGE_H / 2 - 20;
+		tfMessage.visible = false;
+		tfMessage.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		tfMessage.addEventListener(MouseEvent.MOUSE_OVER,this.highlightMessage);
+		tfMessage.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightMessage);
+		tfMessage.addEventListener(flash.events.MouseEvent.CLICK, this.procMessage);
+		mcText.addChild(tfMessage);
+
+		ts = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		ts.color = 0xffffff;
+		tfMessage2 = new TextField();
+		tfMessage2.width = 320;
+		tfMessage2.height = 40;
+		tfMessage2.appendText("Destroy all bright tiles before enter exit!");
+		tfMessage2.setTextFormat(ts);
+		tfMessage2.x = Def.STAGE_W / 2 - 150;
+		tfMessage2.y = Def.STAGE_H / 2 - 70;
+		tfMessage2.visible = false;
+		tfMessage2.filters = [
+			new GlowFilter(0xff6666, 1.0, 3, 3, 3, 3, false, false)
+		];
+		mcText.addChild(tfMessage2);
+		
+		infowin = new Sprite();
+		var o:WinbackInfo = new WinbackInfo();
+		var bitmap: Bitmap = o.getBitmap();
+		infowin.addChild(bitmap);
+		infowin.x = (Def.STAGE_W - o.width) / 2;
+		infowin.y = (Def.STAGE_H - o.height) / 2;
+		infowin.alpha = 0.7;
+		infowin.visible = false;
+		infowin.addEventListener(flash.events.MouseEvent.CLICK, this.togleInfowin);
+		mcText.addChild(infowin);
+		
+		tsInfowin = new flash.text.TextFormat();
+		tsInfowin.font=defaultFont;
+		tsInfowin.size = 17;
+		tsInfowin.color = 0xaaaaff;
+		tfInfowin = new TextField();
+		tfInfowin.height = 250;
+		tfInfowin.width = 250;
+		tfInfowin.wordWrap = true;
+		tfInfowin.multiline = true;
+		tfInfowin.htmlText = "<p align='center'><b>Flapo</b></p><br></center>Control the ball trough multilevel mazes. Destroy all bright tile then enter the exit. Use jump pads to access higher levels<br><br>Written by Bence Dobos<br>Music by <a href='http://nicenice.net'>NiceNice</a><br>Idea by Microshark/Damage<br>Special thanks to Dobie<br><p align='center'>copyright 2009</p>";
+		//tfInfowin.appendText("n/a");
+		tfInfowin.setTextFormat(tsInfowin);
+		tfInfowin.x = 25;
+		tfInfowin.y = 25;
+		tfInfowin.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		infowin.addChild(tfInfowin);
+		
+		tsInfowinWinner = new flash.text.TextFormat();
+		tsInfowinWinner.font=defaultFont;
+		tsInfowinWinner.size = 20;
+		tsInfowinWinner.color = 0xFFFFFF;
+		tfInfowinWinner = new TextField();
+		tfInfowinWinner.height = 250;
+		tfInfowinWinner.width = 250;
+		tfInfowinWinner.wordWrap = true;
+		tfInfowinWinner.multiline = true;
+		tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo! Congratulation! I know the last level was killer, but you did it! Even I completed the last level only once!<br><br><p align='center'>Click to start over again.</p>";
+		//tfInfowin.appendText("n/a");
+		tfInfowinWinner.setTextFormat(tsInfowinWinner);
+		tfInfowinWinner.x = 25;
+		tfInfowinWinner.y = 25;
+		tfInfowinWinner.visible = false;
+		tfInfowinWinner.filters = [
+			new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)
+		];
+		infowin.addChild(tfInfowinWinner);
+	}
 	
-	function init ()
+	function removeText()
+	{
+		if (mcText == null)
+			return;
+		mcText.removeChild(szoveg);
+		mcText.removeChild(tfZene);
+		mcText.removeChild(tfBlocks);
+		mcText.removeChild(tfMessage);
+		mcText.removeChild(tfMessage2);
+		mcText.removeChild(tfInfo);
+		mcText.removeChild(infowin);
+		mcText = null;
+	}
+	
+	function setTextMC(gmc: Sprite)
+	{
+
+		mcText = gmc;
+		mcText.addChild(szoveg);
+		mcText.addChild(tfZene);
+		mcText.addChild(tfBlocks);
+		mcText.addChild(tfMessage);
+		mcText.addChild(tfMessage2);
+		mcText.addChild(tfInfo);
+		mcText.addChild(infowin);
+	}
+ 
+	function firstInit ()
 	{
 		//doComplete();
 		flash.Lib.current.addChild (screen);
-
 		//Def.STAGE_W = 480;
 		//Def.STAGE_H = 360;
 		Def.STAGE_W = screen.stage.stageWidth;
 		Def.STAGE_H = screen.stage.stageHeight;
 		screen.stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
-
 		levelcontainer = new LevelContainer();
-
 		ct100 = new ColorTransform(1, 1, 1, 1, 0, 0, 0, 0);
 		ct50 = new ColorTransform(1, 1, 1, 0.5, 0, 0, 0, 0);
-
-
-		initLevel(2);
-		levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
-		for (d in levelwinlose.Layers)
-			d.layer.setVisible(false);
-
 		Keys.init ();
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
-		
-		player = new Player(screen);
-
-		plX = 0;
-		plY = 0;
-		plZ = 0;
-		plXscreen = Std.int(Def.STAGE_W/2);
-		plYscreen = Std.int(Def.STAGE_H/2);
-		//po = Utils.safeMod(plXscreen, level.Layers[level.Layers.length - 1].layer.ts.TileW);
-		player.moveTo(plXscreen-po, plYscreen-po);
-		x -= plXscreen;
-		y -= plYscreen;
-		dbg = new Player(screen);
-		dbg.moveTo(plXscreen + 60, plYscreen-po);
 		//sound
 		ScrollSnd.init();
 		ScrollSnd.enabled = true;
 		ScrollSnd.play(ScrollSound.NiceNice);
 		effectsClearTiles = new List<Effect>();
 		effectsToRemove = new List<Effect>();
-		
-		//Strings
-                defaultFont="Times New Roman";
-                //decompose_string("Anne-Laure & Fabrice");
-                //apply_animation();
-                        szoveg = new flash.text.TextField();
-                        var ts = new flash.text.TextFormat();
-                        ts.font=defaultFont;
-                        ts.size = 12;
-                        ts.color = 0xaaaaff;
-                        szoveg.appendText("dobosbence.extra.hu");
-						//szoveg.appendText(" Click");
-                        szoveg.setTextFormat(ts);
-						szoveg.x = Def.STAGE_W - 100;
-						szoveg.y = Def.STAGE_H - 15;
-						szoveg.filters = [
-							new GlowFilter(0x6666ff, 0.5, 2, 2, 2, 3, false, false)
-						];
-						screen.addChild(szoveg);
-						
-                        ts = new flash.text.TextFormat();
-                        ts.font = defaultFont;
-                        ts.size = 30;
-                        ts.color = 0xaaaaff;
-						tfZene = new TextField();
-						tfZene.appendText("Zene");
-						tfZene.setTextFormat(ts);
-						tfZene.x = Def.STAGE_W - 100;
-						tfZene.filters = [
-							new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
-						];
-						screen.addChild(tfZene);
+		textInit();
+	}
 
-                        tsBlocks = new flash.text.TextFormat();
-                        tsBlocks.font=defaultFont;
-                        tsBlocks.size = 30;
-                        tsBlocks.color = 0xaaaaff;
-						tfBlocks = new TextField();
-						tfBlocks.appendText("n/a");
-						tfBlocks.setTextFormat(tsBlocks);
-						tfBlocks.x = Def.STAGE_W / 2 - 50;
-						tfBlocks.filters = [
-							new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
-						];
-						screen.addChild(tfBlocks);
+	function deInit()
+	{
+		level.clear();
+		level = null;
+		levelwinlose.clear();
+		levelwinlose = null;
+		player.destroy();
+		dbg.destroy();
+		removeText();
+		tfMessage.visible = false;
+		tfMessage2.visible = false;
+	}
+	
+	function init ()
+	{
+		initLevel(levelnum);
+		levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
+		for (d in levelwinlose.Layers)
+			d.layer.setVisible(false);
+		//for (d in level.Layers)
+		//	d.layer.setVisible(false);
+		plX = 0;
+		plY = 0;
+		plZ = 0;
+		plXscreen = Std.int(Def.STAGE_W/2);
+		plYscreen = Std.int(Def.STAGE_H/2);
+		//po = Utils.safeMod(plXscreen, level.Layers[level.Layers.length - 1].layer.ts.TileW);
+		player = new Player(screen);
+		player.moveTo(plXscreen - po, plYscreen - po);
+		if (z >= 0 && z < level.Layers.length)
+			player.setDepth2(level.Layers[Std.int(z)].playerlayer);
 
-				// sets the first click zone
-                var background:Sprite = new Sprite ();
-                background.graphics.beginFill(0xffaaaa);
-                background.graphics.drawRect(Def.STAGE_W-100,Def.STAGE_H-15,100,15);
-                screen.addChild(background);
-                background.alpha=0;
-                background.addEventListener(MouseEvent.MOUSE_OVER,this.highlightFab);
-                background.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightFab);
-                background.addEventListener(flash.events.MouseEvent.CLICK,this.goToAnne);
-                background = new Sprite ();
-                background.graphics.beginFill(0xffaaaa);
-                background.graphics.drawRect(Def.STAGE_W-100,0,100,40);
-                screen.addChild(background);
-                background.alpha=0;
-                background.addEventListener(MouseEvent.MOUSE_OVER,this.highlightZene);
-                background.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightZene);
-                background.addEventListener(flash.events.MouseEvent.CLICK,this.togleZene);
-
+		x -= plXscreen;
+		y -= plYscreen;
+		var spriteText : Sprite = new Sprite();
+		removeText();
+		setTextMC( spriteText );
+		screen.addChild(spriteText);
+		dbg = new Player(screen);
+		dbg.moveTo(plXscreen + 60, plYscreen-po);
+	}
+    
+	public function nextLevel()
+	{
+		if (mode == 9)
+		{
+			levelnum++;
+			if (levelnum > levelcontainer.maxLevel)
+				levelnum = 0;
 		}
-        
+		mode = 16; //nextlevel
+	}
+    
         // function to follow the link when clicking on the first zone
         public function goToAnne(e:flash.events.MouseEvent): Void {
                 try {
@@ -252,7 +433,37 @@ class GameLogic
 			else
 				ScrollSnd.play(ScrollSound.NiceNice);
 		}
+		
+		public function togleInfo(e:flash.events.MouseEvent): Void {
+			if (infomode)
+			{
+				infomode = false;
+				infowin.visible = false;
+				tfInfowin.visible = true;
+				tfInfowinWinner.visible = false;
+			}
+			else
+			{
+				infomode = true;
+				infowin.visible = true;
+			}
+		}
         
+		public function togleInfowin(e:flash.events.MouseEvent): Void {
+			if (infomode)
+			{
+				infomode = false;
+				infowin.visible = false;
+				tfInfowin.visible = true;
+				tfInfowinWinner.visible = false;
+			}
+			else
+			{
+				infomode = true;
+				infowin.visible = true;
+			}
+		}
+		
         // function to highlight the letters 13 to 19
         public function highlightFab(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
@@ -288,13 +499,51 @@ class GameLogic
                 ts.color=0xaaaaff;
                 tfZene.setTextFormat(ts);
         }
+
+        // function to highlight the letters 0 to 9
+        public function highlightInfo(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xffffff;
+                tfInfo.setTextFormat(ts);
+        }
+        
+        // function to un-highlight the letters 0 to 9
+        public function unhighlightInfo(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xaaaaff;
+                tfInfo.setTextFormat(ts);
+        }		
 		
+		        // function to highlight the letters 0 to 9
+        public function highlightMessage(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xffffff;
+                tfMessage.setTextFormat(ts);
+        }
+        
+        // function to un-highlight the letters 0 to 9
+        public function unhighlightMessage(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xaaaaff;
+                tfMessage.setTextFormat(ts);
+        }
 	
+		public function procMessage(e:MouseEvent) {
+					nextLevel();
+		}
 	
 	public function initLevel(levelnum:Int)
 	{
 		scalefactor = 0.2;
-		scaleoffset = 1 - (3 -1) * scalefactor;		
+		scaleoffset = 1 - (4 -1) * scalefactor;		
 		level = levelcontainer.getLevel(levelnum, screen, scalefactor, scaleoffset);
 
 		if (level != null)
@@ -358,9 +607,15 @@ class GameLogic
 	function calculateFps()
 	{
 		frame++;
-		if (frame == 0)
-			init ();
 		++realfps;
+		//trace( -1);
+		if (frame == 0)
+		{
+			//trace( -2);
+			firstInit();
+			init ();
+		}
+
 		var t: Int = Std.int (Date.now ().getTime () / 1000);
 		if (t != lastT)
 		{
@@ -369,7 +624,7 @@ class GameLogic
 			lastrealfps = realfps;
 			if (lastrealfps > maxfps)
 			{
-				trace("..");
+				//trace("..");
 				skipframerate = (realfps - maxfps) / maxfps;
 			}
 			else
@@ -380,6 +635,12 @@ class GameLogic
 			lastT = t;
 			//skipframecumulative = 0;
 		}
+		if (msg2Timeout > 0)
+			{
+				--msg2Timeout;
+				if (msg2Timeout == 0)
+					tfMessage2.visible = false;
+			}
 	}
 
 	function checkSkipFrame(): Bool
@@ -409,11 +670,11 @@ class GameLogic
 	{
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
-#if debug
-		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
-#else
+	#if debug
+		speedZ += -accelerateZ;// + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
+	#else
 		speedZ += -accelerateZ;
-#end		
+	#end		
 	}
 	
 	function checkSpeeds()
@@ -438,7 +699,7 @@ class GameLogic
 	
 	function getScale(level: Float)
 	{
-		return scalefactor * z + scaleoffset;
+		return scalefactor * level + scaleoffset;
 	}
 	
 	function calculateNewCoordinates()
@@ -463,7 +724,7 @@ class GameLogic
 			}
 			d.layer.update ();
 			scale = scalefactor * i + scaleoffset;
-			d.layer.moveTo ((x - ( Def.STAGE_W/2 * (1 - scale) ))*scale, (y - ( Def.STAGE_W/2 * (1 - scale) ))*scale);
+			d.layer.moveTo ((x*scale - ( Def.STAGE_W/2 * (1 - scale) )), (y*scale - ( Def.STAGE_H/2 * (1 - scale) )));
 			d.layer.draw ();
 			++i;
 		}
@@ -471,9 +732,12 @@ class GameLogic
 		{
 			for (d in levelwinlose.Layers)
 			{
-				d.layer.update ();
-				d.layer.moveTo (1.0,1.0);
-				d.layer.draw ();
+				if (d.layer.getVisible())
+				{
+					d.layer.update ();
+					d.layer.moveTo (winloseX, winloseY);
+					d.layer.draw ();
+				}
 			}
 		}
 	}
@@ -489,7 +753,7 @@ class GameLogic
 				{
 					var layer: Layer = level.Layers[e.numLayer].layer;
 					var curTile: Int;
-					curTile = layer.ts.getAnimationFrame (2, e.timeCounter - e.changeState);
+					curTile = layer.ts.getAnimationFrame (3, e.timeCounter - e.changeState);
 					//curSeq = (tile ^ gamelib2d.Def.TF_SEQUENCE) - 1;
 					//t = curSeq;//playertiles.getAnimationFrame (curSeq, timeCounter);
 
@@ -527,14 +791,22 @@ class GameLogic
 			var contact: Bool = false;
 			var contact2: Bool = false;
 			var curTile: Int = 0;
+			var curSeq: Int = -1;
 			var dist: Float;
+			var mapX:Int;
+			var mapY:Int;
+			var mapX2:Int;
+			var mapY2:Int;
+			var e: MyLayer;
 			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
 			while (i != tolayer && i < 10 && i > -2)
 			{
 				if (level.isBackground(i) == false)
 				{
-
-					curTile = level.Layers[i].layer.getCurTile(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48));
+					mapX = Utils.safeDiv (plX, 48);
+					mapY = Utils.safeDiv (plY, 48);
+					e = level.Layers[i];
+					curTile = e.layer.getCurTile(mapX, mapY);
 					//trace(i + " " + curTile);
 					if (curTile != 0)
 					{
@@ -542,8 +814,8 @@ class GameLogic
 						contact = true;
 						//trace("contact");
 						dist = z - i;
-						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
-							trace("rossz");
+						//if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
+							//trace("rossz");
 						//visszapattan
 						speedZ = speedZ * 0.9;
 						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
@@ -553,7 +825,7 @@ class GameLogic
 						else
 						{
 							z = i - (speedZ > 0?0.9: -0.9);
-							trace("nagy!!");
+							//trace("nagy!!");
 						}
 						speedZ = - speedZ ;
 						if (z > i && z - i < slowdownZ && Utils.rAbs(speedZ) < slowdownZ) 
@@ -578,49 +850,61 @@ class GameLogic
 				if (z >= 0 && z < level.Layers.length)
 					player.setDepth2(level.Layers[Std.int(z)].playerlayer);
 			}
-			if (contact && z >= 0)
+			if (contact && z >= 0 && z>=i)
 			{
 				var curCode: Int;
-				curCode = level.Layers[i].layer.readBoundMap(Utils.safeDiv (plX, 48), Utils.safeDiv (plY, 48)) >> 8;
+				mapX = Utils.safeDiv (plX, 48);
+				mapY = Utils.safeDiv (plY, 48);
+				e = level.Layers[i];
+				mapX2 = Utils.safeMod(mapX, e.layer.mapW);
+				mapY2 = Utils.safeMod(mapY, e.layer.mapH);
+				curCode = e.layer.readBoundMap(mapX, mapY) >> 8;
 				//trace("curTile: " + curTile + " curCode: " + curCode);
+				if (curTile < 0)
+					curSeq = -level.Layers[i].layer.mapData
+						[mapY2]
+						[mapX2]-1;
 				if (curCode >= 0x10 && curCode <= 0x60)
 				{
 					//rombolhato tile
 					//megkeresni
 					var found: Effect = null;
 					found = findEffectInXYZ(effectsClearTiles,
-						Utils.safeDiv (plX, 48),
-						Utils.safeDiv (plY, 48),
+						mapX2,
+						mapY2,
 						i);
 					if (found == null)
 					{
 						effect = new Effect(Utils.safeDiv (plX, 48),
 							Utils.safeDiv (plY, 48),
 							i, 0, 30);
-						effect.setState(1, 0, 10);
+						effect.setState(1, 0, 19);
 						effectsClearTiles.add( effect );
-						level.Layers[i].layer.writeMap(Utils.safeDiv (plX, 48),
-							Utils.safeDiv (plY, 48),-2); 
+						level.Layers[i].layer.writeMap(
+							mapX2,
+							mapY2,-2); 
 						++curBlocks;
 						if (curBlocks >= allBlocks)
 							mode = 7; //cleared all blocks
 					}
 				}
-				if (curCode == 0x80)
+				if (curSeq == 4)
 				{
 					//jump
 					speedZ += 1;
 				}
-				if (curCode == 0x02)
+				if (curSeq == 0)
 				{
 					//finish
-					if (mode == 7)
+					if (curBlocks >= allBlocks)
 					{
 						mode = 9;
-						//initLevel( -1);
-						levelwinlose.Layers[0].layer.setVisible(true);
 					}
+					else
+						tfMessage2.visible = true;
+						msg2Timeout = 60;
 				}
+				trace(curSeq + " " + curTile);
 			}
 
 			//nekem a kod fog kelleni curtile >> 8
@@ -632,13 +916,25 @@ class GameLogic
 	
 	function onEnterFrame (d: Dynamic)
 	{
+		//Log.setColor (0xffffff);
+		//trace(0);
 		calculateFps();
+		var a : Bool = Keys.keyIsDown (KEY_SPACE);
+		if (tfMessage.visible == true && a)
+		{
+			nextLevel();
+		}
 	#if debug
 		showFPS ();
 	#end
-		if (checkSkipFrame())
-			return;
-
+	//	if (checkSkipFrame())
+	//		return;
+		if (mode == 16)
+		{
+			deInit();
+			init();
+			mode = 1;
+		}
 		if (mode < 8)
 		{
 			calculateSpeeds();
@@ -649,8 +945,41 @@ class GameLogic
 		scale = getScale(z);
 		if (mode == 9 || mode == 8)
 		{
-			speedX = maxspeed;
-			speedY = maxspeed;
+			if (player.mcPlayer.alpha == 0)
+			{
+				//trace (99999999);
+				winloseX += maxspeed /3;
+				winloseY += maxspeed /3;
+			}
+			else
+			{
+				if (player.mcPlayer.alpha <= 0.2)
+				{
+					player.mcPlayer.alpha = 0;
+					if (mode == 8)
+						levelwinlose.Layers[1].layer.setVisible(true);
+					else
+					{
+						levelwinlose.Layers[0].layer.setVisible(true);
+						if (levelnum >= levelcontainer.maxLevel)
+						{
+							infowin.visible = true;
+							infomode = true;
+							tfInfowin.visible = false;
+							tfInfowinWinner.visible = true;
+						}
+					}
+					tfMessage.visible = true;
+				}
+				else
+					player.mcPlayer.alpha -= 0.1;
+				/*var cx: Int = Utils.safeDiv (plX, 48) * 48 - 24;
+				var cy: Int = Utils.safeDiv (plY, 48) * 48 - 24;
+				if (cx - plX != 0)
+					speedX += 0.5 * ((cx - plX) > 0?-1: 1);
+				if (cy - plY != 0)
+					speedY += 0.5 * ((cy - plY) > 0?-1: 1);	*/			
+			}
 		}
 		calculateNewCoordinates();
 		
@@ -680,17 +1009,18 @@ class GameLogic
 		if (z + speedZ < 0)
 			--tolayer;
 		calculateNewZAndContact(fromlayer, tolayer);
-		if (z < 0)
+		if (z < 1 && (mode != 9 && mode != 8))
 		{
-			player.changeAlpha((2 + z) / 2);
-			if (mode != 9 && mode != 8)
+			//trace(1111);
+			player.changeAlpha((1 + z) / 2);
+			//if (mode != 9 && mode != 8)
 			{
 				mode = 8; //fallen
 				//initLevel( -2);
-				levelwinlose.Layers[1].layer.setVisible(true);
+				//levelwinlose.Layers[0].layer.setVisible(true);
 			}
 		}
-		else if (mode != 9)
+		else if (mode != 9 && mode != 8)
 		{
 			player.changeAlpha(1.0);
 		}
