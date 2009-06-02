@@ -20,10 +20,10 @@ class Player
 	public var surface: BitmapData;
 	#if flash9
 		private var mcContainer: Sprite;
-		private var mcPlayer: Sprite;
+		public var mcPlayer: Sprite;
 	#elseif flash8
 		private var mcContainer: MovieClip;
-		private var mcPlayer: MovieClip;
+		public var mcPlayer: MovieClip;
 	#end
 	public var surfPlayer: BitmapData;
 	public var bitmap: Bitmap;
@@ -140,7 +140,7 @@ class Player
 			mcPlayer.z = depth;
 		#end
 	}
-	
+	/*
 	public function setDepth0 (newContainer: Sprite)
 	{
 		mcContainer.removeChild (mcPlayer);
@@ -154,13 +154,19 @@ class Player
 		mcContainer = newContainer;
 		mcContainer.addChild (bitmap);
 	}	
-
+	*/
 	public function setDepth2 (newContainer: Sprite)
 	{
 		mcPlayer.removeChild (bitmap);
 		mcPlayer = newContainer;
 		mcPlayer.addChild (bitmap);
-	}		
+	}
+	
+	public function destroy()
+	{
+		mcPlayer.removeChild (bitmap);
+		bitmap = null;
+	}
 	
 	public function changexyz(gx: Float, gy: Float, ?gz: Float)
 	{

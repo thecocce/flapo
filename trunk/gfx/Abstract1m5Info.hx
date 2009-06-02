@@ -1,20 +1,20 @@
 
 import gamelib2d.MapData;
 
-class Abstract1m1Info extends MapData
+class Abstract1m5Info extends MapData
 {
   public function new ()
   {
-    name = "m1";
+    name = "m5";
     mapW = 3;
     mapH = 3;
   }
 
   override public function mapdata () : Array<Array<Int>> {
   return 
-  [[ 24, 24, 24],
-   [ 24, 24, 24],
-   [ 24, 24, 24]]; 
+  [[  1,  1,  1],
+   [  1,  1,  1],
+   [  1,  1,  1]]; 
   }
 
   override public function boundmapdata () : Array<Array<Int>> {

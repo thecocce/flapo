@@ -27,7 +27,7 @@ class Main
 	static var game : GameLogic;
 	static var menu : Menu;
 	
-	static function main ()
+	public static function main ()
 	{
 		//var connect:com.blitzagency.xray.util.XrayConnect = com.blitzagency.xray.util.XrayConnect.getInstance(_root, true);		
 		//flash.Lib.getURL(new flash.net.URLRequest("javascript:me.focus( );void 0;"));

@@ -21,9 +21,9 @@ class Abstract1Info extends TileSetData
     name = "Abstract1";
     tileW = 32;
     tileH = 32;
-    numTilesX = 5;
-    numTilesY = 1;
-    numTiles = 5;
+    numTilesX = 7;
+    numTilesY = 4;
+    numTiles = 28;
     numSequences = 0;
   }
 
