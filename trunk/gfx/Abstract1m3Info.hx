@@ -12,9 +12,9 @@ class Abstract1m3Info extends MapData
 
   override public function mapdata () : Array<Array<Int>> {
   return 
-  [[  3,  3,  3],
-   [  3,  3,  3],
-   [  3,  3,  3]]; 
+  [[  2,  2,  2],
+   [  2,  2,  2],
+   [  2,  2,  2]]; 
   }
 
   override public function boundmapdata () : Array<Array<Int>> {
