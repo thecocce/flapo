@@ -3,6 +3,7 @@
  * @author Bence Dobos
  */
 //"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
+//-swf-lib Res.swf -D debug -D fdb
 package flapo;
 
 // add the folder containing gamelib2d to the projects classpaths
@@ -577,9 +578,9 @@ class GameLogic
 	static var skipframerate: Float = 0;
 	static var skipframecumulative: Float = 0;
 	public inline static var maxfps = 27;
-
-#if debug
 	public static var lastfps: Int;
+	
+#if debug
 	// compile with -D debug to see this
 	function showFPS ()
 	{

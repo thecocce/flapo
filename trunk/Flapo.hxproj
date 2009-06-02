@@ -26,7 +26,7 @@
     <option mainClass="Main" />
     <option override="False" />
     <option verbose="False" />
-    <option additional="-swf-lib Res.swf -D debug -D fdb" />
+    <option additional="-swf-lib Res.swf" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
