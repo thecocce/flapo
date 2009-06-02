@@ -1,0 +1,44 @@
+﻿/**
+ * Containing one level!s data
+ * @author Bence Dobos
+ */
+
+package flapo;
+
+import flash.geom.ColorTransform;
+import gamelib2d.Layer;
+import flash.display.Sprite;
+
+class MyLayer 
+{
+
+	public var layer: Layer;
+	public var playerlayer: Sprite;
+	public var colort: ColorTransform;
+	public var xscroll: Float;
+	public var yscroll: Float;
+	public var isBackground: Bool;
+		
+	public function new(gl: Layer, xs: Float, ys: Float, ct: ColorTransform)
+	{
+		layer = gl;
+		xscroll = xs;
+		yscroll = ys;
+		if (ct != null) colort = ct;
+		isBackground = false;
+	}
+	
+	public function setAlpha(alpha: Float)
+	{
+		//colort.alphaMultiplier = alpha;
+		layer.setAlpha(alpha);
+	}
+	
+	public function clear()
+	{
+		layer.clear();
+		layer = null;
+		playerlayer = null;
+		colort = null;
+	}
+}

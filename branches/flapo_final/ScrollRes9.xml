@@ -1,0 +1,7 @@
+<movie>
+    <library>
+      <bitmap id="Background" name="Background" import=".\gfx\Background.png"/>
+      <bitmap id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/>
+      <sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />
+    </library>
+</movie>
