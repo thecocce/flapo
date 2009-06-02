@@ -251,11 +251,11 @@ class GameLogic
 		ts.size = 20;
 		ts.color = 0xffffff;
 		tfMessage2 = new TextField();
-		tfMessage2.width = 320;
+		tfMessage2.width = 400;
 		tfMessage2.height = 40;
-		tfMessage2.appendText("Destroy all bright tiles before enter exit!");
+		tfMessage2.appendText("Destroy all bright tiles before enter the exit tile!");
 		tfMessage2.setTextFormat(ts);
-		tfMessage2.x = Def.STAGE_W / 2 - 150;
+		tfMessage2.x = Def.STAGE_W / 2 - 190;
 		tfMessage2.y = Def.STAGE_H / 2 - 70;
 		tfMessage2.visible = false;
 		tfMessage2.filters = [
@@ -283,7 +283,7 @@ class GameLogic
 		tfInfowin.width = 250;
 		tfInfowin.wordWrap = true;
 		tfInfowin.multiline = true;
-		tfInfowin.htmlText = "<p align='center'><b>Flapo</b></p><br></center>Control the ball trough multilevel mazes. Destroy all bright tile then enter the exit. Use jump pads to access higher levels<br><br>Written by Bence Dobos<br>Music by <a href='http://nicenice.net'>NiceNice</a><br>Idea by Microshark/Damage<br>Special thanks to Dobie<br><p align='center'>copyright 2009</p>";
+		tfInfowin.htmlText = "<p align='center'><b>Flapo</b></p><br></center>Control the ball trough multilevel mazes. Destroy all bright tiles then enter the exit tile. Use jump pads to access higher levels<br><br>Written by Bence Dobos<br>Music by <a href='http://nicenice.net'><font color='#FFFFFF'>Nice Nice</font></a><br>Idea by Microshark/Damage<br>Special thanks to Strato<br><p align='center'>copyright 2009</p>";
 		//tfInfowin.appendText("n/a");
 		tfInfowin.setTextFormat(tsInfowin);
 		tfInfowin.x = 25;
