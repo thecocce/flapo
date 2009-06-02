@@ -185,7 +185,7 @@ class GameLogic
 		tfZene.height = 40;
 		tfZene.appendText("Music");
 		tfZene.setTextFormat(ts);
-		tfZene.x = Def.STAGE_W - 100;
+		tfZene.x = Def.STAGE_W - 80;
 		tfZene.filters = [
 			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
 		];
@@ -277,13 +277,19 @@ class GameLogic
 		tsInfowin = new flash.text.TextFormat();
 		tsInfowin.font=defaultFont;
 		tsInfowin.size = 17;
-		tsInfowin.color = 0xaaaaff;
+		//tsInfowin.color = 0xaaaaff;
 		tfInfowin = new TextField();
 		tfInfowin.height = 250;
 		tfInfowin.width = 250;
 		tfInfowin.wordWrap = true;
 		tfInfowin.multiline = true;
-		tfInfowin.htmlText = "<p align='center'><b>Flapo</b></p><br></center>Control the ball trough multilevel mazes. Destroy all bright tiles then enter the exit tile. Use jump pads to access higher levels<br><br>Written by Bence Dobos<br>Music by <a href='http://nicenice.net'><font color='#FFFFFF'>Nice Nice</font></a><br>Idea by Microshark/Damage<br>Special thanks to Strato<br><p align='center'>copyright 2009</p>";
+		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo</b></p></font><br>" +
+			"<font color='#aaaaff'>Control the ball trough multilevel mazes. Destroy all bright tiles then enter the exit tile. Use jump pads to access higher levels<br><br>" +
+			"Written by <a href='http://dobosbence.extra.hu'><font color='#ccccFF'>Bence Dobos</font></a><br>" +
+			"Music by <a href='http://nicenice.net'><font color='#ccccFF'>Nice Nice</font></a><br>" +
+			"Idea by Microshark/Damage<br>" +
+			"Special thanks to Strato<br>" +
+			"<p align='center'>copyright 2009</p></font>";
 		//tfInfowin.appendText("n/a");
 		tfInfowin.setTextFormat(tsInfowin);
 		tfInfowin.x = 25;
