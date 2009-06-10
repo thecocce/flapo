@@ -5,6 +5,9 @@
 
 package flapo;
 
+import flapo.RGBA;
+import flash.geom.ColorTransform;
+
 class Effect 
 {
 	public var numLayer: Int;
@@ -16,7 +19,9 @@ class Effect
 	public var state: Int;
 	public var startState: Int; //1-solid
 	public var endState: Int;
-	public var changeState: Int; //if (timecounter==changeState) 
+	public var changeState: Int; //if (timecounter==changeState)
+	public var startRGBA: RGBA;
+	public var endRGBA: RGBA;
 
 	public function new(gx: Int, gy: Int, gz: Int, gtype: Int, glength: Int) 
 	{
@@ -30,6 +35,8 @@ class Effect
 		endState = 0;
 		changeState = -1;
 		state = startState;
+		startRGBA = null;
+		endRGBA = null;
 	}
 	
 	public function setState(start: Int, end: Int, change:Int)
@@ -53,4 +60,19 @@ class Effect
 			return true;
 		return false;
 	}
+	
+	public function isEnd(): Bool
+	{
+		if (timeCounter >= length)
+			return true;
+		else
+			return false;
+	}
+	
+	public function setRGBA(start: RGBA, end: RGBA)
+	{
+		startRGBA = start;
+		endRGBA = end;
+	}
+	
 }

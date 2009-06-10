@@ -6,7 +6,18 @@
 //-swf-lib Res.swf -D debug -D fdb
 package flapo;
 
-// add the folder containing gamelib2d to the projects classpaths
+
+//APIs
+#if MochiBot
+import apis.mochi.MochiBot;
+#end
+
+#if ModPlayer
+import modplay.ModPlayer;
+#end
+
+
+
 import flash.display.MovieClip;
 import flash.filters.GlowFilter;
 import flash.geom.ColorTransform;
@@ -34,6 +45,7 @@ import flash.display.BitmapData;
 
 import flapo.Player;
 import flapo.Effect;
+import flapo.RGBA;
 import ScrollSnd;
 
 //String
@@ -50,9 +62,14 @@ class Winback extends BitmapData
 	}
 }*/
 
-class GameLogic 
+class GameLogic extends Sprite
 {
 
+#if ModPlayer
+	static var mp: ModPlayer;
+	static var mpprg: Int;
+#end
+	
 	//static var lc : Main_loadConnector;
 	
 	static var screen: Sprite;
@@ -139,10 +156,16 @@ class GameLogic
 		var tsInfowin: TextFormat;
 		var tfInfowinWinner: TextField;
 		var tsInfowinWinner: TextFormat;
-	
+
+		public static var playerColor: Int; //0 - white
+		public static var playerColorTransform: ColorTransform;
+		public static var playerColors: Array<RGBA>;
+		
 	public function new ()
 	{
+		super();
 		// new should not use the stage
+		screen = this;
 		screen = new Sprite ();
 		screen.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 	}
@@ -350,6 +373,16 @@ class GameLogic
  
 	function firstInit ()
 	{
+#if MochiBot
+		try {
+			/*this.createEmptyMovieClip("MochiBot",this.getNextHighestDepth());
+			var mySound:Sound = new Sound(mcSounds);
+			mySound.attachSound("sndFromLibrary");	*/		
+			MochiBot.track(this, "17990a66");
+		} catch (e:Dynamic) {
+            trace (e);
+        }
+#end
 		//doComplete();
 		flash.Lib.current.addChild (screen);
 		//Def.STAGE_W = 480;
@@ -364,12 +397,30 @@ class GameLogic
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
 		//sound
+#if sound		
 		ScrollSnd.init();
 		ScrollSnd.enabled = true;
 		ScrollSnd.play(ScrollSound.NiceNice);
+#end
+#if ModPlayer
+		mp = new ModPlayer();
+		mp.play("Test.mod");
+		mp.onProgress = function(prg:Int) { setProgress(prg); }
+#end
 		effectsClearTiles = new List<Effect>();
 		effectsToRemove = new List<Effect>();
 		textInit();
+		playerColorTransform = new ColorTransform(1, 1, 1);
+		playerColors = new Array<RGBA>();
+		playerColors.push(new RGBA(1, 1, 1));
+		playerColors.push(new RGBA(1, 0, 0));
+		playerColors.push(new RGBA(0, 0, 1));
+		playerColors.push(new RGBA(0, 1, 0));
+		playerColors.push(new RGBA(1, 1, 0));
+		playerColors.push(new RGBA(1, 0, 1));
+		playerColors.push(new RGBA(0, 1, 1));
+		playerColors.push(new RGBA(0.4, 0.4, 0.4));		
+		//trace(playerColors[2]);
 	}
 
 	function deInit()
@@ -400,6 +451,16 @@ class GameLogic
 		plYscreen = Std.int(Def.STAGE_H/2);
 		//po = Utils.safeMod(plXscreen, level.Layers[level.Layers.length - 1].layer.ts.TileW);
 		player = new Player(screen);
+		playerColor = 0;
+		player.clearEffects();
+		player.setColorTransform(playerColorTransform);
+		//flash the player for a second (30 frame)
+		var rgba: RGBA = new RGBA(1.0, 1.0, 1.0, 0.0);
+		player.setColorTransformRGBA(rgba);
+		//rgba = new RGBA(2.0, 2.0, 2.0, 0.5);
+		//player.changeColorTransform(rgba, 10, 2, 2);
+		rgba = new RGBA(1.0, 1.0, 1.0, 1.0);
+		player.changeColorTransform(rgba, 20, 11, 2);
 		player.moveTo(plXscreen - po, plYscreen - po);
 		if (z >= 0 && z < level.Layers.length)
 			player.setDepth2(level.Layers[Std.int(z)].playerlayer);
@@ -412,7 +473,7 @@ class GameLogic
 		screen.addChild(spriteText);
 		dbg = new Player(screen);
 		dbg.moveTo(plXscreen + 60, plYscreen-po);
-	}
+	} 
     
 	public function nextLevel()
 	{
@@ -425,20 +486,38 @@ class GameLogic
 		mode = 16; //nextlevel
 	}
     
-        // function to follow the link when clicking on the first zone
-        public function goToAnne(e:flash.events.MouseEvent): Void {
-                try {
-                        flash.Lib.getURL(new flash.net.URLRequest("http://dobosbence.extra.hu"),"_top");
-                } catch (e:Dynamic) {
-                        trace (e);
-                }
-        }
+	// function to follow the link when clicking on the first zone
+	public function goToAnne(e:flash.events.MouseEvent): Void {
+			try {
+					flash.Lib.getURL(new flash.net.URLRequest("http://dobosbence.extra.hu"),"_top");
+			} catch (e:Dynamic) {
+					trace (e);
+			}
+	}
 
+#if ModPlayer
+    static function setProgress(prg:Int)
+    {
+		mpprg = prg;
+		trace(prg+"% loaded");
+		trace("...............");
+    }
+#end
+	
+		
 		public function togleZene(e:flash.events.MouseEvent): Void {
+		#if sound
 			if (ScrollSnd.snd_NiceNicePlaying)
 				ScrollSnd.stop(ScrollSound.NiceNice);
 			else
 				ScrollSnd.play(ScrollSound.NiceNice);
+		#end
+		#if ModPlayer
+			if (mpprg != -1 || mpprg < 100)
+				mp.stop();
+			else
+				mp.play("Test.mod");
+		#end
 		}
 		
 		public function togleInfo(e:flash.events.MouseEvent): Void {
@@ -566,7 +645,12 @@ class GameLogic
 			curBlocks = 0;
 			for (d in level.Layers)
 			{
-				allBlocks += d.layer.countMapCode(0x10);
+				for (i in 0...9)
+					allBlocks += d.layer.countMapCode(0x10 + i);
+#if Vye
+				if (d.isBackground)
+					d.layer.setVisible(false);
+#end
 			}
 		}	
 	}
@@ -581,6 +665,7 @@ class GameLogic
 	public static var lastfps: Int;
 	
 #if debug
+#if showfps
 	// compile with -D debug to see this
 	function showFPS ()
 	{
@@ -609,6 +694,7 @@ class GameLogic
 				" z:" + level.startposz);
 		}
 	}
+#end
 #end
 	
 	function calculateFps()
@@ -679,14 +765,17 @@ class GameLogic
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
 	#if debug
 		speedZ += -accelerateZ;// + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
+		if (Keys.keyIsDown (KEY_SPACE))
+		{
+			player.setColorTransform(playerColorTransform);
+		}
 	#else
 		speedZ += -accelerateZ;
-	#end		
+	#end
 	}
 	
 	function checkSpeeds()
 	{
-		//trace("4.2");
 	/*	if (x + speedX < 0)
 			speedX = Utils.rAbs( speedX );
 		if (x + speedX >= foregroundLayer.width () - Def.STAGE_W)
@@ -722,17 +811,20 @@ class GameLogic
 		var i:Int = 0;
 		for (d in level.Layers)
 		{
-			if (level.isBackground(i) == false)
+			if (d.layer.getVisible())
 			{
-				if (z < i)
-					level.Layers[i].setAlpha( 0.5 );
-				else
-					level.Layers[i].setAlpha( 1.0 );
+				if (level.isBackground(i) == false)
+				{
+					if (z < i)
+						level.Layers[i].setAlpha( 0.5 );
+					else
+						level.Layers[i].setAlpha( 1.0 );
+				}
+				d.layer.update ();
+				scale = scalefactor * i + scaleoffset;
+				d.layer.moveTo ((x*scale - ( Def.STAGE_W/2 * (1 - scale) )), (y*scale - ( Def.STAGE_H/2 * (1 - scale) )));
+				d.layer.draw ();
 			}
-			d.layer.update ();
-			scale = scalefactor * i + scaleoffset;
-			d.layer.moveTo ((x*scale - ( Def.STAGE_W/2 * (1 - scale) )), (y*scale - ( Def.STAGE_H/2 * (1 - scale) )));
-			d.layer.draw ();
 			++i;
 		}
 		if (mode == 9 || mode == 8)
@@ -770,7 +862,7 @@ class GameLogic
 						curTile);
 				}
 			}
-			if (e.timeCounter >= e.length)
+			if (e.isEnd())
 			{
 				if (e.numLayer>=0 && e.numLayer<=level.Layers.length-1)
 					level.Layers[e.numLayer].layer.writeMap(
@@ -871,28 +963,32 @@ class GameLogic
 					curSeq = -level.Layers[i].layer.mapData
 						[mapY2]
 						[mapX2]-1;
-				if (curCode >= 0x10 && curCode <= 0x60)
+				if (curCode >= 0x10 && curCode < 0x20)
 				{
 					//rombolhato tile
-					//megkeresni
-					var found: Effect = null;
-					found = findEffectInXYZ(effectsClearTiles,
-						mapX2,
-						mapY2,
-						i);
-					if (found == null)
+					var c: Int = curCode - 0x10;
+					if (c == playerColor)
 					{
-						effect = new Effect(Utils.safeDiv (plX, 48),
-							Utils.safeDiv (plY, 48),
-							i, 0, 30);
-						effect.setState(1, 0, 19);
-						effectsClearTiles.add( effect );
-						level.Layers[i].layer.writeMap(
+						//megkeresni
+						var found: Effect = null;
+						found = findEffectInXYZ(effectsClearTiles,
 							mapX2,
-							mapY2,-2); 
-						++curBlocks;
-						if (curBlocks >= allBlocks)
-							mode = 7; //cleared all blocks
+							mapY2,
+							i);
+						if (found == null)
+						{
+							effect = new Effect(Utils.safeDiv (plX, 48),
+								Utils.safeDiv (plY, 48),
+								i, 0, 30);
+							effect.setState(1, 0, 19);
+							effectsClearTiles.add( effect );
+							level.Layers[i].layer.writeMap(
+								mapX2,
+								mapY2,-2); 
+							++curBlocks;
+							if (curBlocks >= allBlocks)
+								mode = 7; //cleared all blocks
+						}
 					}
 				}
 				if (curSeq == 4)
@@ -911,7 +1007,20 @@ class GameLogic
 						tfMessage2.visible = true;
 						msg2Timeout = 60;
 				}
-				trace(curSeq + " " + curTile);
+				if (curCode >= 0x20 && curCode < 0x30)
+				{
+					var c: Int = curCode - 0x20;
+					//effect here
+					trace(c);
+					playerColor = c;
+					//player.surface.colorTransform(player.surface.rect, playerColorTransform);
+					//playerColorTransform.greenMultiplier = c / 5;
+	
+					//player.setColorTransform(playerColorTransform);
+					var rgba: RGBA = playerColors[c];
+					player.changeColorTransform(rgba, 40);
+				}
+				//trace(curCode + " " + curTile);
 			}
 
 			//nekem a kod fog kelleni curtile >> 8
@@ -932,7 +1041,9 @@ class GameLogic
 			nextLevel();
 		}
 	#if debug
+	#if showfps
 		showFPS ();
+	#end
 	#end
 	//	if (checkSkipFrame())
 	//		return;

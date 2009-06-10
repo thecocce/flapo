@@ -1,0 +1,994 @@
+/*
+ * Flash Module Player 
+ * Copyright (C) 2008 Kostas Michalopoulos
+ * 
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ * 
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ * 
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ * Kostas Michalopoulos <badsector@slashstone.com>
+ */
+package modplay;
+ 
+import flash.events.Event;
+import flash.events.IOErrorEvent;
+import flash.net.URLRequest;
+import flash.net.URLLoader;
+import flash.utils.ByteArray;
+import flash.utils.Timer;
+
+private class Sample
+{
+    public var wave:Array<Int>;
+    public var length:Int;
+    public var fine:Int;
+    public var volume:Int;
+    public var loopstart:Int;
+    public var looplen:Int;
+    
+    public function new(){}
+}
+
+private class Note
+{
+    public var sample:Sample;
+    public var period:Int;
+    public var peridx:Int;
+    public var command:Int;
+    public var cmdarg:Int;
+    
+    public function new(){}
+}
+
+private  class Channel
+{
+    public var note:Array<Note>;
+    
+    public function new(){}
+}
+
+private  class Pattern
+{
+    public var channel:Array<Channel>;
+    
+    public function new(){}
+}
+
+private  class ChanState
+{
+    public var csmp:Sample;
+    public var cslength:Int;
+    public var cslooplen:Int;
+    public var cperiod:Int;
+    public var lastnoteperiod:Int;
+    public var csp:Int;
+    public var cspinc:Int;
+    public var cvolume:Int;
+    public var rvolume:Int;
+    public var arpeggio:Bool;
+    public var arpeggionote:Int;
+    public var arpeggiosemi1:Int;
+    public var arpeggiosemi2:Int;
+    public var arpeggiotick:Int;
+    public var cutsample:Bool;
+    public var cutsampleticks:Int;
+    public var delaynote:Bool;
+    public var delaynoteticks:Int;
+    public var retriggersample:Bool;
+    public var retriggersampleticks:Int;
+    public var retriggersamplectr:Int;
+    public var slidevolume:Bool;
+    public var slidevolumeval:Int;
+    public var slideperiod:Bool;
+    public var slideperiodval:Int;
+    public var slidetonote:Bool; // uses slideperiodval too
+    public var slidetonotetarget:Int;
+    public var vibrato:Bool;
+    public var vibratowave:Int;
+    public var vibratopos:Int;
+    public var vibratospeed:Int;
+    public var vibratodepth:Int;
+    public var tremolo:Bool;
+    public var tremolowave:Int;
+    public var tremolopos:Int;
+    public var tremolospeed:Int;
+    public var tremolodepth:Int;
+    
+    public function new(){}
+}
+ 
+class ModPlayer
+{
+    //NOTE: the fields below should be considered as "private"!! See the end of
+    //      the class for the public API.
+    
+    /**** Module data ****/
+    public var pat:Array<Pattern>;
+    public var smp:Array<Sample>;
+    public var order:Array<Int>;
+    public var chancount:Int;
+    public var songlength:Int;
+    /**** Player data ****/
+    public var wave:ByteArray; // generated waveform for the module
+    public var wavelen:Int;
+    public var periods:Array<Int>;
+    public var sinewave:Array<Int>;
+	public var stopnow:Bool;
+	public var repeating:Bool;
+    
+    /**** Public functions ****/
+    public function xtrace(msg:String)
+    {
+        if (showTraces) trace(msg);
+    }
+	
+	public function setRepeating(value:Bool)
+	{
+		repeating = value;
+	}
+    
+    public function parseData(data:ByteArray)
+    {
+        /* MOD info */
+        var samplecount:Int;
+        var patcount:Int;
+        var rowcount:Int = 64;
+        var periods:Array<Int> = [3628,3424,3232,3048,2880,2712,2560,2416,2280,2152,2032,1920,
+								  1814,1712,1616,1524,1440,1356,1280,1208,1140,1076,1016,960,
+								  907,856,808,762,720,678,640,604,570,538,508,480,
+								  453,428,404,381,360,339,320,302,285,269,254,240,
+								  226,214,202,190,180,170,160,151,143,135,127,120,
+								  113,107,101,95,90,85,80,75,71,67,63,60,
+								  56,53,50,47,45,42,40,37,35,33,31,30,
+								  3600,3400,3208,3028,2860,2700,2544,2404,2268,2140,2020,1908,
+								  1800,1700,1604,1514,1430,1350,1272,1202,1134,1070,1010,954,
+								  900,850,802,757,715,675,636,601,567,535,505,477,
+								  450,425,401,379,357,337,318,300,284,268,253,238,
+								  225,212,200,189,179,169,159,150,142,134,126,119,
+								  112,106,100,94,89,84,79,75,71,67,63,59,
+								  56,53,50,47,44,42,39,37,35,33,31,29,
+								  3576,3376,3184,3008,2836,2680,2528,2388,2252,2128,2008,1896,
+								  1788,1688,1592,1504,1418,1340,1264,1194,1126,1064,1004,948,
+								  894,844,796,752,709,670,632,597,563,532,502,474,
+								  447,422,398,376,355,335,316,298,282,266,251,237,
+								  223,211,199,188,177,167,158,149,141,133,125,118,
+								  111,105,99,94,88,83,79,74,70,66,62,59,
+								  55,52,49,47,44,41,39,37,35,33,31,29,
+								  3548,3352,3164,2984,2816,2660,2512,2368,2236,2112,1992,1880,
+								  1774,1676,1582,1492,1408,1330,1256,1184,1118,1056,996,940,
+								  887,838,791,746,704,665,628,592,559,528,498,470,
+								  444,419,395,373,352,332,314,296,280,264,249,235,
+								  222,209,198,187,176,166,157,148,140,132,125,118,
+								  111,104,99,93,88,83,78,74,70,66,62,59,
+								  55,52,49,46,44,41,39,37,35,33,31,29,
+								  3524,3328,3140,2964,2796,2640,2492,2352,2220,2096,1976,1868,
+								  1762,1664,1570,1482,1398,1320,1246,1176,1110,1048,988,934,
+								  881,832,785,741,699,660,623,588,555,524,494,467,
+								  441,416,392,370,350,330,312,294,278,262,247,233,
+								  220,208,196,185,175,165,156,147,139,131,123,117,
+								  110,104,98,92,87,82,78,73,69,65,61,58,
+								  55,52,49,46,43,41,39,36,34,32,30,29,
+								  3500,3304,3116,2944,2776,2620,2476,2336,2204,2080,1964,1852,
+								  1750,1652,1558,1472,1388,1310,1238,1168,1102,1040,982,926,
+								  875,826,779,736,694,655,619,584,551,520,491,463,
+								  437,413,390,368,347,328,309,292,276,260,245,232,
+								  219,206,195,184,174,164,155,146,138,130,123,116,
+								  109,103,97,92,87,82,77,73,69,65,61,58,
+								  54,51,48,46,43,41,38,36,34,32,30,29,
+								  3472,3280,3096,2920,2756,2604,2456,2320,2188,2064,1948,1840,
+								  1736,1640,1548,1460,1378,1302,1228,1160,1094,1032,974,920,
+								  868,820,774,730,689,651,614,580,547,516,487,460,
+								  434,410,387,365,345,325,307,290,274,258,244,230,
+								  217,205,193,183,172,163,154,145,137,129,122,115,
+								  108,102,96,91,86,81,77,72,68,64,61,57,
+								  54,51,48,45,43,40,38,36,34,32,30,28,
+								  3448,3256,3072,2900,2736,2584,2440,2300,2172,2052,1936,1828,
+								  1724,1628,1536,1450,1368,1292,1220,1150,1086,1026,968,914,
+								  862,814,768,725,684,646,610,575,543,513,484,457,
+								  431,407,384,363,342,323,305,288,272,256,242,228,
+								  216,203,192,181,171,161,152,144,136,128,121,114,
+								  108,101,96,90,85,80,76,72,68,64,60,57,
+								  54,50,48,45,42,40,38,36,34,32,30,28,
+								  3424,3232,3048,2880,2712,2560,2416,2280,2152,2032,1920,1812,
+								  1712,1616,1524,1440,1356,1280,1208,1140,1076,1016,960,906,
+								  856,808,762,720,678,640,604,570,538,508,480,453,
+								  428,404,381,360,339,320,302,285,269,254,240,226,
+								  214,202,190,180,170,160,151,143,135,127,120,113,
+								  107,101,95,90,85,80,75,71,67,63,60,56,
+								  53,50,47,45,42,40,37,35,33,31,30,28,
+								  3400,3208,3028,2860,2696,2548,2404,2268,2140,2020,1908,1800,
+								  1700,1604,1514,1430,1348,1274,1202,1134,1070,1010,954,900,
+								  850,802,757,715,674,637,601,567,535,505,477,450,
+								  425,401,379,357,337,318,300,284,268,253,239,225,
+								  213,201,189,179,169,159,150,142,134,126,119,113,
+								  106,100,94,89,84,79,75,71,67,63,59,56,
+								  53,50,47,44,42,39,37,35,33,31,29,28,
+								  3376,3184,3008,2836,2680,2528,2388,2252,2128,2008,1896,1788,
+								  1688,1592,1504,1418,1340,1264,1194,1126,1064,1004,948,894,
+								  844,796,752,709,670,632,597,563,532,502,474,447,
+								  422,398,376,355,335,316,298,282,266,251,237,224,
+								  211,199,188,177,167,158,149,141,133,125,118,112,
+								  105,99,94,88,83,79,74,70,66,62,59,56,
+								  52,49,47,44,41,39,37,35,33,31,29,28,
+								  3352,3164,2984,2816,2660,2512,2368,2236,2112,1992,1880,1776,
+								  1676,1582,1492,1408,1330,1256,1184,1118,1056,996,940,888,
+								  838,791,746,704,665,628,592,559,528,498,470,444,
+								  419,395,373,352,332,314,296,280,264,249,235,222,
+								  209,198,187,176,166,157,148,140,132,125,118,111,
+								  104,99,93,88,83,78,74,70,66,62,59,55,
+								  52,49,46,44,41,39,37,35,33,31,29,27,
+								  3328,3140,2964,2796,2640,2492,2352,2220,2096,1980,1868,1764,
+								  1664,1570,1482,1398,1320,1246,1176,1110,1048,990,934,882,
+								  832,785,741,699,660,623,588,555,524,495,467,441,
+								  416,392,370,350,330,312,294,278,262,247,233,220,
+								  208,196,185,175,165,156,147,139,131,124,117,110,
+								  104,98,92,87,82,78,73,69,65,62,58,55,
+								  52,49,46,43,41,39,36,34,32,31,29,27,
+								  3304,3116,2944,2776,2620,2476,2336,2204,2080,1964,1852,1748,
+								  1652,1558,1472,1388,1310,1238,1168,1102,1040,982,926,874,
+								  826,779,736,694,655,619,584,551,520,491,463,437,
+								  413,390,368,347,328,309,292,276,260,245,232,219,
+								  206,195,184,174,164,155,146,138,130,123,116,109,
+								  103,97,92,87,82,77,73,69,65,61,58,54,
+								  51,48,46,43,41,38,36,34,32,30,29,27,
+								  3280,3096,2920,2756,2604,2456,2320,2188,2064,1948,1840,1736,
+								  1640,1548,1460,1378,1302,1228,1160,1094,1032,974,920,868,
+								  820,774,730,689,651,614,580,547,516,487,460,434,
+								  410,387,365,345,325,307,290,274,258,244,230,217,
+								  205,193,183,172,163,154,145,137,129,122,115,109,
+								  102,96,91,86,81,77,72,68,64,61,57,54,
+								  51,48,45,43,40,38,36,34,32,30,28,27,
+								  3256,3072,2900,2736,2584,2440,2300,2172,2052,1936,1828,1724,
+								  1628,1536,1450,1368,1292,1220,1150,1086,1026,968,914,862,
+								  814,768,725,684,646,610,575,543,513,484,457,431,
+								  407,384,363,342,323,305,288,272,256,242,228,216,
+								  204,192,181,171,161,152,144,136,128,121,114,108,
+								  102,96,90,85,80,76,72,68,64,60,57,54,
+								  51, 48, 45, 42, 40, 38, 36, 34, 32, 30, 28, 27];
+								  
+		this.periods = periods;
+                                  
+        xtrace("Parsing mod data...");
+        
+        chancount = 4;
+        
+        // load sample info
+        smp = new Array<Sample>();
+        if ((data[1080] == 77 && data[1081] == 46 && data[1082] == 75 && data[1083] == 46) || // M.K. signature
+            (data[1080] == 70 && data[1081] == 76 && data[1082] == 84 && data[1083] == 52) || // FLT4 signature
+            (data[1080] == 52 && data[1081] == 67 && data[1082] == 72 && data[1083] == 78))   // 4CHN signature
+        {
+            samplecount = 31;
+        }
+        else if (data[1080] == 52 && data[1081] == 67 && data[1082] == 72 && data[1083] == 78)   // 2CHN signature
+        {
+            samplecount = 31;
+            chancount = 2;
+        }
+        else if (data[1080] == 54 && data[1081] == 67 && data[1082] == 72 && data[1083] == 78)   // 6CHN signature
+        {
+            samplecount = 31;
+            chancount = 6;
+        }
+        else if ((data[1080] == 67 && data[1081] == 68 && data[1082] == 56 && data[1083] == 49) || // CD81 signature
+                 (data[1080] == 79 && data[1081] == 67 && data[1082] == 84 && data[1083] == 65) || // OCTA signature
+                 (data[1080] == 56 && data[1081] == 67 && data[1082] == 72 && data[1083] == 78))   // 8CHN signature
+        {
+            samplecount = 31;
+            chancount = 8;
+        }
+        else
+        {
+            samplecount = 15;
+        }
+        xtrace("Module has " + samplecount + " samples, " + chancount + " channels");
+        var name:String = "";
+        for (j in 0...20)
+        {
+            var c:Int = data.readUnsignedByte();
+            if (c > 31 && c < 127) name += String.fromCharCode(c); else break;
+        }
+        xtrace("Module title: " + name);
+        data.position = 20;
+        for (i in 0...samplecount)
+        {
+            data.position += 22;
+            var len:Int = data.readUnsignedShort()*2;
+            var fine:Int = data.readUnsignedByte()&0x0F;
+            var vol:Int = data.readUnsignedByte();
+            var loopstart:Int = data.readUnsignedShort()*2;
+            var looplen:Int = data.readUnsignedShort()*2;
+            
+            if (len < 4) len = 0; // MilkyTracker bug?
+			if (fine > 7) fine = fine - 16;
+            
+            smp[i] = new Sample();
+            smp[i].length = len;
+            smp[i].fine = fine;
+            smp[i].volume = vol;
+            smp[i].loopstart = loopstart;
+            smp[i].looplen = looplen;
+        }
+        
+        // load order
+        songlength = data.readByte();
+        if (songlength < 1) songlength = 1;
+        data.readByte(); // skip obsolete byte
+        order = new Array<Int>();
+        for (i in 0...128)
+            order[i] = data.readUnsignedByte();
+        if (samplecount != 15) data.readInt();
+        
+        xtrace("Song length is " + songlength + " patterns.");
+        
+        // load patterns
+        patcount = 0;
+        for (i in 0...songlength)
+            if (patcount < order[i]) patcount = order[i];
+        patcount += 1;
+        xtrace("Pattern count: " + patcount);
+        pat = new Array<Pattern>();
+        for (i in 0...patcount)
+        {
+            pat[i] = new Pattern();
+            pat[i].channel = new Array<Channel>();
+            for (c in 0...chancount)
+            {
+                pat[i].channel[c] = new Channel();
+                pat[i].channel[c].note = new Array<Note>();
+                for (r in 0...rowcount)
+                    pat[i].channel[c].note[r] = new Note();
+            }
+            
+            for (r in 0...rowcount)
+            {
+                for (ch in 0...chancount)
+                {
+                    var a:Int = data.readUnsignedByte();
+                    var b:Int = data.readUnsignedByte();
+                    var c:Int = data.readUnsignedByte();
+                    var d:Int = data.readUnsignedByte();
+                    
+                    var sampidx:Int = (((a>>4)&0x0F)<<4)|(((c>>4)&0x0F));
+                    var period:Int = b|((a&0x0F)<<8);
+                    var effect:Int = d|((c&0x0F)<<8);
+                    var peridx:Int = -1;
+                    
+                    if (period > 0)
+                    {
+						var diff = 50;
+						
+                        for (p in 672...756)
+                        {
+                            if (Math.abs(period-periods[p]) < diff)
+                            {
+                                peridx = p;
+								diff = Std.int(Math.abs(period - periods[p]));
+                            }
+                        }
+                    }
+                    
+                    pat[i].channel[ch].note[r].sample = sampidx==0?null:smp[sampidx - 1];
+                    pat[i].channel[ch].note[r].period = period;
+                    pat[i].channel[ch].note[r].peridx = peridx;
+                    pat[i].channel[ch].note[r].command = (effect>>8)&0x0F;
+                    pat[i].channel[ch].note[r].cmdarg = effect&0xFF;
+                }
+            }
+        }
+        
+        // load sample data
+        for (i in 0...samplecount)
+        {
+            smp[i].wave = new Array<Int>();
+            for (j in 0...smp[i].length)
+            {
+                var b:Int = data.readByte();
+                smp[i].wave[j] = b;
+            }
+        }
+        
+        xtrace("Done parsing module data");
+    }
+    
+    public var notsupflag:Array<Bool>;
+    public function notsupport(code:Int,pat:Int,row:Int)
+    {
+        if (!notsupflag[code])
+        {
+            notsupflag[code] = true;
+            if (code > 0x0F)
+                xtrace("Command not supported at pat " + pat + " row " + row + ": Extended " + (code>>4));
+            else
+                xtrace("Command not supported at pat " + pat + " row " + row + ": " + code);
+        }
+    }
+    
+    // state variables for genSegment
+    var corder:Int;
+    var cnt:Int;
+    var cpat:Int;
+    var crow:Int;
+    var cpattern:Pattern;
+    var states:Array<ChanState>;
+    var rowspermin:Int;
+    var ticksperrow:Int;
+    var tickspermin:Int;
+    var samplespertick:Int;
+    var rowtick: Int;
+    var ticksmpctr:Int;
+    var checkrow:Bool;
+    var checktick:Bool;
+    var breakpatonrow:Bool;
+    var breakpatnextrow:Int;
+    var delaypattern:Int;
+    
+    public function calcSegment():Bool
+    {
+        var stamp:Float = haxe.Timer.stamp();
+        var segsamples:Int = 0;
+        var cs:ChanState;
+        
+        while (true)
+        {
+            var nextcheckrow:Bool = false;
+            
+            if (++ticksmpctr == samplespertick)
+            {
+                ticksmpctr = 0;
+                if (++rowtick == ticksperrow)
+                {
+                    rowtick = 0;
+                    if (delaypattern > 0)
+                    {
+                        delaypattern--;
+                    }
+                    else
+                    {
+                        if (breakpatonrow || ++crow == 64)
+                        {
+                            crow = breakpatonrow?breakpatnextrow:0;
+                            if (crow >= 0x40) crow = 0x3F;
+                            if (++corder == songlength) return false; // end-of-song
+                            cpat = order[corder];
+                            cpattern = pat[cpat];
+                            breakpatonrow = false;
+                            delaypattern = 0;
+                        }
+                        checkrow = true;
+                    }
+                }
+                checktick = true;
+            }
+            
+            var mixed:Int = 0;
+            
+            for (c in 0...chancount)
+            {
+                cs = states[c];
+                
+                if (checkrow)
+                {
+                    var note:Note = cpattern.channel[c].note[crow];
+                    
+                    cs.arpeggio = false;
+                    cs.delaynote = false;
+                    cs.retriggersample = false;
+                    cs.slidevolume = false;
+                    cs.slideperiod = false;
+                    cs.slidetonote = (note.command == 0x03 || note.command == 0x05);
+                    cs.vibrato = (note.command == 0x04 || note.command == 0x06);
+                    cs.tremolo = false;
+                    
+                    if (note.sample != null)
+                    {
+                        cs.csmp = note.sample;
+                        cs.cvolume = cs.rvolume = cs.csmp.volume;
+                        cs.cslength = cs.csmp.length << 16;
+                        cs.cslooplen = cs.cslength;
+                    }
+                    if (note.period != 0 && cs.csmp != null && !cs.slidetonote)
+                    {
+                        if (note.peridx != -1)
+                        {
+                            cs.cperiod = periods[note.peridx + cs.csmp.fine*84];
+                        }
+                        else cs.cperiod = note.period;
+                        cs.lastnoteperiod = cs.cperiod;
+                        var amigabps:Float = 7159090.5/(cs.cperiod*2);
+                        cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                        cs.csp = 0;
+                        cs.slideperiod = false;
+                        if (cs.vibratowave < 4) cs.vibratopos = 0;
+                        if (cs.tremolowave < 4) cs.tremolopos = 0;
+                    }
+                    if (note.command != 0 || note.cmdarg != 0)
+                    {
+                        var cmd:Int = note.command;
+                        var arg:Int = note.cmdarg;
+                        switch (cmd)
+                        {
+                            case 0x00:
+                                cs.arpeggio = note.peridx != -1 || note.period == 0;
+                                if (note.period != 0) cs.arpeggionote = note.peridx;
+                                cs.arpeggiosemi1 = (arg&0xF0)>>4;
+                                cs.arpeggiosemi2 = arg&0x0F;
+                                cs.arpeggiotick = 0;
+                            case 0x01: 
+                                if (arg != 0)
+                                {
+                                    cs.slideperiod = true;
+                                    cs.slideperiodval = -arg;
+                                }
+                                break;
+                            case 0x02: 
+                                if (arg != 0)
+                                {
+                                    cs.slideperiod = true;
+                                    cs.slideperiodval = arg;
+                                }
+                                break;
+                            case 0x03:
+                                if (arg != 0) cs.slideperiodval = arg;
+                                if (note.period != 0)
+                                {
+                                    cs.slidetonotetarget = note.peridx==1?note.period:periods[note.peridx + cs.csmp.fine*84];
+                                    if (cs.cperiod > note.period && cs.slideperiodval > 0)
+                                        cs.slideperiodval = -cs.slideperiodval;
+                                    else if (cs.cperiod < note.period && cs.slideperiodval < 0)
+                                        cs.slideperiodval = -cs.slideperiodval;
+                                }
+                                else if (arg != 0)
+                                {
+                                    if (cs.cperiod > cs.slidetonotetarget && cs.slideperiodval > 0)
+                                        cs.slideperiodval = -cs.slideperiodval;
+                                    else if (cs.cperiod < cs.slidetonotetarget && cs.slideperiodval < 0)
+                                        cs.slideperiodval = -cs.slideperiodval;
+                                }
+                                if (cs.slidetonotetarget == 0) cs.slidetonote = false;
+                            case 0x04:
+                                if (arg != 0)
+                                {
+                                    cs.vibratospeed = (arg&0xF0)>>4;
+                                    cs.vibratodepth = arg&0x0F;
+                                    cs.vibratopos = 0;
+                                }
+                            case 0x07:
+                                cs.tremolo = true;
+                                if (arg != 0)
+                                {
+                                    cs.tremolospeed = (arg&0xF0)>>4;
+                                    cs.tremolodepth = arg&0x0F;
+                                    cs.tremolopos = 0;
+                                }
+                            case 0x08: // ignored (we don't use stereo afterall)
+                            case 0x09:
+                                if (arg != 0)
+                                {
+                                    arg <<= 8;
+                                    if (arg >= cs.csmp.length) arg = cs.csmp.length;
+                                    cs.csp = arg << 16;
+                                }
+                            case 0x05,0x06,0x0A:
+                                cs.slidevolume = true;
+                                if (arg != 0)
+                                {
+                                    if ((arg&0xF0) != 0)
+                                    {
+                                        cs.slidevolumeval = arg>>4;
+                                    }
+                                    else
+                                    {
+                                        cs.slidevolumeval = -(arg&0x0F);
+                                    }
+                                }
+                            case 0x0B: // allows only skips to orders below
+                                if (arg > corder)
+                                {
+                                    corder = arg;
+                                    if (corder >= order.length) 
+                                    {
+                                        corder = order.length-1;
+                                        crow = 63;
+                                        cpat = order[corder];
+                                        cpattern = pat[cpat];
+                                    }
+                                    else
+                                    {
+                                        crow = 0;
+                                    }
+                                    nextcheckrow = true;
+                                }
+                            case 0x0C:
+                                if (arg > 0x40) arg = 0x40;
+                                cs.cvolume = cs.rvolume = arg;
+                            case 0x0D:
+                                arg = ((arg&0xF0)>>4)*10 + (arg&0x0F);
+                                if (arg > 0x3F) arg = 0x3F;
+                                breakpatonrow = true;
+                                breakpatnextrow = arg;
+                            case 0x0E:
+                                switch (arg&0xF0)
+                                {
+                                    case 0x00: // ignore
+                                    case 0x10:
+                                        cs.cperiod -= arg&0x0F;
+                                        var amigabps:Float = 7159090.5/(cs.cperiod*2);
+                                        cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                                    case 0x20:
+                                        cs.cperiod += arg&0x0F;
+                                        var amigabps:Float = 7159090.5/(cs.cperiod*2);
+                                        cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                                    case 0x30: notsupport(arg&0xF0,cpat,crow);
+                                    case 0x40:
+                                        switch (arg&0x0F)
+                                        {
+                                            case 0,1,2,4,5,6: cs.vibratowave = arg&0x0F;
+                                            case 3,7: 
+                                                cs.vibratowave = Std.int(Math.random()*4);
+                                                if (cs.vibratowave > 3) cs.vibratowave = 3;
+                                                if (arg&0x0F == 7) cs.vibratowave += 4;
+                                        }
+                                    case 0x50: notsupport(arg&0xF0,cpat,crow);
+                                    case 0x60: notsupport(arg&0xF0,cpat,crow);
+                                    case 0x70:
+                                        switch (arg&0x0F)
+                                        {
+                                            case 0,1,2,4,5,6: cs.tremolowave = arg&0x0F;
+                                            case 3,7: 
+                                                cs.tremolowave = Std.int(Math.random()*4);
+                                                if (cs.tremolowave > 3) cs.tremolowave = 3;
+                                                if (arg&0x0F == 7) cs.tremolowave += 4;
+                                        }
+                                    case 0x80: // ignore, we don't use stereo
+                                    case 0x90:
+                                        cs.retriggersample = (arg&0x0F) > 0;
+                                        cs.retriggersamplectr = 0;
+                                        cs.retriggersampleticks = arg&0x0F;
+                                    case 0xA0: 
+                                        cs.cvolume += arg&0x0F;
+                                        if (cs.cvolume > 64) cs.cvolume=64;
+                                        cs.rvolume = cs.cvolume;
+                                    case 0xB0: 
+                                        cs.cvolume -= arg&0x0F;
+                                        if (cs.cvolume < 0) cs.cvolume=0;
+                                        cs.rvolume = cs.cvolume;
+                                    case 0xC0:
+                                        cs.cutsample = (arg&0x0F) > 0;
+                                        cs.cutsampleticks = arg&0x0F;
+                                    case 0xD0: 
+                                        cs.delaynote = true;
+                                        cs.delaynoteticks = arg&0x0F;
+                                    case 0xE0:
+                                        delaypattern = arg&0x0F;
+                                    case 0xF0: // universally unsupported
+                                }
+                            case 0x0F:
+                                if (arg <= 32)
+                                {
+                                    if (arg == 0) arg = 1;
+                                    ticksperrow = arg;
+                                }
+                                else
+                                {
+                                    rowspermin = arg*4;
+                                    tickspermin = rowspermin*6;
+                                    samplespertick = Std.int((22050*60)/tickspermin);
+                                }
+                        }
+                    }
+                }
+                
+                if (checktick)
+                {
+                    if (rowtick > 0)
+                    {
+                        if (cs.cutsample && cs.cutsampleticks <= rowtick)
+                        {
+                            cs.cvolume = cs.rvolume = 0;
+                            cs.csmp = null;
+                            cs.cutsample = false;
+                        }
+                        
+                        if (cs.delaynote && cs.delaynoteticks <= rowtick)
+                        {
+                            cs.csp = 0;
+                            cs.delaynote = false;
+                        }
+                        
+                        if (cs.retriggersample)
+                        {
+                            if (++cs.retriggersamplectr == cs.retriggersampleticks)
+                            {
+                                cs.csp = 0;
+                                cs.cslength = cs.csmp.length << 16;
+                                cs.cslooplen = cs.cslength;
+                                cs.retriggersamplectr = 0;
+                            }
+                        }
+                        
+                        if (cs.slidevolume)
+                        {
+                            cs.cvolume += cs.slidevolumeval;
+                            if (cs.cvolume <= 0)
+                                cs.cvolume = 0;
+                            else if (cs.cvolume > 64)
+                                cs.cvolume = 64;
+                            cs.rvolume = cs.cvolume;
+                        }
+                        
+                        if (cs.slideperiod)
+                        {
+                            cs.cperiod += cs.slideperiodval;
+                            if (cs.cperiod < 113)
+                                cs.cperiod = 113;
+                            else if (cs.cperiod > 856)
+                                cs.cperiod = 856;
+                            var amigabps:Float = 7159090.5/(cs.cperiod*2);
+                            cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                        }
+                        
+                        if (cs.slidetonote)
+                        {
+                            cs.cperiod += cs.slideperiodval;
+                            if (cs.slideperiodval < 0 && cs.slidetonotetarget > cs.cperiod)
+                            {
+                                cs.cperiod = cs.slidetonotetarget;
+                            }
+                            else if (cs.slideperiodval > 0 && cs.slidetonotetarget < cs.cperiod)
+                            {
+                                cs.cperiod = cs.slidetonotetarget;
+                            }
+                            var amigabps:Float = 7159090.5/(cs.cperiod*2);
+                            cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                        }
+                    }
+                    
+                    if (cs.arpeggio)
+                    {
+                        var aperiod:Int;
+                        if (cs.arpeggiotick == 0)
+                        {
+                            aperiod = periods[cs.arpeggionote + cs.csmp.fine*84];
+                            var amigabps:Float = 7159090.5/(aperiod*2);
+                            cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                            cs.arpeggiotick++;
+                        }
+                        else if (cs.arpeggiotick == 1)
+                        {
+                            aperiod = periods[cs.arpeggionote + cs.csmp.fine*84 + cs.arpeggiosemi1];
+                            var amigabps:Float = 7159090.5/(aperiod*2);
+                            cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                            cs.arpeggiotick++;
+                        }
+                        else if (cs.arpeggiotick == 2)
+                        {
+                            aperiod = periods[cs.arpeggionote + cs.csmp.fine*84 + cs.arpeggiosemi2];
+                            var amigabps:Float = 7159090.5/(aperiod*2);
+                            cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                            cs.arpeggiotick = 0;
+                        }
+                    }
+
+                    if (cs.vibrato)
+                    {
+                        // note: MilkyTracker and OpenCubicPlayer do not seem to
+                        // use other waves (at least the sound "sounds" the same
+                        // no matter the waveform chosen). So unless someone can
+                        // provide me a module where setting the wave for vibrato
+                        // does make a difference (so i can test it), i'll use
+                        // sinewave only here.
+                        var vibval:Int = cs.vibratodepth*sinewave[cs.vibratopos&0x3F] >> 7;
+                        var amigabps:Float = 7159090.5/((cs.cperiod+vibval)*2);
+                        cs.cspinc = Std.int((amigabps/22050.0)*65536);
+                        if (rowtick > 0) cs.vibratopos += cs.vibratospeed;
+                    }
+                    
+                    if (cs.tremolo)
+                    {
+                        // note:same case with waves like above
+                        var trmval:Int = cs.tremolodepth*sinewave[cs.tremolopos&0x3F] >> 6;
+                        cs.rvolume = cs.cvolume + trmval;
+                        if (cs.rvolume < 0) cs.rvolume = 0; else if (cs.rvolume > 64) cs.rvolume = 64;
+                        if (rowtick > 0) cs.tremolopos += cs.tremolospeed;
+                    }
+                }
+                
+                if (cs.csmp == null || cs.rvolume == 0) continue;
+                
+                if (!cs.delaynote) mixed += (cs.csmp.wave[cs.csp>>16]*cs.rvolume) >> 8;
+                
+                cs.csp += cs.cspinc;
+                if (cs.csp >= cs.cslooplen)
+                {
+                    if (cs.csmp.looplen < 2)
+                    {
+                        cs.csmp = null;
+                        continue;
+                    }
+                    else
+                    {
+                        cs.csp = cs.csmp.loopstart << 16;
+                        cs.cslooplen = cs.csp + (cs.csmp.looplen << 16);
+                    }
+                }
+            }
+            
+            if (mixed < -128) mixed = -128; else if (mixed > 127) mixed = 127;
+            mixed += 128;
+            if (cnt >= wavelen)
+            {
+                wavelen += 1000000;
+                wave.length = wavelen;
+            }
+            wave[cnt++] = mixed;
+            wave[cnt++] = mixed;
+            if (checkrow) checkrow = nextcheckrow;
+            if (checktick) checktick = false;
+            
+            if (++segsamples >= segbreak) return true;
+        }
+        return true;
+    }
+
+    public function genWaveform(onFinish:Void->Void)
+    {
+        // init state
+        corder = 0x00;
+        cpat = order[corder];
+        cpattern = pat[cpat];
+        states = new Array<ChanState>();
+        rowspermin = 125*4;
+        ticksperrow = 6;
+        tickspermin = rowspermin*ticksperrow;
+        samplespertick = Std.int((22050*60)/tickspermin);
+        ticksmpctr = -1;
+        checkrow = true;
+        checktick = true;
+        delaypattern = 0;
+        
+        // init waves
+        sinewave = [0,24,49,74,97,120,141,161,180,197,212,224,235,244,250,253,
+                    255,253,250,244,235,224,212,197,180,161,141,120,97,74,49,
+                    24,0,-24,-49,-74,-97,-120,-141,-161,-180,-197,-212,-224,
+                    -235,-244,-250,-253,-255,-253,-250,-244,-235,-224,-212,-197,
+                    -180,-161,-141,-120,-97,-74,-49,-24];
+        
+        notsupflag = new Array<Bool>();
+        for (i in 0...256) notsupflag[i] = false;
+        
+        for (c in 0...chancount)
+        {
+            states[c] = new ChanState();
+            states[c].csmp = null;
+            states[c].cperiod = 0;
+            states[c].cvolume = 64;
+            states[c].rvolume = 64;
+            states[c].csp = 0;
+            states[c].cspinc = 0;
+            states[c].slideperiod = false;
+            states[c].vibratowave = 0;
+            states[c].tremolowave = 0;
+        }
+        
+        xtrace("Generating waveform from module data");
+        wave = new ByteArray();
+        wave.length = wavelen = 1000000;
+        cnt = 0;
+        
+        stopnow = false;
+        this.onFinish = onFinish;
+        calcSegTask(null);
+    }
+    
+    var onFinish:Void->Void;
+    var tmr:Timer;
+    private function calcSegTask(d:Dynamic)
+    {
+        if (!calcSegment())
+        {
+            if (onProgress != null) onProgress(100);
+            onFinish();
+        }
+        else
+        {
+            if (onProgress != null)
+                onProgress(10 + Std.int(89 * corder / songlength));
+			if (stopnow) {
+				stopnow = false;
+				return;
+			}
+            tmr = new Timer(1, 1);
+            tmr.addEventListener(flash.events.TimerEvent.TIMER_COMPLETE, calcSegTask);
+            tmr.start();
+        }
+    }
+    
+    var ldr:flash.display.Loader;
+    public function beginPlayback()
+    {
+		if (stopnow) return;
+        xtrace("Beginning playback");
+        ldr = DynSound.playSound(wave, repeating);
+        wave.length = 0;
+    }
+    
+    /**** Public API ****/
+    public var onProgress:Int->Void;
+    public var segbreak:Int;
+    public var showTraces:Bool;
+    
+    public function new()
+    {
+        showTraces = false;
+        segbreak = 500000;
+		repeating = true;
+    }
+    
+    public function playBytes(data:ByteArray)
+    {
+        data.endian = flash.utils.Endian.BIG_ENDIAN;
+		stopnow = false;
+        try{parseData(data);}catch(e:flash.Error){xtrace('pderror - '+e.message);if (onProgress != null) onProgress(-1);}
+        data.length = 0; // data array is not needed any more, free it
+        var stamp:Float = haxe.Timer.stamp();
+        var self = this;
+        try{
+            genWaveform(function() {
+                self.xtrace("Waveform synthesis time: " + (haxe.Timer.stamp()-stamp) + " seconds");
+                self.wave.length = self.cnt;
+                self.beginPlayback();
+            });
+        }catch(e:flash.Error){xtrace(e.message);if (onProgress != null) onProgress(-1);return;}
+    }
+    
+    public function play(url:String)
+    {
+        var req:URLRequest = new URLRequest(url);
+        var loader:URLLoader = new URLLoader();
+        var self:ModPlayer = this;
+        xtrace("Downloading " + url);
+        loader.dataFormat = flash.net.URLLoaderDataFormat.BINARY;
+        try
+        {
+            loader.load(req);
+        }
+        catch (e:flash.Error)
+        {
+            xtrace("Flash error - " + e.message);
+            if (onProgress != null) onProgress(-1);
+            return;
+        }
+        loader.addEventListener(IOErrorEvent.IO_ERROR, function(d:Dynamic){
+            self.xtrace("IO Error while loading " + url);
+            if (self.onProgress != null) self.onProgress(-1);
+        });
+        loader.addEventListener(Event.COMPLETE, function(d:Dynamic){
+            self.xtrace("Finished loading " + loader.bytesTotal + " bytes");
+            self.playBytes(cast(loader.data,ByteArray));
+            loader.data.length = 0;
+        });
+        loader.addEventListener(flash.events.ProgressEvent.PROGRESS, function(d:Dynamic){
+            if (self.onProgress != null) self.onProgress(Std.int(9*d.bytesLoaded/d.bytesTotal));
+        });
+    }
+    
+    public function stop()
+    {
+		stopnow = true;
+        flash.media.SoundMixer.stopAll();
+    }
+}
+

@@ -5,13 +5,16 @@
 
 package flapo;
 
+import BlocksInfo;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
-import BlocksInfo;
+//import BlocksInfo;
 import flash.display.MovieClip;
 import flash.display.Sprite;
+import flash.geom.ColorTransform;
 import gamelib2d.TileSet;
 import flash.geom.Rectangle;
+import flapo.Effect;
 
 class Player 
 {
@@ -38,6 +41,9 @@ class Player
 	public var y: Float;
 	public var z: Float;
 	public var Depth: Int;
+	public var Effects: List<Effect>;
+	public var EffectsRemove: List<Effect>;
+	public var colortransform: ColorTransform;
 	
 	public function new(screen) 
 	{
@@ -61,6 +67,9 @@ class Player
 		
 		timeCounter = 0;
 		scale = 1.0;
+		Effects = new List<Effect>();
+		EffectsRemove = new List<Effect>();
+		colortransform = null;
 	}
 
 	public function clear()
@@ -112,9 +121,61 @@ class Player
 		y = fNewY;
 	}
 	
+	public function setColorTransformRGBA(rgba: RGBA)
+	{
+		if (colortransform != null)
+		{
+			colortransform.redMultiplier = rgba.r;
+			colortransform.greenMultiplier = rgba.g;
+			colortransform.blueMultiplier = rgba.b;
+			colortransform.alphaMultiplier = rgba.a;
+			setColorTransform(colortransform);
+		}
+	}
+	
 	public function update ()
 	{
 		timeCounter++;
+		var rgba: RGBA= new RGBA(1,1,1,1);
+		for (e in Effects)
+		{
+			e.update();
+
+			switch (e.type)
+			{
+			case 1:
+				var i:Float = e.timeCounter / e.length;
+				rgba.r = (e.startRGBA.r) + ((e.endRGBA.r) - (e.startRGBA.r)) * i;
+				rgba.g = (e.startRGBA.g) + ((e.endRGBA.g) - (e.startRGBA.g)) * i;
+				rgba.b = (e.startRGBA.b) + ((e.endRGBA.b) - (e.startRGBA.b)) * i;
+				rgba.a = (e.startRGBA.a) + ((e.endRGBA.a) - (e.startRGBA.a)) * i;
+				setColorTransformRGBA(rgba);
+			case 2:
+				if (e.isChange())
+				{
+					rgba = flapo.RGBA.getRGBAFromCT(colortransform);
+					e.startRGBA = rgba;
+				}
+				if (e.timeCounter > e.changeState)
+				{
+					var i:Float = (e.timeCounter-e.changeState) / (e.length-e.changeState);
+					rgba.r = (e.startRGBA.r) + ((e.endRGBA.r) - (e.startRGBA.r)) * i;
+					rgba.g = (e.startRGBA.g) + ((e.endRGBA.g) - (e.startRGBA.g)) * i;
+					rgba.b = (e.startRGBA.b) + ((e.endRGBA.b) - (e.startRGBA.b)) * i;
+					rgba.a = (e.startRGBA.a) + ((e.endRGBA.a) - (e.startRGBA.a)) * i;
+					setColorTransformRGBA(rgba);
+				}
+			default:
+				trace("Invalid Effect.type");
+			}
+			if (e.isEnd())
+				EffectsRemove.add(e);
+		}
+		for (e in EffectsRemove)
+		{
+			Effects.remove(e);
+		}
+		EffectsRemove.clear();
 	}
 	
 	public function changeScale(gscale: Float)
@@ -162,6 +223,12 @@ class Player
 		mcPlayer.addChild (bitmap);
 	}
 	
+	public function setColorTransform(ct: ColorTransform)
+	{
+		bitmap.transform.colorTransform = ct;
+		colortransform = ct;
+	}
+	
 	public function destroy()
 	{
 		mcPlayer.removeChild (bitmap);
@@ -173,5 +240,50 @@ class Player
 		x = gx;
 		y = gy;
 		if (gz != null) z = gz;
+	}
+	
+	public function addEffect(e: Effect)
+	{
+		if (e == null) return;
+		Effects.add(e);
+	}
+	
+	public function clearEffects()
+	{
+		Effects.clear();
+	}
+	
+	public function changeColorTransform(rgba: RGBA, length: Int,
+		?change: Int = 0, ?type: Int = 1)
+	{
+		if (colortransform == null) return;
+		var fromRGBA:RGBA = flapo.RGBA.getRGBAFromCT(colortransform);
+		if (type == 1)
+		{
+			if (findEffectType(1) != null) return;
+			if (fromRGBA.equal(rgba))
+				return;
+		}
+		var e: Effect = new Effect(0, 0, 0, type, length);
+		e.setRGBA(fromRGBA, rgba);
+		if (type != 1)
+		{
+			e.setState(0, 1, change);
+		}
+		Effects.add(e);
+	}
+	
+	public function findEffectType(type: Int) : Effect
+	{
+		var res : Effect = null;
+		for (e in Effects)
+		{
+			if (e.type == type)
+			{
+				res = e;
+				return e;
+			}	
+		}
+		return null;
 	}
 }

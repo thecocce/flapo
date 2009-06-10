@@ -170,7 +170,7 @@ class TileSet
 
 	public function drawTile (surface: BitmapData, x: Int, y: Int, n: Int, m: Int)
 	{
-		surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y));
+		surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y), bitmap[m], new Point (0, 48), false);
 	}
 
 	public function runSequences ()

@@ -16,8 +16,6 @@
     <class path="..\hx" />
     <class path="gfx" />
     <class path="snd" />
-    <class path="Flapo" />
-    <class path="gamelib2d" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -26,7 +24,7 @@
     <option mainClass="Main" />
     <option override="False" />
     <option verbose="False" />
-    <option additional="-swf-lib Res.swf" />
+    <option additional="-swf-lib Res.swf -D debug -D Vye -D ModPlayer -D MochiBot -D showfps" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
