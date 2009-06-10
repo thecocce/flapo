@@ -1,0 +1,62 @@
+<html>
+<head><title>Flash MOD Player</title></head>
+<body>
+<h1>Flash Module Player version 1.1</h1>
+<p><strong>Copyright (C) 2008 Kostas Michalopoulos</strong></p>
+
+<p><a href="http://realm.badsectoracula.com/fmp">Don't forget to visit the FMP homepage for the latest version and additional information!</a></p>
+
+<p>This is the full source code of the flash9 module player in haXe
+(<a href="http://www.haxe.org/">http://www.haxe.org/</a>). It is licensed under
+the zlib license.</p>
+
+<p>The module player supports most effects found in MOD files with the exception of
+panning effects (there is no stereo support) and the following effects: E3, E5
+and E6 (will added soon). Also due to the way the module player works (see docs)
+0B is limited to jumping to orders below (after) the current order (so no
+looping).</p>
+
+<p>To use the module player create a new ModPlayer object and call the play()
+function like</p>
+<pre>
+
+    mp = new ModPlayer()
+    mp.play(url);
+
+</pre>
+<p>The "url" can be anything that can be opened with Flash's URLLoader (usually
+just a file on the same domain). When play() is called, the file is downloaded
+and then the module is rendered in a monolithic waveform (this is why looping
+commands are limited). Then this is fed to DynSound.playSound() function, which
+plays raw sound data by synthesizing a SWF file in memory and loading it in
+order to play the module music.</p>
+
+<p>In order to stop playback call the stop() function of ModPlayer. Note that this
+actually calls SoundMixer.stopAll, which will stop ALL sounds on the flash
+movie, not only the module. Currently there doesn't seem to be a better method
+to stop the playback. However you should still use this function because once
+a Flash 10 port is made, this will have the expected functionality under that
+version.</p>
+
+<p>You can assign a function to onProgress field to get notified about the module
+loading and rendering progress. The function must take a single Int value, which
+will be called with from 0 to 100 for progress and -1 if an error happens. To
+show possible errors, set showTraces to true.</p>
+
+<p>If the loading feels sluggish and the module is long, you may want to decrease
+the size of chunks the module player calculates. The default value is 500000,
+which should be ok, but if you want to make it more responsive decrease it. Note
+that by decreasing this value you increase the time it takes to build the
+full waveform.</p>
+
+<pre style="font-weight: bolder; background: #FF9999; padding: 10px; border: 4px solid #FFAAAA">
+NOTE: Some fields are declared public for various reasons, but they should be
+      considered private. Only the fields and methods below the Public API
+      comment line should be considered as public.
+</pre>
+
+<p>For an example see Test.hx.</p>
+
+<p>Kostas "Bad Sector" Michalopoulos<br>
+<a href="http://realm.badsectoracula.com/fmp">http://realm.badsectoracula.com/fmp</a></p>
+</body></html>

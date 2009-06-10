@@ -1,0 +1,5 @@
+-swf test.swf
+-swf-version 9
+-swf-header 128:48:45:e7f8ff
+-main Test
+

@@ -9,7 +9,7 @@
       <bitmap id="Abstract1" name="Abstract1" import=".\gfx\Abstract1.png"/>
       <bitmap id="New" name="New" import=".\gfx\New.png"/>
       <bitmap id="Winback" name="Winback" import=".\Winback.png"/>
-      <sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />
+      <!--<sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />-->
 	  <!--<clip id="swf" import =".\xrayConnector_1.6.2.swf"/>-->
     </library>
   </frame> 
