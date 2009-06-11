@@ -12,6 +12,10 @@ package flapo;
 import apis.mochi.MochiBot;
 #end
 
+#if Kongregate
+import apis.kongregate.CKongregate;
+#end
+
 #if ModPlayer
 import modplay.ModPlayer;
 #end
@@ -70,6 +74,9 @@ class GameLogic extends Sprite
 	static var mpprg: Int;
 #end
 	
+#if Kongregate
+	static var kg: CKongregate;
+#end
 	//static var lc : Main_loadConnector;
 	
 	static var screen: Sprite;
@@ -406,6 +413,9 @@ class GameLogic extends Sprite
 		mp = new ModPlayer();
 		mp.play("Test.mod");
 		mp.onProgress = function(prg:Int) { setProgress(prg); }
+#end
+#if Kongregate
+		kg = new CKongregate();
 #end
 		effectsClearTiles = new List<Effect>();
 		effectsToRemove = new List<Effect>();
@@ -977,8 +987,7 @@ class GameLogic extends Sprite
 							i);
 						if (found == null)
 						{
-							effect = new Effect(Utils.safeDiv (plX, 48),
-								Utils.safeDiv (plY, 48),
+							effect = new Effect(mapX2, mapY2,
 								i, 0, 30);
 							effect.setState(1, 0, 19);
 							effectsClearTiles.add( effect );
@@ -1039,6 +1048,39 @@ class GameLogic extends Sprite
 		if (tfMessage.visible == true && a)
 		{
 			nextLevel();
+		}
+		else
+		if (a)
+		{
+			var mapX: Int;
+			var mapY: Int;
+			var e: MyLayer;
+			var mapX2: Int;
+			var mapY2: Int;
+			var found: Effect;
+			var i: Int = 1;
+			mapX = Utils.safeDiv (plX, 48);
+			mapY = Utils.safeDiv (plY, 48);
+			e = level.Layers[i];
+			mapX2 = Utils.safeMod(mapX, e.layer.mapW);
+			mapY2 = Utils.safeMod(mapY, e.layer.mapH);
+			found = findEffectInXYZ(effectsClearTiles,
+				mapX2,
+				mapY2,
+				i);
+			if (found == null)
+			{
+				effect = new Effect(mapX2, mapY2,
+					i, 0, 30);
+				effect.setState(1, 0, 19);
+				effectsClearTiles.add( effect );
+				level.Layers[i].layer.writeMap(
+					mapX2,
+					mapY2,-2); 
+				++curBlocks;
+				if (curBlocks >= allBlocks)
+					mode = 7; //cleared all blocks
+			}
 		}
 	#if debug
 	#if showfps
