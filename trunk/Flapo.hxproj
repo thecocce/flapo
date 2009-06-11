@@ -24,7 +24,7 @@
     <option mainClass="Main" />
     <option override="False" />
     <option verbose="False" />
-    <option additional="-swf-lib Res.swf -D debug -D Vye -D ModPlayer -D MochiBot -D showfps" />
+    <option additional="-swf-lib Res.swf -D debug -D Vye -D ModPlayer -D MochiBot -D showfps -D Kongregate" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
