@@ -40,8 +40,8 @@ _or we can variate the ball theme along level designs, rock for the Egyptian pyr
 New Ideas:
  * Slopes _hard to support. However, with slopes, obstacles, it will be too similar to Gyroscope and it's clones._
  * Obstacles:
- * *    Enemies _great idea, lot's of code, maybe next version_
- * *   Color coded blocks (your ball needs to be a certain color to pass) _already done_
+ **   Enemies _great idea, lot's of code, maybe next version_
+ **   Color coded blocks (your ball needs to be a certain color to pass) _already done_
  * Time Limit/Clock _Nice idea, and some score system will be fine, and Kongregate achievments_
  * A Menu _would be nice_
  * Level Selection _definitely. There are 3-4 world (whith one theme, like forest, Egyptian, etc. each with 10-20 level, and you can freely play the first 1-3 level from each theme, then if you completed then you can play further levels or replay old levels_
