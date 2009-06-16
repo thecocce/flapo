@@ -7,7 +7,7 @@ Ideas from Zach to improve the game.
 = Details =
 
 *Level designs*
- * Space _nice, with decreased slowdown values, and little gravity, so you can control the ball in "air"
+ * Space _nice, with decreased slowdown values, and little gravity, so you can control the ball in "air"_
  * Roman _maybe_
  * Egyptians _must have, all the sand, pyramids, lots of yellow color and hieroglyphs_
  * Japanese/Chinese _?_
