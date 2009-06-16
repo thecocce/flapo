@@ -7,41 +7,41 @@ Ideas from Zach to improve the game.
 = Details =
 
 *Level designs*
-*Space _nice, with decreased slowdown values, and little gravity, so you can control the ball in "air"
-*Roman _maybe_
-*Egyptians _must have, all the sand, pyramids, lots of yellow color and hieroglyphs_
-*Japanese/Chinese _?_
-*Mountains _definitely_
-*Desert _?_
-*Forest _or jungle_
-*Circus _I don't know_
-*Etc. _desktop?_
+ * Space _nice, with decreased slowdown values, and little gravity, so you can control the ball in "air"
+ * Roman _maybe_
+ * Egyptians _must have, all the sand, pyramids, lots of yellow color and hieroglyphs_
+ * Japanese/Chinese _?_
+ * Mountains _definitely_
+ * Desert _?_
+ * Forest _or jungle_
+ * Circus _I don't know_
+ * Etc. _desktop?_
 
 *Ball*
-*Beach Ball
-*Bowling Ball
-*Tennis Ball
-*Basket Ball
-*Baseball
-*Metal Ball
-*Glass Ball
-*The Pixar Ball
-*Etc.
+ * Beach Ball
+ * Bowling Ball
+ * Tennis Ball
+ * Basket Ball
+ * Baseball
+ * Metal Ball
+ * Glass Ball
+ * The Pixar Ball
+ * Etc.
 _or we can variate the ball theme along level designs, rock for the Egyptian pyramid, cocus for the oasis, glass ball for desktop theme, meteor for space?_
 
 *Changes*
-*The word "WIN" or "LOSE" in green dots covering the screen _I'm thinking about totally change WIN and LOSE, as it's looking very unprofessional._
-*Better Ball physics _I changed the friction, so the ball rolling little more after *released the keys_
-*Better cursor _? I will to use W A S D, but I have no other idea about improving "cursor"_
-*When you lose or win you can just press the "Enter/Return" key to continue or restart _You can continue with SPACE, but I will add Enter and maybe some text like 'press *space/enter'_
-*The Music _Currently I'm experimenting with MOD musics, but with litle luck, as I can't find any really good music which fit my game_
-*The Font _Using Times new roman, which is very basic. What kind would be nice?_
+ * The word "WIN" or "LOSE" in green dots covering the screen _I'm thinking about totally change WIN and LOSE, as it's looking very unprofessional._
+ * Better Ball physics _I changed the friction, so the ball rolling little more after   released the keys_
+ * Better cursor _? I will to use W A S D, but I have no other idea about improving "cursor"_
+ * When you lose or win you can just press the "Enter/Return" key to continue or restart _You can continue with SPACE, but I will add Enter and maybe some text like 'press space/enter'_
+ * The Music _Currently I'm experimenting with MOD musics, but with litle luck, as I can't find any really good music which fit my game_
+ * The Font _Using Times new roman, which is very basic. What kind would be nice?_
 
 New Ideas:
-Slopes _hard to support. However, with slopes, obstacles, it will be too similar to Gyroscope and it's clones._
-Obstacles:
-     Enemies _great idea, lot's of code, maybe next version_
-     Color coded blocks (your ball needs to be a certain color to pass) _already done_
-Time Limit/Clock _Nice idea, and some score system will be fine, and Kongregate achievments_
-A Menu _would be nice_
-Level Selection _definitely. There are 3-4 world (whith one theme, like forest, Egyptian, etc. each with 10-20 level, and you can freely play the first 1-3 level from each theme, then if you completed then you can play further levels or replay old levels_
+ * Slopes _hard to support. However, with slopes, obstacles, it will be too similar to Gyroscope and it's clones._
+ * Obstacles:
+ * *    Enemies _great idea, lot's of code, maybe next version_
+ * *   Color coded blocks (your ball needs to be a certain color to pass) _already done_
+ * Time Limit/Clock _Nice idea, and some score system will be fine, and Kongregate achievments_
+ * A Menu _would be nice_
+ * Level Selection _definitely. There are 3-4 world (whith one theme, like forest, Egyptian, etc. each with 10-20 level, and you can freely play the first 1-3 level from each theme, then if you completed then you can play further levels or replay old levels_
