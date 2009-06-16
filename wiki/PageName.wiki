@@ -37,7 +37,7 @@ _or we can variate the ball theme along level designs, rock for the Egyptian pyr
  * The Music _Currently I'm experimenting with MOD musics, but with litle luck, as I can't find any really good music which fit my game_
  * The Font _Using Times new roman, which is very basic. What kind would be nice?_
 
-New Ideas:
+*New Ideas*
  * Slopes _hard to support. However, with slopes, obstacles, it will be too similar to Gyroscope and it's clones._
  * Obstacles:
  **   Enemies _great idea, but lot's of code, maybe next version_
@@ -45,3 +45,4 @@ New Ideas:
  * Time Limit/Clock _Nice idea, and some score system will be fine, and Kongregate achievments_
  * A Menu _would be nice_
  * Level Selection _definitely. There are 3-4 world (whith one theme, like forest, Egyptian, etc. each with 10-20 level, and you can freely play the first 1-3 level from each theme, then if you completed then you can play further levels or replay old levels_
+_I thinking about added some really strange level, where the player doesn't really know what to do, as not trivial what blocks are destroyable (maybe not visually different too). Like in the Shift series, where the game sometime lie. Like: "This level has no solution" and so on._
