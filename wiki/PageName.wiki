@@ -2,29 +2,29 @@
 
 = Introduction =
 
-Ideas from Zach to improve the game.
+Ideas from Zach to improve the game. I added comments with _Italic_ and highlighted *bold* some items.
 
 = Details =
 
 *Level designs*
- * Space _nice, with decreased slowdown values, and little gravity, so you can control the ball in "air"_
+ * *Space* _nice, with decreased slowdown values and little gravity: so you can control the ball in "air"_
  * Roman _maybe_
- * Egyptians _must have, all the sand, pyramids, lots of yellow color and hieroglyphs_
+ * *Egyptians* _must have, all the sand, pyramids, lots of yellow color and hieroglyphs_
  * Japanese/Chinese _?_
- * Mountains _definitely_
+ * *Mountains* _definitely_
  * Desert _?_
- * Forest _or jungle_
+ * *Forest* _or jungle_
  * Circus _I don't know_
  * Etc. _desktop?_
 
 *Ball*
  * Beach Ball
- * Bowling Ball
+ * *Bowling Ball*
  * Tennis Ball
  * Basket Ball
  * Baseball
- * Metal Ball
- * Glass Ball
+ * *Metal Ball*
+ * *Glass Ball*
  * The Pixar Ball
  * Etc.
 _or we can variate the ball theme along level designs, rock for the Egyptian pyramid, cocus for the oasis, glass ball for desktop theme, meteor for space?_
@@ -40,7 +40,7 @@ _or we can variate the ball theme along level designs, rock for the Egyptian pyr
 New Ideas:
  * Slopes _hard to support. However, with slopes, obstacles, it will be too similar to Gyroscope and it's clones._
  * Obstacles:
- **   Enemies _great idea, lot's of code, maybe next version_
+ **   Enemies _great idea, but lot's of code, maybe next version_
  **   Color coded blocks (your ball needs to be a certain color to pass) _already done_
  * Time Limit/Clock _Nice idea, and some score system will be fine, and Kongregate achievments_
  * A Menu _would be nice_
