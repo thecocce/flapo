@@ -8,6 +8,7 @@ package flapo;
 import BlocksInfo;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
+import flash.geom.Point;
 //import BlocksInfo;
 import flash.display.MovieClip;
 import flash.display.Sprite;
@@ -15,6 +16,7 @@ import flash.geom.ColorTransform;
 import gamelib2d.TileSet;
 import flash.geom.Rectangle;
 import flapo.Effect;
+import flapo.RotatedBall;
 
 class Player 
 {
@@ -44,6 +46,7 @@ class Player
 	public var Effects: List<Effect>;
 	public var EffectsRemove: List<Effect>;
 	public var colortransform: ColorTransform;
+	public var rball: RotatedBall;
 	
 	public function new(screen) 
 	{
@@ -70,6 +73,8 @@ class Player
 		Effects = new List<Effect>();
 		EffectsRemove = new List<Effect>();
 		colortransform = null;
+		rball = new RotatedBall( 48 );
+		rball.tabfill(5, 20);
 	}
 
 	public function clear()
@@ -77,7 +82,7 @@ class Player
 		surface.fillRect (new Rectangle (0, 0, playertiles.tileW, playertiles.tileH), 0);
 
 	}
-	
+
 	public function draw(?tile:Int)
 	{
 		mcPlayer.x = x;
@@ -104,6 +109,40 @@ class Player
 		}
 		
 		playertiles.drawTile(surface, 0, 0, t, 0);
+	}
+
+	public function drawBall(?tile:Int)
+	{
+		mcPlayer.x = x;
+		mcPlayer.y = y;
+		var curSeq: Int;
+		if (tile != null && tile == 0)
+		{
+			clear();
+			return;
+		}
+		var t: Int;
+		if (tile == null)
+			t = 9;
+		else
+		{
+			//trace(tile);
+			if (tile < 0)
+			{
+				curSeq = (tile ^ gamelib2d.Def.TF_SEQUENCE) - 1;
+				t = curSeq;//playertiles.getAnimationFrame (curSeq, timeCounter);
+			}
+			else
+				t = tile-1;
+		}
+		
+		var texture: BitmapData = new BitmapData(2 * 48, 4 * 48, true, 0x0);
+		playertiles.drawTile(texture, 0, 0, t, 0);
+		playertiles.drawTile(texture, 48, 0, t, 0);
+		playertiles.drawTile(texture, 0, 48, t, 0);
+		playertiles.drawTile(texture, 48, 48, t, 0);
+		rball.len(surface, texture, new Point(24+48-(x % 48), 24+48-(y % 48)));
+		
 	}
 	
 	public function moveTo(X: Float, Y: Float)
@@ -256,15 +295,18 @@ class Player
 	public function changeColorTransform(rgba: RGBA, length: Int,
 		?change: Int = 0, ?type: Int = 1)
 	{
+		var e: Effect;
 		if (colortransform == null) return;
 		var fromRGBA:RGBA = flapo.RGBA.getRGBAFromCT(colortransform);
 		if (type == 1)
 		{
-			if (findEffectType(1) != null) return;
+			e = findEffectType(1);
+			if (e != null)
+				Effects.remove(e);
 			if (fromRGBA.equal(rgba))
 				return;
 		}
-		var e: Effect = new Effect(0, 0, 0, type, length);
+		e = new Effect(0, 0, 0, type, length);
 		e.setRGBA(fromRGBA, rgba);
 		if (type != 1)
 		{

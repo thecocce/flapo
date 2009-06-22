@@ -20,7 +20,7 @@ class LevelContainer
 	
 	public function new() 
 	{
-		maxLevel = 8;
+		maxLevel = 10;
 		var l: Int;
 		LevelDatas = new Array<LevelData>();
 		l = 0;
@@ -293,6 +293,57 @@ class LevelContainer
 				scale = scalefactor * numlayer + scaleoffset;
 				retval.addMyLayer(addNewLayer(false, screen, tiles, new Blocksm5l1Info(),
 					1.0, 1.0, true, scale, 1.0, scale));
+			case 9:
+				retval = new Level(screen);
+				tiles = new TileSet (screen);
+				tiles.init (new Abstract1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Abstract1IntroInfo(), 0.5, 0.5, false));
+
+				++numlayer;		
+				tiles = new TileSet (screen);
+				tiles.init (new Clouds1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back2Info(),
+					0.5, 0.5, true, 0.6, 0.4));
+				/*	
+				++numlayer;		
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
+					0.5, 0.5, true, 1.0, 0.3));*/
+				
+				++numlayer;		
+				scale = scalefactor * numlayer + scaleoffset;
+				tiles = new TileSet (screen);
+				tiles.init (new MicroTilesInfo ());
+				retval.addMyLayer(addNewLayer(false, screen, tiles, new MicroTilesm2l1Info (),
+					8/10, 8/10, true, scale, 1.0, scale)); 
+
+				++numlayer;
+				scale = scalefactor * numlayer + scaleoffset;
+				tiles = new TileSet (screen);
+				tiles.init (new NewInfo ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new NewIntroInfo(),
+					1.0, 1.0, true, scale, 1.0, scale));
+			case 10:
+							retval = new Level(screen);
+				tiles = new TileSet (screen);
+				tiles.init (new Abstract1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Abstract1m1Info(), 0.5, 0.5, false));
+
+				++numlayer;		
+				tiles = new TileSet (screen);
+				tiles.init (new Clouds1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back2Info(),
+					0.5, 0.5, true, 0.6, 0.1));
+					
+				++numlayer;		
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
+					0.5, 0.5, true, 1.0, 0.2));
+				
+				++numlayer;		
+				scale = scalefactor * numlayer + scaleoffset;
+				tiles = new TileSet (screen);
+				tiles.init (new MicroTilesInfo ());
+				retval.addMyLayer(addNewLayer(false, screen, tiles, new MicroTilesm1l1Info(),
+					8/10, 8/10, true, scale, 1.0, scale)); 
 			default:
 				retval = null;
 		}

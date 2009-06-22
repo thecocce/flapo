@@ -7,7 +7,10 @@
 // add the folder containing gamelib2d to the projects classpaths
 /*import flash.geom.ColorTransform;
 
+import flash.display.DisplayObject;
+import flash.display.Sprite;
 import flash.events.ContextMenuEvent;
+import flash.net.ObjectEncoding;
 import haxe.Log;
 
 import flash.events.Event;
@@ -19,20 +22,69 @@ import flash.display.Sprite;*/
 //import com.blitzagency.xray.logger.XrayLog;
 
 import flapo.GameLogic;
-import flapo.Menu;
+//import flapo.Menu;
+import flash.Lib;
+import haxe.Log;
 
-class Main
+class Main extends flash.display.Sprite
 {
 	
 	static var game : GameLogic;
-	static var menu : Menu;
+	public var testobj: Dynamic;
+	//static var menu : Menu;
 	
 	public static function main ()
 	{
-		//var connect:com.blitzagency.xray.util.XrayConnect = com.blitzagency.xray.util.XrayConnect.getInstance(_root, true);		
-		//flash.Lib.getURL(new flash.net.URLRequest("javascript:me.focus( );void 0;"));
-		//doComplete();
-		game = new GameLogic();
-		//new Main ();
+		new Main();
 	}
+	
+	public function new ()
+	{
+		super();
+		//var connect:com.blitzagency.xray.util.XrayConnect = com.blitzagency.xray.util.XrayConnect.getInstance(_root, true);		
+		flash.Lib.current.addChild (this);
+		Log.setColor (0x555500);
+		testobj = null;
+		trace("Loaded");
+		/*
+		  We have to delay initialization, because the Haxe Boot object may not be added to the Display list yet.
+		  We can now that we are on the Display chain when we receive an ADDED_TO_STAGE or an ENTER_FRAME event for example.
+		*/		
+		/*flash.Lib.current.stage.*/addEventListener(flash.events.Event.ADDED_TO_STAGE, init);
+		game = new GameLogic();		
+	}
+	
+   function init(e) {
+      /*
+      Call a function in the Test object.
+
+      This may be required if we use an external library function which searches FlashVars in the first LoaderInfo.
+      Because the @Embed tag loads the the haxe swf with a Loader, this is the first loader if the external function (which checks the loaderInfo) 
+      is called from a wrapped Haxe object. (Such is the MindJolt API for example).
+
+      To circumvent this, calls to such APIs should happen from the wrapper (now the Test object), so all necessary data should be passed back
+      to the Test object with a function call, and the Test object will call the API (loaderInfo will be the outermost then).
+
+      Now we call a test function, which will call back to htrace().
+      
+      Object hierarchy: Test object -> HxInst object -> Loader object -> Haxe Boot object -> First child added to Boot (will be Main now).
+      Maybe this could be done in a more elegant way.
+      */
+      try {
+         testobj = untyped parent.parent.parent.parent;
+		 testobj.traceCallback();
+      }
+      catch (e : flash.Error) {
+         trace("Could not call prent...traceCallback() from Haxe. Maybe not preloaded?");
+         trace("Error was: " + e.message);
+      }
+
+      trace("Example brought to you by Mindless Labs");
+	  game.setParent(testobj);
+   }
+
+   /* Will be called from the wrapper. */
+   public function htrace(s : String) {
+      trace("Trace from Haxe: " + s);
+   }	
 }
