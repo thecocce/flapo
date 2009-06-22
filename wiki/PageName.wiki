@@ -28,6 +28,7 @@ Ideas from Zach to improve the game. I added comments with _Italic_ and highligh
  * The Pixar Ball
  * Etc.
 _or we can variate the ball theme along level designs, rock for the Egyptian pyramid, cocus for the oasis, glass ball for desktop theme, meteor for space?_
+*I've just added a rotated textured ball*
 
 *Changes*
  * The word "WIN" or "LOSE" in green dots covering the screen _I'm thinking about totally change WIN and LOSE, as it's looking very unprofessional._
