@@ -3,6 +3,7 @@
  * @author Bence Dobos
  */
 //"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
+//-swf-lib Res.swf -D debug -D ModPlayer -D MochiBot -D Kongregate -D showfps -D MonsterDebugger
 //-swf-lib Res.swf -D debug -D fdb
 package flapo;
 
@@ -20,7 +21,9 @@ import apis.kongregate.CKongregate;
 import modplay.ModPlayer;
 #end
 
-
+#if MonsterDebugger
+import nl.demonsters.debugger.MonsterDebugger;
+#end
 
 import flash.display.MovieClip;
 import flash.filters.GlowFilter;
@@ -57,6 +60,7 @@ import flash.events.MouseEvent;
 //import flash.events.Event;
 import flash.text.TextField;
 import flash.text.AntiAliasType;
+import flapo.RotatedBall;
 /*
 class Winback extends BitmapData
 {
@@ -71,14 +75,19 @@ class GameLogic extends Sprite
 
 #if ModPlayer
 	static var mp: ModPlayer;
-	static var mpprg: Int;
+	static var mpprg: Int = 0;
 #end
 	
 #if Kongregate
 	static var kg: CKongregate;
 #end
+#if MonsterDebugger
+		// Variable to hold the debugger
+		// This is needed to explore your live application
+		private var debugger:MonsterDebugger;
+#end
 	//static var lc : Main_loadConnector;
-	
+	public var testobj: Dynamic;
 	static var screen: Sprite;
 	static var frame: Int = -1;
 	
@@ -107,6 +116,7 @@ class GameLogic extends Sprite
 	public static inline var KEY_UP     =  flash.ui.Keyboard.UP;
 	public static inline var KEY_DOWN   =  flash.ui.Keyboard.DOWN;
 	public static inline var KEY_SPACE  =  flash.ui.Keyboard.SPACE;	
+	public static inline var KEY_ENTER  =  flash.ui.Keyboard.ENTER;
 	
 	public var player: Player;
 	public var dbg: Player;
@@ -121,11 +131,11 @@ class GameLogic extends Sprite
 	public var snd: ScrollSnd;
 	
 	public inline static var accelerate  =  1.8;
-	public inline static var slowdown  =  1.3;
+	public inline static var slowdown  =  1.0;
 	public inline static var maxspeed = 6;
 
-	public inline static var accelerateZ  =  0.1;
-	public inline static var slowdownZ  =  0.07;
+	public inline static var accelerateZ  =  0.11;
+	public inline static var slowdownZ  =  0.08;
 	public inline static var maxspeedZ = 1.0;
 
 	var scale: Float;
@@ -156,7 +166,7 @@ class GameLogic extends Sprite
 		public static var curBlocks: Int;
 		public static var mode: Int;
 		
-		public static var levelnum: Int = 0;
+		public static var levelnum: Int = 9;
 		public static var infomode: Bool = false;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
@@ -171,10 +181,24 @@ class GameLogic extends Sprite
 	public function new ()
 	{
 		super();
+		testobj = null;
 		// new should not use the stage
+#if Kongregate
+		kg = new CKongregate(null);
+#end
 		screen = this;
 		screen = new Sprite ();
 		screen.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+	}
+	
+	public function setParent(gt: Dynamic)
+	{
+		trace("setparent");
+		testobj = gt;
+#if Kongregate
+		if (kg==null || kg.loaded==false || kg.type<2)
+			kg = new CKongregate(testobj);
+#end		
 	}
 	
 //	private function doComplete()
@@ -380,6 +404,13 @@ class GameLogic extends Sprite
  
 	function firstInit ()
 	{
+		trace("firstinit");
+#if MonsterDebugger
+		// Init the debugger
+		debugger = new MonsterDebugger(this);
+		// Send a simple trace
+		MonsterDebugger.trace(this, "Hello World!");
+#end
 #if MochiBot
 		try {
 			/*this.createEmptyMovieClip("MochiBot",this.getNextHighestDepth());
@@ -396,7 +427,28 @@ class GameLogic extends Sprite
 		//Def.STAGE_H = 360;
 		Def.STAGE_W = screen.stage.stageWidth;
 		Def.STAGE_H = screen.stage.stageHeight;
-		screen.stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
+		if (Def.STAGE_W > 1400)
+		{
+			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 4);
+			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 4);
+			screen.scaleX = 4;
+			screen.scaleY = 4;
+		}
+		else if (Def.STAGE_W > 1000)
+		{
+			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 3);
+			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 3);
+			screen.scaleX = 3;
+			screen.scaleY = 3;
+		}
+		else if (Def.STAGE_W > 650)
+		{
+			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 2);
+			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 2);
+			screen.scaleX = 2;
+			screen.scaleY = 2;
+		}
+		//screen.stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
 		levelcontainer = new LevelContainer();
 		ct100 = new ColorTransform(1, 1, 1, 1, 0, 0, 0, 0);
 		ct50 = new ColorTransform(1, 1, 1, 0.5, 0, 0, 0, 0);
@@ -404,19 +456,7 @@ class GameLogic extends Sprite
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
 		//sound
-#if sound		
-		ScrollSnd.init();
-		ScrollSnd.enabled = true;
-		ScrollSnd.play(ScrollSound.NiceNice);
-#end
-#if ModPlayer
-		mp = new ModPlayer();
-		mp.play("Test.mod");
-		mp.onProgress = function(prg:Int) { setProgress(prg); }
-#end
-#if Kongregate
-		kg = new CKongregate();
-#end
+
 		effectsClearTiles = new List<Effect>();
 		effectsToRemove = new List<Effect>();
 		textInit();
@@ -431,6 +471,16 @@ class GameLogic extends Sprite
 		playerColors.push(new RGBA(0, 1, 1));
 		playerColors.push(new RGBA(0.4, 0.4, 0.4));		
 		//trace(playerColors[2]);
+#if sound		
+		ScrollSnd.init();
+		ScrollSnd.enabled = true;
+		ScrollSnd.play(ScrollSound.NiceNice);
+#end
+#if ModPlayer
+		mp = new ModPlayer();
+		mp.play("Test.mod");
+		mp.onProgress = function(prg:Int) { setProgress(prg); }
+#end		
 	}
 
 	function deInit()
@@ -448,6 +498,7 @@ class GameLogic extends Sprite
 	
 	function init ()
 	{
+		trace(1);
 		initLevel(levelnum);
 		levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
 		for (d in levelwinlose.Layers)
@@ -482,7 +533,9 @@ class GameLogic extends Sprite
 		setTextMC( spriteText );
 		screen.addChild(spriteText);
 		dbg = new Player(screen);
-		dbg.moveTo(plXscreen + 60, plYscreen-po);
+		dbg.moveTo(plXscreen - po, plYscreen - po);
+		//dbg.draw(6);
+		//dbg.changeAlpha(0.4);
 	} 
     
 	public function nextLevel()
@@ -510,7 +563,7 @@ class GameLogic extends Sprite
     {
 		mpprg = prg;
 		trace(prg+"% loaded");
-		trace("...............");
+	//	trace("...............");
     }
 #end
 	
@@ -775,10 +828,6 @@ class GameLogic extends Sprite
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
 	#if debug
 		speedZ += -accelerateZ;// + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
-		if (Keys.keyIsDown (KEY_SPACE))
-		{
-			player.setColorTransform(playerColorTransform);
-		}
 	#else
 		speedZ += -accelerateZ;
 	#end
@@ -833,6 +882,7 @@ class GameLogic extends Sprite
 				d.layer.update ();
 				scale = scalefactor * i + scaleoffset;
 				d.layer.moveTo ((x*scale - ( Def.STAGE_W/2 * (1 - scale) )), (y*scale - ( Def.STAGE_H/2 * (1 - scale) )));
+
 				d.layer.draw ();
 			}
 			++i;
@@ -861,15 +911,19 @@ class GameLogic extends Sprite
 				if (e.numLayer >= 0 && e.numLayer <= level.Layers.length - 1)
 				{
 					var layer: Layer = level.Layers[e.numLayer].layer;
-					var curTile: Int;
-					curTile = layer.ts.getAnimationFrame (3, e.timeCounter - e.changeState);
-					//curSeq = (tile ^ gamelib2d.Def.TF_SEQUENCE) - 1;
-					//t = curSeq;//playertiles.getAnimationFrame (curSeq, timeCounter);
-
-					layer.writeMap(
-						Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
-						Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
-						curTile);
+					switch (e.type)
+					{
+					case 0:
+						var curTile: Int;
+						curTile = layer.ts.getAnimationFrame (3, e.timeCounter - e.changeState);
+						layer.writeEffectMap(
+							Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
+							Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
+							curTile);
+					case 1:
+						var i: Float = (e.timeCounter - e.changeState) / (e.length - e.changeState);
+						//layer.ts.clearRect( e.timeCounter - e.changeState
+					}
 				}
 			}
 			if (e.isEnd())
@@ -957,7 +1011,10 @@ class GameLogic extends Sprite
 			{
 				z += speedZ;
 				if (z >= 0 && z < level.Layers.length)
+				{
 					player.setDepth2(level.Layers[Std.int(z)].playerlayer);
+					dbg.setDepth2(level.Layers[Std.int(z)].playerlayer);
+				}
 			}
 			if (contact && z >= 0 && z>=i)
 			{
@@ -991,9 +1048,9 @@ class GameLogic extends Sprite
 								i, 0, 30);
 							effect.setState(1, 0, 19);
 							effectsClearTiles.add( effect );
-							level.Layers[i].layer.writeMap(
-								mapX2,
-								mapY2,-2); 
+							//level.Layers[i].layer.writeMap(
+							//	mapX2,
+							//	mapY2,-2); 
 							++curBlocks;
 							if (curBlocks >= allBlocks)
 								mode = 7; //cleared all blocks
@@ -1019,15 +1076,12 @@ class GameLogic extends Sprite
 				if (curCode >= 0x20 && curCode < 0x30)
 				{
 					var c: Int = curCode - 0x20;
-					//effect here
-					trace(c);
-					playerColor = c;
-					//player.surface.colorTransform(player.surface.rect, playerColorTransform);
-					//playerColorTransform.greenMultiplier = c / 5;
-	
-					//player.setColorTransform(playerColorTransform);
-					var rgba: RGBA = playerColors[c];
-					player.changeColorTransform(rgba, 40);
+					if (playerColor != c)
+					{
+						playerColor = c;
+						var rgba: RGBA = playerColors[c];
+						player.changeColorTransform(rgba, 40);
+					}
 				}
 				//trace(curCode + " " + curTile);
 			}
@@ -1045,11 +1099,12 @@ class GameLogic extends Sprite
 		//trace(0);
 		calculateFps();
 		var a : Bool = Keys.keyIsDown (KEY_SPACE);
+		a = a || Keys.keyIsDown (KEY_ENTER);
 		if (tfMessage.visible == true && a)
 		{
 			nextLevel();
 		}
-		else
+/*		else
 		if (a)
 		{
 			var mapX: Int;
@@ -1058,7 +1113,7 @@ class GameLogic extends Sprite
 			var mapX2: Int;
 			var mapY2: Int;
 			var found: Effect;
-			var i: Int = 1;
+			var i: Int = 2;
 			mapX = Utils.safeDiv (plX, 48);
 			mapY = Utils.safeDiv (plY, 48);
 			e = level.Layers[i];
@@ -1071,17 +1126,17 @@ class GameLogic extends Sprite
 			if (found == null)
 			{
 				effect = new Effect(mapX2, mapY2,
-					i, 0, 30);
+					i, 1, 30);
 				effect.setState(1, 0, 19);
 				effectsClearTiles.add( effect );
-				level.Layers[i].layer.writeMap(
-					mapX2,
-					mapY2,-2); 
+				//level.Layers[i].layer.writeMap(
+				//	mapX2,
+				//	mapY2,-2); 
 				++curBlocks;
 				if (curBlocks >= allBlocks)
 					mode = 7; //cleared all blocks
 			}
-		}
+		}*/
 	#if debug
 	#if showfps
 		showFPS ();
@@ -1127,6 +1182,15 @@ class GameLogic extends Sprite
 							infomode = true;
 							tfInfowin.visible = false;
 							tfInfowinWinner.visible = true;
+						#if Kongregate
+							if (kg!=null) kg.SubmitStat("AllLevelCompleted", 1);
+						#end
+						}
+						else
+						{
+						#if Kongregate
+							if (kg!=null) kg.SubmitStat("LevelCompleted", levelnum);
+						#end
 						}
 					}
 					tfMessage.visible = true;
@@ -1153,8 +1217,9 @@ class GameLogic extends Sprite
 		//trace("ooo");
 		//Utils.gc(); //garbage collector
 		player.update();
-		player.draw();
-	
+		player.changexyz(plX, plY); //negativra nem jo!
+		player.drawBall();
+		
 		var fromlayer: Int = Std.int( z );
 		var tolayer: Int = Std.int( z + speedZ );
 		if (speedZ > 0)
@@ -1173,6 +1238,7 @@ class GameLogic extends Sprite
 		{
 			//trace(1111);
 			player.changeAlpha((1 + z) / 2);
+			//dbg.changeAlpha((1 + z) / 2 * 0.4);
 			//if (mode != 9 && mode != 8)
 			{
 				mode = 8; //fallen
@@ -1183,28 +1249,51 @@ class GameLogic extends Sprite
 		else if (mode != 9 && mode != 8)
 		{
 			player.changeAlpha(1.0);
+			//dbg.changeAlpha(0.4);			
 		}
 		if (z < -2)
 			z = -2;
 
 		var i:Int;
 		i = Std.int(z);
-		/*dbg.update();
-
+		dbg.update();
+/*
 		if (i >= 0 && i <= level.Layers.length - 1)
-			dbg.draw(level.Layers[i].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
+			//dbg.draw(level.Layers[i].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
+			dbg.draw(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,48)][Utils.safeDiv (plX,48)] >> 8);
 		else
-			dbg.draw(0);*/
+			dbg.draw(0);
+MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,48)][Utils.safeDiv (plX,48)] >> 8);
+*/
+//MonsterDebugger.inspect(level.Layers[2].layer.effectMapData[1][10] >> 8);
+//MonsterDebugger.inspect(level.Layers[1].layer.effectMapData[2][10] >> 8);
+
 		if (z >= -2)
 		{
 			scale = scalefactor * z + scaleoffset;
 			player.changeScale(scale);
+			dbg.changeScale(scale);
 			if (i >= 0)
+			{
 				player.moveTo(plXscreen - po * scale, plYscreen - po * scale);
+				dbg.moveTo(plXscreen - po * scale, plYscreen - po * scale);
+			}
 		}
 
-		tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks);
-		tfBlocks.setTextFormat(tsBlocks);
+#if ModPlayer
+		if (!(mpprg == 100 || mpprg <= 0))
+		
+		{
+			tfBlocks.text = Std.string(mpprg) + "%";
+			tfBlocks.setTextFormat(tsBlocks);
+		}
+		else
+#end
+		{
+			tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks);
+			tfBlocks.setTextFormat(tsBlocks);
+		}
+
 	}
 	
 	

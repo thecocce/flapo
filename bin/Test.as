@@ -27,6 +27,13 @@ package {
         public function traceCallback():void {
             mytrace("Hello from AS3 preloader");
         }
+		
+        public function parametersCallback():Object {
+			mytrace("Entering parametersCallback");
+            var parameters = LoaderInfo(root.loaderInfo).parameters;
+			mytrace("url from preloader: " + parameters);
+			return parameters;
+        }		
       
         /*
         This is an ugly function to call a custom haxe trace function defined in Main.hx's Main object.

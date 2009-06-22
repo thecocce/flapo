@@ -168,11 +168,21 @@ class TileSet
 		return new Rectangle (tileX * tileW, tileY * tileH, tileW, tileH);
 	}
 
-	public function drawTile (surface: BitmapData, x: Int, y: Int, n: Int, m: Int)
+	public function drawTile (surface: BitmapData, x: Int, y: Int, n: Int, m: Int,
+		?maskn: Int = -1 )
 	{
-		surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y), bitmap[m], new Point (0, 48), false);
+		if (maskn >= 0)
+			surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y),
+				bitmap[m], getTileRect(maskn).topLeft, false);
+		else
+			surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y));
 	}
-
+	
+	public function drawRect (surface: BitmapData, rect: Rectangle, x: Int, y: Int, color: UInt )
+	{
+		surface.fillRect( rect, color);
+	}
+	
 	public function runSequences ()
 	{
 		if (numSequences > 0)

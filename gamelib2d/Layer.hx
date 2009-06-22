@@ -1,5 +1,6 @@
 package gamelib2d;
 
+import flash.utils.ByteArray;
 import gamelib2d.Def;
 
 #if flash8
@@ -112,7 +113,8 @@ class Layer
 	private var mapScreenTiles: Array<Array<Int>>;
 
 	public var mapData: Array<Array<Int>>;
-	public var boundMapData: Array<Array<Int>>;
+	public var boundMapData: Array < Array < Int >> ;
+	public var effectMapData: Array < Array < Int >> ;
 
 	public var blockW: Int;
 	public var blockH: Int;
@@ -163,6 +165,7 @@ class Layer
 		mapScreenTiles = null;
 		mapData = null;
 		boundMapData = null;
+		effectMapData = null;
 		
 		if (mc00 != null)  { mcContainer.removeChild (mc00);  mc00 = null; }
 		if (mc01 != null)  { mcContainer.removeChild (mc01);  mc01 = null; }
@@ -190,7 +193,17 @@ class Layer
 
 		mapData = data.mapdata ();
 		boundMapData = data.boundmapdata ();
-
+		effectMapData = new Array < Array < Int >> ();
+		var ins: Array<Int>;
+		for (i in 0 ... data.mapH)
+		{
+			ins = new Array<Int>();
+			effectMapData.insert(i, ins);
+			for (j in 0 ... data.mapW)
+				effectMapData[i].insert(j, 0 << 8);
+		}
+		//effectMapData[2][2] = 2;
+		
 		setMetaMap (0, 0, [], bp_none, bp_none);
 
 		if (xscale != null)  scaleX = xscale;  else  scaleX = 1.0;
@@ -764,7 +777,7 @@ class Layer
 	public function writeMap (x: Int, y: Int, tile: Int)
 	{
 		mapData[y][x] = tile;
-		tilesToRedraw.add (new Point (x, y));
+		tilesToRedraw.add (new Point (Utils.safeMod(x, Std.int(width())), Utils.safeMod(y, Std.int(height()))));
 	}
 
 
@@ -853,6 +866,21 @@ class Layer
 		return result;
 	}
 
+	
+	public function writeEffectMap (x: Int, y: Int, effect: Int, ?other: Int = 0xFFFFFFFF)
+	{
+		if (effect != -1)
+			effectMapData[y][x] = (effectMapData[y][x] & 0xFFFF00FF) | (effect << 8);
+		if (other != 0xFFFFFFFF)
+			effectMapData[y][x] = (effectMapData[y][x] & 0xFFFFFF00) + other;
+		tilesToRedraw.add (new Point (x, y));
+
+		//var Code: Int = ReadBoundMap (X, Y);
+		//boundMapData[curMapY][curMapX] = boundMapData[curMapY][curMapX] | (code << 8);
+
+		//if (other >= startObjCode)
+		//	mapCodeList.add (new Point (x, y));  //!!
+	}
 
 	public function draw (?force: Bool = false)
 	{
@@ -865,6 +893,7 @@ class Layer
 		var count: Int;
 		var limit: Int;
 		var oldtile: Int;
+		var oldtile2: Int;
 		var alwx, alwy: Bool;
 		var oldx, oldy: Float;
 		var m: Int;
@@ -933,7 +962,7 @@ class Layer
 					if (! tilesToRedraw.isEmpty())
 					{
 						for (p in tilesToRedraw)
-						if ((p.x == x) && (p.y == y))
+						if ((p.x == Utils.safeMod(x, mapW)) && (p.y == Utils.safeMod(y, mapH)))
 						{
 							alwx = true;
 							tilesToRedraw.remove (p);
@@ -947,14 +976,14 @@ class Layer
 
 						if (count < limit || force)
 						{
-							if ((curTile | curFlags) != oldtile || force)
+							if ((curTile | curFlags) != oldtile || force || effectMapData[Utils.safeMod(y, mapH)][Utils.safeMod(x, mapW)] != 0)
 							{
 								m = 0;
 								if (curFlags & Def.TF_MIRROR     != 0) m += 1;
 								if (curFlags & Def.TF_UPSIDEDOWN != 0) m += 2;
 
 								if (curTile != 0)
-									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m);
+									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m, (effectMapData[Utils.safeMod(y, mapH)][Utils.safeMod(x, mapW)] >> 8)-1);
 								else
 									if (oldtile != 0)
 #if inverse									
