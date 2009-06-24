@@ -53,4 +53,13 @@ class Effect
 			return true;
 		return false;
 	}
+	
+	public function isEnd(): Bool
+	{
+		if (timeCounter >= length)
+			return true;
+		else
+			return false;
+	}
+	
 }
