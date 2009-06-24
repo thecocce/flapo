@@ -764,7 +764,7 @@ class Layer
 	public function writeMap (x: Int, y: Int, tile: Int)
 	{
 		mapData[y][x] = tile;
-		tilesToRedraw.add (new Point (x, y));
+		tilesToRedraw.add (new Point (Utils.safeMod(x, Std.int(width())), Utils.safeMod(y, Std.int(height()))));
 	}
 
 
@@ -933,7 +933,7 @@ class Layer
 					if (! tilesToRedraw.isEmpty())
 					{
 						for (p in tilesToRedraw)
-						if ((p.x == x) && (p.y == y))
+						if ((p.x == Utils.safeMod(x, mapW)) && (p.y == Utils.safeMod(y, mapH)))
 						{
 							alwx = true;
 							tilesToRedraw.remove (p);

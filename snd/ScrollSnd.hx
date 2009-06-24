@@ -44,10 +44,10 @@ class ScrollSnd
       {
 #if flash9
         case NiceNice:
-			channel = snd_NiceNice.play ();
+			channel = snd_NiceNice.play (0,999);
 			snd_NiceNicePlaying = true;
 #else flash8
-        case NiceNice: snd_NiceNice.start ();
+        case NiceNice: snd_NiceNice.start (0,999);
 #end
       }
   }

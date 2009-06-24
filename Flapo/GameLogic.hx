@@ -11,6 +11,7 @@ import flash.display.MovieClip;
 import flash.filters.GlowFilter;
 import flash.geom.ColorTransform;
 import flash.text.TextFormat;
+import flapo.Dict;
 import gamelib2d.Def;
 import gamelib2d.TileSetData;
 import gamelib2d.Utils;
@@ -54,7 +55,7 @@ class GameLogic
 {
 
 	//static var lc : Main_loadConnector;
-	
+	static var dict: Dict;
 	static var screen: Sprite;
 	static var frame: Int = -1;
 	
@@ -83,6 +84,7 @@ class GameLogic
 	public static inline var KEY_UP     =  flash.ui.Keyboard.UP;
 	public static inline var KEY_DOWN   =  flash.ui.Keyboard.DOWN;
 	public static inline var KEY_SPACE  =  flash.ui.Keyboard.SPACE;	
+	public static inline var KEY_ENTER  =  flash.ui.Keyboard.ENTER;
 	
 	public var player: Player;
 	public var dbg: Player;
@@ -145,6 +147,7 @@ class GameLogic
 		// new should not use the stage
 		screen = new Sprite ();
 		screen.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+		dict = new Dict(DICT_ENG);
 	}
 	
 //	private function doComplete()
@@ -184,7 +187,7 @@ class GameLogic
 		ts.color = 0xaaaaff;
 		tfZene = new TextField();
 		tfZene.height = 40;
-		tfZene.appendText("Music");
+		tfZene.appendText(dict.get(1));
 		tfZene.setTextFormat(ts);
 		tfZene.x = Def.STAGE_W - 80;
 		tfZene.filters = [
@@ -201,7 +204,7 @@ class GameLogic
 		ts.color = 0xaaaaff;
 		tfInfo = new TextField();
 		tfInfo.height = 40;
-		tfInfo.appendText("Info");
+		tfInfo.appendText(dict.get(2));
 		tfInfo.setTextFormat(ts);
 		tfInfo.x = 0;
 		tfInfo.y = Def.STAGE_H - 40;
@@ -234,7 +237,7 @@ class GameLogic
 		tfMessage = new TextField();
 		tfMessage.width = 150;
 		tfMessage.height = 40;
-		tfMessage.appendText("Continue");
+		tfMessage.appendText(dict.get(3));
 		tfMessage.setTextFormat(ts);
 		tfMessage.x = Def.STAGE_W / 2 - 50;
 		tfMessage.y = Def.STAGE_H / 2 - 20;
@@ -254,7 +257,7 @@ class GameLogic
 		tfMessage2 = new TextField();
 		tfMessage2.width = 400;
 		tfMessage2.height = 40;
-		tfMessage2.appendText("Destroy all bright tiles before enter the exit tile!");
+		tfMessage2.appendText(dict.get(4));
 		tfMessage2.setTextFormat(ts);
 		tfMessage2.x = Def.STAGE_W / 2 - 190;
 		tfMessage2.y = Def.STAGE_H / 2 - 70;
@@ -284,13 +287,7 @@ class GameLogic
 		tfInfowin.width = 250;
 		tfInfowin.wordWrap = true;
 		tfInfowin.multiline = true;
-		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo</b></p></font><br>" +
-			"<font color='#aaaaff'>Control the ball trough multilevel mazes. Destroy all bright tiles then enter the exit tile. Use jump pads to access higher levels<br><br>" +
-			"Written by <a href='http://dobosbence.extra.hu'><font color='#ccccFF'>Bence Dobos</font></a><br>" +
-			"Music by <a href='http://nicenice.net'><font color='#ccccFF'>Nice Nice</font></a><br>" +
-			"Idea by Microshark/Damage<br>" +
-			"Special thanks to Strato<br>" +
-			"<p align='center'>copyright 2009</p></font>";
+		tfInfowin.htmlText = dict.get(5);
 		//tfInfowin.appendText("n/a");
 		tfInfowin.setTextFormat(tsInfowin);
 		tfInfowin.x = 25;
@@ -309,7 +306,7 @@ class GameLogic
 		tfInfowinWinner.width = 250;
 		tfInfowinWinner.wordWrap = true;
 		tfInfowinWinner.multiline = true;
-		tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo! Congratulation! I know the last level was killer, but you did it! Even I completed the last level only once!<br><br><p align='center'>Click to start over again.</p>";
+		tfInfowinWinner.htmlText = dict.get(6);
 		//tfInfowin.appendText("n/a");
 		tfInfowinWinner.setTextFormat(tsInfowinWinner);
 		tfInfowinWinner.x = 25;
@@ -356,6 +353,27 @@ class GameLogic
 		//Def.STAGE_H = 360;
 		Def.STAGE_W = screen.stage.stageWidth;
 		Def.STAGE_H = screen.stage.stageHeight;
+		if (Def.STAGE_W > 1400)
+		{
+			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 4);
+			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 4);
+			screen.scaleX = 4;
+			screen.scaleY = 4;
+		}
+		else if (Def.STAGE_W > 1000)
+		{
+			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 3);
+			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 3);
+			screen.scaleX = 3;
+			screen.scaleY = 3;
+		}
+		else if (Def.STAGE_W > 650)
+		{
+			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 2);
+			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 2);
+			screen.scaleX = 2;
+			screen.scaleY = 2;
+		}
 		screen.stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
 		levelcontainer = new LevelContainer();
 		ct100 = new ColorTransform(1, 1, 1, 1, 0, 0, 0, 0);
@@ -770,7 +788,7 @@ class GameLogic
 						curTile);
 				}
 			}
-			if (e.timeCounter >= e.length)
+			if (e.isEnd())
 			{
 				if (e.numLayer>=0 && e.numLayer<=level.Layers.length-1)
 					level.Layers[e.numLayer].layer.writeMap(
@@ -882,8 +900,7 @@ class GameLogic
 						i);
 					if (found == null)
 					{
-						effect = new Effect(Utils.safeDiv (plX, 48),
-							Utils.safeDiv (plY, 48),
+							effect = new Effect(mapX2, mapY2,
 							i, 0, 30);
 						effect.setState(1, 0, 19);
 						effectsClearTiles.add( effect );
@@ -927,6 +944,7 @@ class GameLogic
 		//trace(0);
 		calculateFps();
 		var a : Bool = Keys.keyIsDown (KEY_SPACE);
+		a = a || Keys.keyIsDown (KEY_ENTER);
 		if (tfMessage.visible == true && a)
 		{
 			nextLevel();
