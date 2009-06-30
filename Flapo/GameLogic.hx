@@ -175,7 +175,7 @@ class GameLogic extends Sprite
 		public static var curBlocks: Int;
 		public static var mode: Int;
 		
-		public static var levelnum: Int = 9;
+		public static var levelnum: Int = 10;
 		public static var infomode: Bool = false;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
@@ -938,7 +938,7 @@ class GameLogic extends Sprite
 				{
 					#if sound
 					if (e.isChange())
-						ScrollSnd.play(ScrollSound.Block_disappear);
+						ScrollSnd.play(ScrollSound.Block_disappear, 0.2);
 					#end
 					var layer: Layer = level.Layers[e.numLayer].layer;
 					switch (e.type)
@@ -1012,8 +1012,11 @@ class GameLogic extends Sprite
 						//visszapattan
 						speedZ = speedZ * 0.9;
 						#if sound
-						if (Utils.rAbs(speedZ)>slowdownZ)
-							ScrollSnd.play(ScrollSound.Bump);  //speedZ fuggvenyeben kellene a hangerot
+						if (Utils.rAbs(speedZ) > slowdownZ)
+						{
+							ScrollSnd.play(ScrollSound.Bump, Utils.rAbs(speedZ));
+							trace(Utils.rAbs(speedZ));
+						}
 						#end
 						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
 							z = speedZ>0?i-0.01:i;
@@ -1126,7 +1129,7 @@ class GameLogic extends Sprite
 						var rgba: RGBA = playerColors[c];
 						player.changeColorTransform(rgba, 40);
 						#if sound
-						ScrollSnd.play(ScrollSound.Color_change);
+						ScrollSnd.play(ScrollSound.Color_change, 0.3);
 						#end
 					}
 				}
