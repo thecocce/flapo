@@ -1,2 +1,2 @@
-extern class LinkLib {
+extern class LinkLib extends flash.display.Sprite {
 }

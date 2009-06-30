@@ -20,7 +20,9 @@ import flash.display.Sprite;*/
 
 //import com.blitzagency.Main_loadConnector;
 //import com.blitzagency.xray.logger.XrayLog;
-
+#if MDebugger
+import nl.demonsters.debugger.MonsterDebugger;
+#end
 import flapo.GameLogic;
 //import flapo.Menu;
 import flash.Lib;
@@ -28,7 +30,11 @@ import haxe.Log;
 
 class Main extends flash.display.Sprite
 {
-	
+#if MDebugger
+		// Variable to hold the debugger
+		// This is needed to explore your live application
+		private var debugger:MonsterDebugger;
+#end
 	static var game : GameLogic;
 	public var testobj: Dynamic;
 	//static var menu : Menu;
@@ -46,12 +52,18 @@ class Main extends flash.display.Sprite
 		Log.setColor (0x555500);
 		testobj = null;
 		trace("Loaded");
+#if MDebugger
+		// Init the debugger
+		debugger = new MonsterDebugger(this);
+		// Send a simple trace
+		MonsterDebugger.trace(this, "Hello World!");
+#end
 		/*
 		  We have to delay initialization, because the Haxe Boot object may not be added to the Display list yet.
 		  We can now that we are on the Display chain when we receive an ADDED_TO_STAGE or an ENTER_FRAME event for example.
 		*/		
-		/*flash.Lib.current.stage.*/addEventListener(flash.events.Event.ADDED_TO_STAGE, init);
-		game = new GameLogic();		
+		addEventListener(flash.events.Event.ADDED_TO_STAGE, init);
+		game = new GameLogic();
 	}
 	
    function init(e) {

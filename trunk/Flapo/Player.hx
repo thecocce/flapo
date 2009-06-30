@@ -17,6 +17,8 @@ import gamelib2d.TileSet;
 import flash.geom.Rectangle;
 import flapo.Effect;
 import flapo.RotatedBall;
+import flash.display.PixelSnapping;
+import gamelib2d.Utils;
 
 class Player 
 {
@@ -52,13 +54,13 @@ class Player
 	{
 		//player init
 		playertiles = new TileSet (screen);
-		playertiles.init (new BlocksInfo ());
+		playertiles.init (new BallInfo ());
 		mcContainer = screen;
-		surface = new BitmapData (100, 100, true, 0x0);
+		surface = new BitmapData (400, 400, true, 0x0);
 
 	//	#if flash9
 			mcPlayer = new Sprite ();
-			bitmap = new Bitmap(surface);
+			bitmap = new Bitmap(surface, AUTO, true);
 			mcPlayer.addChild (bitmap);
 			mcContainer.addChild (mcPlayer);
 			//mcContainer.addChild (bitmap);
@@ -74,7 +76,7 @@ class Player
 		EffectsRemove = new List<Effect>();
 		colortransform = null;
 		rball = new RotatedBall( 48 );
-		rball.tabfill(5, 20);
+		rball.tabfill(3, 20);
 	}
 
 	public function clear()
@@ -123,7 +125,7 @@ class Player
 		}
 		var t: Int;
 		if (tile == null)
-			t = 9;
+			t = 1;
 		else
 		{
 			//trace(tile);
@@ -135,13 +137,19 @@ class Player
 			else
 				t = tile-1;
 		}
+		t = t % playertiles.numTiles;
 		
-		var texture: BitmapData = new BitmapData(2 * 48, 4 * 48, true, 0x0);
+		var texture: BitmapData = new BitmapData(2 * 200, 2 * 200, true, 0x0);
 		playertiles.drawTile(texture, 0, 0, t, 0);
-		playertiles.drawTile(texture, 48, 0, t, 0);
-		playertiles.drawTile(texture, 0, 48, t, 0);
-		playertiles.drawTile(texture, 48, 48, t, 0);
-		rball.len(surface, texture, new Point(24+48-(x % 48), 24+48-(y % 48)));
+		playertiles.drawTile(texture, 200, 0, t, 0);
+		playertiles.drawTile(texture, 0, 200, t, 0);
+		playertiles.drawTile(texture, 200, 200, t, 0);
+		rball.len(surface, texture,
+			new Point(
+				100 + 200 - Utils.iAbs(Utils.safeMod(Std.int(x), 200)),
+				100 + 200 - Utils.iAbs(Utils.safeMod(Std.int(y), 200))
+			)
+		);
 		
 	}
 	

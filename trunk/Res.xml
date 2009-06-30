@@ -3,17 +3,26 @@
   <background color="#000000"/>
   <frame>
     <library>
-      <bitmap id="Background" name="Background" import=".\gfx\Background.png"/>
+      <!--<bitmap id="Background" name="Background" import=".\gfx\Background.png"/>-->
       <bitmap id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/>
       <bitmap id="Clouds1" name="Clouds1" import=".\gfx\Clouds1.png"/>
       <bitmap id="Abstract1" name="Abstract1" import=".\gfx\Abstract1.png"/>
       <bitmap id="New" name="New" import=".\gfx\New.png"/>
-      <bitmap id="Simplepatterned" name="Simplepatterned" import=".\gfx\Simplepatterned.png"/>
+      <!--<bitmap id="Simplepatterned" name="Simplepatterned" import=".\gfx\Simplepatterned.png"/>-->
+      <bitmap id="Ball" name="Ball" import=".\gfx\Ball.png"/>
       <bitmap id="MicroTiles" name="MicroTiles" import=".\gfx\MicroTiles.png"/>
+
       <bitmap id="Winback" name="Winback" import=".\Winback.png"/>
-      <!--<sound id="NiceNice_mp3" imLinkLibport=".\snd\NiceNice.mp3" />-->
-	  <!--<clip id="swf" import =".\xrayConnector_1.6.2.swf"/>-->
-    <clip id="swf" import =".\lib.swf"/>		  
+      <sound id="Block_disappear_wav" import=".\snd\block_disappear_01.mp3"/>
+      <sound id="Bump_wav" import=".\snd\bump_03.mp3"/>
+      <sound id="Color_change_wav" import=".\snd\colorchange_v2_01.mp3"/>
+      <sound id="Falling_wav" import=".\snd\falling_01.mp3"/>
+      <sound id="False_win_wav" import=".\snd\False_win_01.mp3"/>
+      <sound id="Jump_platform_wav" import=".\snd\jump_platform_02.mp3"/>
+      <sound id="Win_wav" import=".\snd\win_03.mp3"/>
+      <!--<sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />-->
+      <!--<clip id="swf" import =".\xrayConnector_1.6.2.swf"/>-->
+      <!--<clip id="swf" import =".\lib.swf"/>		  -->
     </library>
   </frame> 
 </movie>

@@ -5,8 +5,8 @@
 //"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
 //-swf-lib Res.swf -D debug -D ModPlayer -D MochiBot -D Kongregate -D showfps -D MonsterDebugger
 //-swf-lib Res.swf -D debug -D fdb
+//-swf-lib Res.swf -D debug -D ModPlayer -D sound -D MochiBot -D Kongregate
 package flapo;
-
 
 //APIs
 #if MochiBot
@@ -25,6 +25,7 @@ import modplay.ModPlayer;
 import nl.demonsters.debugger.MonsterDebugger;
 #end
 
+import flapo.Savegame;
 import flash.display.MovieClip;
 import flash.filters.GlowFilter;
 import flash.geom.ColorTransform;
@@ -53,7 +54,9 @@ import flash.display.BitmapData;
 import flapo.Player;
 import flapo.Effect;
 import flapo.RGBA;
+#if sound
 import ScrollSnd;
+#end
 
 //String
 import flash.events.MouseEvent;
@@ -76,6 +79,7 @@ class GameLogic extends Sprite
 #if ModPlayer
 	static var mp: ModPlayer;
 	static var mpprg: Int = 0;
+	static var mpPlay: Bool = false;
 #end
 	
 #if Kongregate
@@ -117,6 +121,11 @@ class GameLogic extends Sprite
 	public static inline var KEY_DOWN   =  flash.ui.Keyboard.DOWN;
 	public static inline var KEY_SPACE  =  flash.ui.Keyboard.SPACE;	
 	public static inline var KEY_ENTER  =  flash.ui.Keyboard.ENTER;
+	public static inline var KEY_T  	=  84;
+	public static inline var KEY_S  	=  83;
+	public static inline var KEY_L  	=  76;
+
+	public var KeyTrepeat: Bool;
 	
 	public var player: Player;
 	public var dbg: Player;
@@ -128,10 +137,10 @@ class GameLogic extends Sprite
 	
 	var ct100: ColorTransform;
 	var ct50: ColorTransform;
-	public var snd: ScrollSnd;
+//	public var snd: ScrollSnd;
 	
 	public inline static var accelerate  =  1.8;
-	public inline static var slowdown  =  1.0;
+	public inline static var slowdown  =  0.9;
 	public inline static var maxspeed = 6;
 
 	public inline static var accelerateZ  =  0.11;
@@ -177,6 +186,10 @@ class GameLogic extends Sprite
 		public static var playerColor: Int; //0 - white
 		public static var playerColorTransform: ColorTransform;
 		public static var playerColors: Array<RGBA>;
+		
+		public var balltexture: Int;
+		
+		public var savegame: Savegame;
 		
 	public function new ()
 	{
@@ -463,18 +476,20 @@ class GameLogic extends Sprite
 		playerColorTransform = new ColorTransform(1, 1, 1);
 		playerColors = new Array<RGBA>();
 		playerColors.push(new RGBA(1, 1, 1));
-		playerColors.push(new RGBA(1, 0, 0));
-		playerColors.push(new RGBA(0, 0, 1));
-		playerColors.push(new RGBA(0, 1, 0));
-		playerColors.push(new RGBA(1, 1, 0));
-		playerColors.push(new RGBA(1, 0, 1));
-		playerColors.push(new RGBA(0, 1, 1));
-		playerColors.push(new RGBA(0.4, 0.4, 0.4));		
+		playerColors.push(new RGBA(1.0, 0.5, 0.5));
+		playerColors.push(new RGBA(0.5, 0.5, 1.0));
+		playerColors.push(new RGBA(0.5, 1.0, 0.5));
+		playerColors.push(new RGBA(1.0, 1.0, 0.5));
+		playerColors.push(new RGBA(1.0, 0.5, 1.0));
+		playerColors.push(new RGBA(0.5, 1.0, 1.0));
+		playerColors.push(new RGBA(0.5, 0.5, 0.5));		
 		//trace(playerColors[2]);
+		balltexture = 7;
+		savegame = new Savegame();
 #if sound		
 		ScrollSnd.init();
 		ScrollSnd.enabled = true;
-		ScrollSnd.play(ScrollSound.NiceNice);
+		//ScrollSnd.play(ScrollSound.NiceNice);
 #end
 #if ModPlayer
 		mp = new ModPlayer();
@@ -525,7 +540,7 @@ class GameLogic extends Sprite
 		player.moveTo(plXscreen - po, plYscreen - po);
 		if (z >= 0 && z < level.Layers.length)
 			player.setDepth2(level.Layers[Std.int(z)].playerlayer);
-
+		player.drawBall(balltexture);
 		x -= plXscreen;
 		y -= plYscreen;
 		var spriteText : Sprite = new Sprite();
@@ -562,6 +577,8 @@ class GameLogic extends Sprite
     static function setProgress(prg:Int)
     {
 		mpprg = prg;
+		if (mpprg == 100)
+			mpPlay = true;
 		trace(prg+"% loaded");
 	//	trace("...............");
     }
@@ -570,14 +587,23 @@ class GameLogic extends Sprite
 		
 		public function togleZene(e:flash.events.MouseEvent): Void {
 		#if sound
-			if (ScrollSnd.snd_NiceNicePlaying)
-				ScrollSnd.stop(ScrollSound.NiceNice);
-			else
-				ScrollSnd.play(ScrollSound.NiceNice);
+			//if (ScrollSnd.snd_NiceNicePlaying)
+			//	ScrollSnd.stop(ScrollSound.NiceNice);
+			//else
+			//	ScrollSnd.play(ScrollSound.NiceNice);
+			ScrollSnd.enabled = !ScrollSnd.enabled;
 		#end
 		#if ModPlayer
-			if (mpprg != -1 || mpprg < 100)
+			if (mpprg == -1)
+			{
+				//nem sikerult a betoltes
+				mp.play("Test.mod");
+			}
+			else if (mpPlay)
+			{
 				mp.stop();
+				mpPlay = false;
+			}
 			else
 				mp.play("Test.mod");
 		#end
@@ -910,6 +936,10 @@ class GameLogic extends Sprite
 			{
 				if (e.numLayer >= 0 && e.numLayer <= level.Layers.length - 1)
 				{
+					#if sound
+					if (e.isChange())
+						ScrollSnd.play(ScrollSound.Block_disappear);
+					#end
 					var layer: Layer = level.Layers[e.numLayer].layer;
 					switch (e.type)
 					{
@@ -981,9 +1011,13 @@ class GameLogic extends Sprite
 							//trace("rossz");
 						//visszapattan
 						speedZ = speedZ * 0.9;
+						#if sound
+						if (Utils.rAbs(speedZ)>slowdownZ)
+							ScrollSnd.play(ScrollSound.Bump);  //speedZ fuggvenyeben kellene a hangerot
+						#end
 						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
 							z = speedZ>0?i-0.01:i;
-						else if (Utils.rAbs(speedZ +  dist) < 1) //kovetkezo platformra ugrana
+						else if (Utils.rAbs(speedZ +  dist) < 1) //meg nem ugrana a kovetkezo platformra
 							z = i - (speedZ +  dist);
 						else
 						{
@@ -1061,6 +1095,9 @@ class GameLogic extends Sprite
 				{
 					//jump
 					speedZ += 1;
+					#if sound
+					ScrollSnd.play(ScrollSound.Jump_platform);
+					#end
 				}
 				if (curSeq == 0)
 				{
@@ -1070,8 +1107,15 @@ class GameLogic extends Sprite
 						mode = 9;
 					}
 					else
+					{
+						#if sound
+						if (msg2Timeout < 30)
+							ScrollSnd.play(ScrollSound.False_win);
+						#end
+
 						tfMessage2.visible = true;
 						msg2Timeout = 60;
+					}
 				}
 				if (curCode >= 0x20 && curCode < 0x30)
 				{
@@ -1081,6 +1125,9 @@ class GameLogic extends Sprite
 						playerColor = c;
 						var rgba: RGBA = playerColors[c];
 						player.changeColorTransform(rgba, 40);
+						#if sound
+						ScrollSnd.play(ScrollSound.Color_change);
+						#end
 					}
 				}
 				//trace(curCode + " " + curTile);
@@ -1137,6 +1184,36 @@ class GameLogic extends Sprite
 					mode = 7; //cleared all blocks
 			}
 		}*/
+		var b : Bool = Keys.keyIsDown (KEY_T);
+		if (b)
+		{
+			if (!KeyTrepeat)
+				++balltexture;
+			KeyTrepeat = true;
+		}
+		else
+			KeyTrepeat = false;
+
+		if (Keys.keyIsDown (KEY_S))
+			if (!KeyTrepeat)
+			{
+				trace("Saving game");
+				savegame.saveScore(curBlocks);
+				trace("Game saved");
+			}
+		if (Keys.keyIsDown (KEY_L))
+		{
+			//Save
+			if (!KeyTrepeat)
+			{
+				trace("Loading game");
+				curBlocks = savegame.loadScore(0);
+				trace("Game loaded");
+			}
+			KeyTrepeat = true;
+		}
+		else
+			KeyTrepeat = false;
 	#if debug
 	#if showfps
 		showFPS ();
@@ -1192,6 +1269,9 @@ class GameLogic extends Sprite
 							if (kg!=null) kg.SubmitStat("LevelCompleted", levelnum);
 						#end
 						}
+						#if sound
+						ScrollSnd.play(ScrollSound.Win);
+						#end
 					}
 					tfMessage.visible = true;
 				}
@@ -1218,7 +1298,7 @@ class GameLogic extends Sprite
 		//Utils.gc(); //garbage collector
 		player.update();
 		player.changexyz(plX, plY); //negativra nem jo!
-		player.drawBall();
+		player.drawBall(balltexture);
 		
 		var fromlayer: Int = Std.int( z );
 		var tolayer: Int = Std.int( z + speedZ );
@@ -1242,6 +1322,9 @@ class GameLogic extends Sprite
 			//if (mode != 9 && mode != 8)
 			{
 				mode = 8; //fallen
+				#if sound
+				ScrollSnd.play(ScrollSound.Falling);
+				#end
 				//initLevel( -2);
 				//levelwinlose.Layers[0].layer.setVisible(true);
 			}
@@ -1301,7 +1384,10 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 	{
 		var repeat: Bool = Keys.keyIsDown (event.keyCode);
 		if (! repeat)
+		{
+			//trace("Keycode: " + event.keyCode);
 			Keys.setKeyStatus (event.keyCode, true);
+		}
 	}
 	
 	
