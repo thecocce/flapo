@@ -21,15 +21,14 @@ class LevelContainer
 	public function new() 
 	{
 		maxLevel = 10;
-		var l: Int;
-		LevelDatas = new Array<LevelData>();
-		l = 0;
-		var ld: LevelData;
-		ld = new LevelData();
-		ld.AddTile(new BackgroundInfo());
-		ld.AddMap(new BackgroundMap1Info());
-		LevelDatas.push(ld);
-
+		//var l: Int;
+		//LevelDatas = new Array<LevelData>();
+		//l = 0;
+		//var ld: LevelData;
+		//ld = new LevelData();
+		//ld.AddTile(new BackgroundInfo());
+		//ld.AddMap(new BackgroundMap1Info());
+		//LevelDatas.push(ld);
 	}
 	
 	/*returns LevelData*/

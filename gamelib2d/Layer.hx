@@ -14,7 +14,7 @@ import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
-
+import flash.display.PixelSnapping;
 
 enum MapRepeatPattern
 {
@@ -243,7 +243,7 @@ class Layer
 #end
 		#if flash9
 			mc00 = new Sprite ();
-			mc00.addChild (new Bitmap (surface));
+			mc00.addChild (new Bitmap (surface, AUTO, true));
 			mcContainer.addChild (mc00);
 		#elseif flash8
 			var Depth = flash.Lib._root.getNextHighestDepth ();
@@ -255,7 +255,7 @@ class Layer
 		{
 			#if flash9
 				mc01 = new Sprite ();
-				mc01.addChild (new Bitmap (surface));
+				mc01.addChild (new Bitmap (surface, AUTO, true));
 				mcContainer.addChild (mc01);
 			#elseif flash8
 				mc01 = mcContainer.createEmptyMovieClip (name + "_01", Depth+2);
@@ -267,7 +267,7 @@ class Layer
 		{
 			#if flash9
 				mc10 = new Sprite ();
-				mc10.addChild (new Bitmap (surface));
+				mc10.addChild (new Bitmap (surface, AUTO, true));
 				mcContainer.addChild (mc10);
 			#elseif flash8
 				mc10 = mcContainer.createEmptyMovieClip (name + "_10", Depth+3);
@@ -278,7 +278,7 @@ class Layer
 			{
 				#if flash9
 					mc11 = new Sprite ();
-					mc11.addChild (new Bitmap (surface));
+					mc11.addChild (new Bitmap (surface, AUTO, true));
 					mcContainer.addChild (mc11);
 				#elseif flash8
 					mc11 = mcContainer.createEmptyMovieClip (name + "_11", Depth+4);
