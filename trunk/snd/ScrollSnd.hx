@@ -3,6 +3,7 @@
 import flash.media.Sound;
 import flash.media.SoundChannel;
 import flash.media.SoundLoaderContext;
+import flash.media.SoundTransform;
 #else flash8
 import flash.Sound;
 #end
@@ -71,25 +72,26 @@ class ScrollSnd
 	snd_Win = new Win_wav ();
   }
 
-  public static function play (s: ScrollSound)
+  public static function play (s: ScrollSound, ?vol: Float=1.0)
   {
+	channel = null;
     if (enabled)
       switch (s)
       {
 		  case Block_disappear:
-			snd_Block_disappear.play ();
+			channel = snd_Block_disappear.play ();
 		  case Bump:
-			snd_Bump.play ();
+			channel = snd_Bump.play ();
 		  case Color_change:
-			snd_Color_change.play ();
+			channel = snd_Color_change.play ();
 		  case Falling: 
-			snd_Falling.play ();
+			channel = snd_Falling.play ();
 		  case False_win:
-			snd_False_win.play ();
+			channel = snd_False_win.play ();
 		  case Jump_platform:
-			snd_Jump_platform.play ();
+			channel = snd_Jump_platform.play ();
 		  case Win:
-			snd_Win.play ();
+			channel = snd_Win.play ();
 /*#if flash9   
         case NiceNice:
 			channel = snd_NiceNice.play ();
@@ -98,6 +100,12 @@ class ScrollSnd
         case NiceNice: snd_NiceNice.start ();
 #end*/
       }
+	if (channel != null)
+	{
+		trace(vol);
+		channel.soundTransform = new SoundTransform(vol);
+	}
+
   }
 
     public static function stop (s: ScrollSound)
