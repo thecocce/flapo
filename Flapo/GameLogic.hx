@@ -175,7 +175,7 @@ class GameLogic extends Sprite
 		public static var curBlocks: Int;
 		public static var mode: Int;
 		
-		public static var levelnum: Int = 10;
+		public static var levelnum: Int = 1;
 		public static var infomode: Bool = false;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
@@ -538,8 +538,18 @@ class GameLogic extends Sprite
 		rgba = new RGBA(1.0, 1.0, 1.0, 1.0);
 		player.changeColorTransform(rgba, 20, 11, 2);
 		player.moveTo(plXscreen - po, plYscreen - po);
+		player.moveToShadow(plXscreen - po, plYscreen - po);
+		dbg = new Player(screen);
+//		dbg.moveTo(plXscreen - po, plYscreen - po);
+		//dbg.draw(6);
+		//dbg.changeAlpha(0.4);
+
 		if (z >= 0 && z < level.Layers.length)
+		{
 			player.setDepth2(level.Layers[Std.int(z)].playerlayer);
+			player.changeScaleShadow(scalefactor * Std.int(z) + scaleoffset);
+			//dbg.setDepth2(level.Layers[Std.int(z)].playerlayer);
+		}
 		player.drawBall(balltexture);
 		x -= plXscreen;
 		y -= plYscreen;
@@ -547,10 +557,6 @@ class GameLogic extends Sprite
 		removeText();
 		setTextMC( spriteText );
 		screen.addChild(spriteText);
-		dbg = new Player(screen);
-		dbg.moveTo(plXscreen - po, plYscreen - po);
-		//dbg.draw(6);
-		//dbg.changeAlpha(0.4);
 	} 
     
 	public function nextLevel()
@@ -567,7 +573,7 @@ class GameLogic extends Sprite
 	// function to follow the link when clicking on the first zone
 	public function goToAnne(e:flash.events.MouseEvent): Void {
 			try {
-					flash.Lib.getURL(new flash.net.URLRequest("http://dobosbence.extra.hu"),"_top");
+					flash.Lib.getURL(new flash.net.URLRequest("http://dobdob.metacortex.hu"),"_top");
 			} catch (e:Dynamic) {
 					trace (e);
 			}
@@ -1050,7 +1056,8 @@ class GameLogic extends Sprite
 				if (z >= 0 && z < level.Layers.length)
 				{
 					player.setDepth2(level.Layers[Std.int(z)].playerlayer);
-					dbg.setDepth2(level.Layers[Std.int(z)].playerlayer);
+					player.changeScaleShadow(scalefactor * Std.int(z) + scaleoffset);
+					//dbg.setDepth2(level.Layers[Std.int(z)].playerlayer);
 				}
 			}
 			if (contact && z >= 0 && z>=i)
@@ -1300,8 +1307,16 @@ class GameLogic extends Sprite
 		//trace("ooo");
 		//Utils.gc(); //garbage collector
 		player.update();
-		player.changexyz(plX, plY); //negativra nem jo!
+		player.changexyz(plX, plY, z);
 		player.drawBall(balltexture);
+		var bd:BitmapData = new BitmapData(2 * 48, 2 * 48);
+		//draw palya mask to bd
+		//bd.copyPixels();
+		var i:Int = Std.int(z);
+		if (i >= 0 && i < level.Layers.length && level.isBackground(i) == false)
+			player.drawShadow(bd);
+		else 
+			player.clearShadow();
 		
 		var fromlayer: Int = Std.int( z );
 		var tolayer: Int = Std.int( z + speedZ );
@@ -1357,12 +1372,15 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 		if (z >= -2)
 		{
 			scale = scalefactor * z + scaleoffset;
+			var scaleShadow:Float = scalefactor * Std.int(z) + scaleoffset;
 			player.changeScale(scale);
-			dbg.changeScale(scale);
+			//dbg.changeScale(scale);
 			if (i >= 0)
 			{
 				player.moveTo(plXscreen - po * scale, plYscreen - po * scale);
-				dbg.moveTo(plXscreen - po * scale, plYscreen - po * scale);
+				
+				player.moveToShadow(plXscreen - po * scaleShadow, plYscreen - po * scaleShadow);
+				//dbg.moveTo(plXscreen - po * scale, plYscreen - po * scale);
 			}
 		}
 

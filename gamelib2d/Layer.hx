@@ -983,7 +983,10 @@ class Layer
 								if (curFlags & Def.TF_UPSIDEDOWN != 0) m += 2;
 
 								if (curTile != 0)
-									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m, (effectMapData[Utils.safeMod(y, mapH)][Utils.safeMod(x, mapW)] >> 8)-1);
+								{
+									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m, (effectMapData[Utils.safeMod(y, mapH)][Utils.safeMod(x, mapW)] >> 8) - 1);
+									//ts.drawShadow (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m);
+								}
 								else
 									if (oldtile != 0)
 #if inverse									

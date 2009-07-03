@@ -177,6 +177,11 @@ class TileSet
 		else
 			surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y));
 	}
+
+	public function drawShadow (surface: BitmapData, x: Int, y: Int, n: Int, m: Int)
+	{
+			surface.merge (bitmap[m], getTileRect (n), new Point (x, y), 1, 1, 1, 1);
+	}
 	
 	public function drawRect (surface: BitmapData, rect: Rectangle, x: Int, y: Int, color: UInt )
 	{
