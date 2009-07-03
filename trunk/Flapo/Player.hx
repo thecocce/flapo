@@ -24,16 +24,20 @@ class Player
 {
 
 		//player
+	public var surfaceShadow: BitmapData;
 	public var surface: BitmapData;
 	#if flash9
 		private var mcContainer: Sprite;
 		public var mcPlayer: Sprite;
+		public var mcPlayerShadow: Sprite;
+		public var mcPlayer2: Sprite;
 	#elseif flash8
 		private var mcContainer: MovieClip;
 		public var mcPlayer: MovieClip;
 	#end
-	public var surfPlayer: BitmapData;
+	public var bdShadow: BitmapData;
 	public var bitmap: Bitmap;
+	public var bitmapShadow: Bitmap;
 	public var playertiles: TileSet;
 	public var plX: Int; //Draw here (screen coordinates)
 	public var plY: Int;
@@ -50,6 +54,31 @@ class Player
 	public var colortransform: ColorTransform;
 	public var rball: RotatedBall;
 	
+	public function calcShadow( r: Int, center: Int )
+	{
+	  var ix: Int;
+	  var iy: Int;
+	  var iz: Int;
+	  var alpha: Int;
+	  
+	  for(ix in -r ... r+1)
+	  for(iy in -r ... r+1)
+	  {
+		if (ix*ix+iy*iy<=r*r) //bent van e a korben
+		{
+			iz = Std.int(Math.sqrt(1 * 1 - ix * ix - iy * iy + r * r) / 3 + 1);
+			alpha = (iz * 20);
+			if (alpha > 255) alpha = 255;
+			if (alpha < 0) alpha = 0;
+			bdShadow.setPixel32(ix+center, iy+center, alpha << 24); //alpha
+		}
+		else //ha nincs, akkor marad
+		{
+			bdShadow.setPixel32(ix+center, iy+center, 0x0);
+		}
+	  }
+	}
+	
 	public function new(screen) 
 	{
 		//player init
@@ -57,11 +86,18 @@ class Player
 		playertiles.init (new BallInfo ());
 		mcContainer = screen;
 		surface = new BitmapData (400, 400, true, 0x0);
+		surfaceShadow = new BitmapData (400, 400, true, 0x0);
 
 	//	#if flash9
+			mcPlayerShadow = new Sprite();
+			mcPlayer2 = new Sprite ();
 			mcPlayer = new Sprite ();
 			bitmap = new Bitmap(surface, AUTO, true);
-			mcPlayer.addChild (bitmap);
+			bitmapShadow = new Bitmap(surfaceShadow, AUTO, true);
+			mcPlayerShadow.addChild (bitmapShadow);
+			mcPlayer2.addChild (bitmap);
+			mcPlayer.addChild(mcPlayerShadow);
+			mcPlayer.addChild(mcPlayer2);
 			mcContainer.addChild (mcPlayer);
 			//mcContainer.addChild (bitmap);
 	/*	#elseif flash8
@@ -77,6 +113,8 @@ class Player
 		colortransform = null;
 		rball = new RotatedBall( 48 );
 		rball.tabfill(3, 20);
+		bdShadow = new BitmapData(200, 200, true, 0x0);
+		calcShadow(20,24);
 	}
 
 	public function clear()
@@ -87,8 +125,8 @@ class Player
 
 	public function draw(?tile:Int)
 	{
-		mcPlayer.x = x;
-		mcPlayer.y = y;
+		mcPlayer2.x = x;
+		mcPlayer2.y = y;
 		var curSeq: Int;
 		if (tile != null && tile == 0)
 		{
@@ -115,8 +153,8 @@ class Player
 
 	public function drawBall(?tile:Int)
 	{
-		mcPlayer.x = x;
-		mcPlayer.y = y;
+		mcPlayer2.x = x;
+		mcPlayer2.y = y;
 		var curSeq: Int;
 		if (tile != null && tile == 0)
 		{
@@ -152,20 +190,47 @@ class Player
 		);
 		
 	}
+
+	public function drawShadow(insurf: BitmapData)
+	{
+		//mcPlayerShadow.x = x;
+		//mcPlayerShadow.y = y;
+		var shx: Int = Utils.iAbs(Utils.safeMod(Std.int(x), 48));
+		var shy: Int = Utils.iAbs(Utils.safeMod(Std.int(y), 48));
+		var offset: Float = z - Std.int(z);
+		var alpha: Float = 1 - offset;
+		mcPlayerShadow.alpha = alpha;
+		clearShadow();
+		surfaceShadow.copyPixels (bdShadow, new Rectangle(0,0,48,48), new Point (offset*48, offset*48)
+			//, insurf, new Point(shx, shy), false
+			);
+	}
+	
+	public function clearShadow()
+	{
+		surfaceShadow.fillRect(new Rectangle(0, 0, 200, 200), 0x0);
+	}	
 	
 	public function moveTo(X: Float, Y: Float)
 	{
 		fNewX = Std.int (X);
 		fNewY = Std.int (Y);
 		#if flash8
-			mcPlayer._x = fNewX;
-			mcPlayer._y = fNewY;
+			mcPlayer2._x = fNewX;
+			mcPlayer2._y = fNewY;
 		#elseif flash9
-			mcPlayer.x = fNewX;
-			mcPlayer.y = fNewY;
+			mcPlayer2.x = fNewX;
+			mcPlayer2.y = fNewY;
+
 		#end
 		x = fNewX;
 		y = fNewY;
+	}
+	
+	public function moveToShadow(X: Float, Y: Float)
+	{
+		mcPlayerShadow.x = X+5;
+		mcPlayerShadow.y = Y+5;
 	}
 	
 	public function setColorTransformRGBA(rgba: RGBA)
@@ -229,17 +294,34 @@ class Player
 	{
 		scale = gscale;
 		#if flash9
-			mcPlayer.scaleX = scale;
-			mcPlayer.scaleY = scale;
+			mcPlayer2.scaleX = scale;
+			mcPlayer2.scaleY = scale;
 		#elseif flash8
-			mcPlayer._xscale = 100 * scale;
-			mcPlayer._yscale = 100 * scale;
+			mcPlayer2._xscale = 100 * scale;
+			mcPlayer2._yscale = 100 * scale;
+		#end
+	}
+
+	public function changeScaleShadow(gscale: Float)
+	{
+		//scale = gscale;
+		#if flash9
+			mcPlayerShadow.scaleX = gscale;
+			mcPlayerShadow.scaleY = gscale;
+		#elseif flash8
+			mcPlayerShadow._xscale = 100 * gscale;
+			mcPlayerShadow._yscale = 100 * gscale;
 		#end
 	}
 	
 	public function changeAlpha(galpha: Float)
 	{
-		mcPlayer.alpha = galpha;
+		mcPlayer2.alpha = galpha;
+	}
+	
+	public function changeAlphaShadow(galpha: Float)
+	{
+		mcPlayerShadow.alpha = galpha;
 	}
 	
 	public function changeDepth(depth: Int)
@@ -265,9 +347,11 @@ class Player
 	*/
 	public function setDepth2 (newContainer: Sprite)
 	{
-		mcPlayer.removeChild (bitmap);
+		mcPlayer.removeChild (mcPlayerShadow);
+		mcPlayer.removeChild (mcPlayer2);
 		mcPlayer = newContainer;
-		mcPlayer.addChild (bitmap);
+		mcPlayer.addChild (mcPlayerShadow);
+		mcPlayer.addChild (mcPlayer2);
 	}
 	
 	public function setColorTransform(ct: ColorTransform)
@@ -278,8 +362,14 @@ class Player
 	
 	public function destroy()
 	{
-		mcPlayer.removeChild (bitmap);
+		mcPlayerShadow.removeChild(bitmapShadow);
+		mcPlayer2.removeChild(bitmap);
+		mcPlayer.removeChild (mcPlayerShadow);
+		mcPlayer.removeChild (mcPlayer2);
+		mcPlayer2 = null;
+		mcPlayerShadow = null;
 		bitmap = null;
+		bitmapShadow = null;
 	}
 	
 	public function changexyz(gx: Float, gy: Float, ?gz: Float)
