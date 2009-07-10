@@ -139,13 +139,13 @@ class GameLogic extends Sprite
 	var ct50: ColorTransform;
 //	public var snd: ScrollSnd;
 	
-	public inline static var accelerate  =  1.8;
-	public inline static var slowdown  =  0.9;
+	public inline static var accelerate  =  1.5;//1.8;
+	public inline static var slowdown  =  0.5;//
 	public inline static var maxspeed = 6;
 
-	public inline static var accelerateZ  =  0.11;
-	public inline static var slowdownZ  =  0.08;
-	public inline static var maxspeedZ = 1.0;
+	public inline static var accelerateZ  =  0.08;//0.11;
+	public inline static var slowdownZ  =  0.04;//0.08;
+	public inline static var maxspeedZ = 0.8;// 1.0;
 
 	var scale: Float;
 	var scalefactor: Float;
@@ -175,7 +175,7 @@ class GameLogic extends Sprite
 		public static var curBlocks: Int;
 		public static var mode: Int;
 		
-		public static var levelnum: Int = 1;
+		public static var levelnum: Int = 0;
 		public static var infomode: Bool = false;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
@@ -483,7 +483,6 @@ class GameLogic extends Sprite
 		playerColors.push(new RGBA(1.0, 0.5, 1.0));
 		playerColors.push(new RGBA(0.5, 1.0, 1.0));
 		playerColors.push(new RGBA(0.5, 0.5, 0.5));		
-		//trace(playerColors[2]);
 		balltexture = 7;
 		savegame = new Savegame();
 #if sound		
@@ -1021,7 +1020,7 @@ class GameLogic extends Sprite
 						if (Utils.rAbs(speedZ) > slowdownZ)
 						{
 							ScrollSnd.play(ScrollSound.Bump, Utils.rAbs(speedZ));
-							trace(Utils.rAbs(speedZ));
+							//trace(Utils.rAbs(speedZ));
 						}
 						#end
 						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
@@ -1309,12 +1308,18 @@ class GameLogic extends Sprite
 		player.update();
 		player.changexyz(plX, plY, z);
 		player.drawBall(balltexture);
-		var bd:BitmapData = new BitmapData(2 * 48, 2 * 48);
+		var bd:BitmapData = new BitmapData(6 * 48, 6 * 48);
 		//draw palya mask to bd
 		//bd.copyPixels();
 		var i:Int = Std.int(z);
 		if (i >= 0 && i < level.Layers.length && level.isBackground(i) == false)
+		{
+			var offset: Int = Std.int((z - i) * 48);
+			level.Layers[i].layer.getBitmapDataAtXY
+				(bd, plX - 24 + offset + 5 + 4, plY - 24 + offset + 5 + 4);
+				//trace(plX - 24 + offset + 5 + 4);
 			player.drawShadow(bd);
+		}
 		else 
 			player.clearShadow();
 		
@@ -1324,7 +1329,6 @@ class GameLogic extends Sprite
 		{
 			//jump
 			++fromlayer;
-			//trace(fromlayer);
 			++tolayer;
 		}
 		if (z < 0)
@@ -1334,7 +1338,6 @@ class GameLogic extends Sprite
 		calculateNewZAndContact(fromlayer, tolayer);
 		if (z < 1 && (mode != 9 && mode != 8))
 		{
-			//trace(1111);
 			player.changeAlpha((1 + z) / 2);
 			//dbg.changeAlpha((1 + z) / 2 * 0.4);
 			//if (mode != 9 && mode != 8)

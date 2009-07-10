@@ -102,7 +102,7 @@ class ScrollSnd
       }
 	if (channel != null)
 	{
-		trace(vol);
+		//trace(vol);
 		channel.soundTransform = new SoundTransform(vol);
 	}
 
