@@ -22,7 +22,7 @@
       <sound id="Win_wav" import=".\snd\win_03.mp3"/>
       <!--<sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />-->
       <!--<clip id="swf" import =".\xrayConnector_1.6.2.swf"/>-->
-      <!--<clip id="swf" import =".\lib.swf"/>		  -->
+      <clip id="swf" import =".\lib.swf"/>		  
     </library>
   </frame> 
 </movie>

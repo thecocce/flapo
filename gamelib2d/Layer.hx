@@ -1061,6 +1061,23 @@ class Layer
 
 	}
 
+	public function getBitmapDataAtXY(s: BitmapData, x: Int, y: Int)
+	{
+		var tx:Int = (Std.int (x / ts.tileW));
+		var ty:Int = (Std.int (y / ts.tileH));
+		for (i in 0 ... 2)
+		 for (j in 0 ... 2)
+		 {
+			var bufx:Int = Utils.safeMod (tx+j, bufW);
+			var bufy:Int = Utils.safeMod (ty+i, bufH);
+			s.copyPixels(surface, 
+				new Rectangle( (bufx) * ts.tileW,
+					(bufy) * ts.tileH,
+					48, 48),
+				new Point(j * 48, i * 48)
+			);
+		 }
+	}
 	
 	public static function iterator ()
 	{

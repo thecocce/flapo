@@ -5,9 +5,9 @@
     <movie disabled="False" />
     <movie input="" />
     <movie path="bin\Flapo.swf" />
-    <movie fps="30" />
-    <movie width="550" />
-    <movie height="400" />
+    <movie fps="5" />
+    <movie width="300" />
+    <movie height="200" />
     <movie version="9" />
     <movie background="#000000" />
   </output>
@@ -25,7 +25,7 @@
     <option mainClass="Main" />
     <option override="False" />
     <option verbose="False" />
-    <option additional="-swf-lib Res.swf -D sound" />
+    <option additional="-swf-lib Res.swf -D sound -D MonsterDebugger" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -44,7 +44,7 @@
     <!-- example: <hidden path="..." /> -->
   </hiddenPaths>
   <!-- Executed before build -->
-  <preBuildCommand />
+  <preBuildCommand>"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf</preBuildCommand>
   <!-- Executed after build -->
   <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->

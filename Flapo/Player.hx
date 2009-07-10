@@ -195,15 +195,18 @@ class Player
 	{
 		//mcPlayerShadow.x = x;
 		//mcPlayerShadow.y = y;
-		var shx: Int = Utils.iAbs(Utils.safeMod(Std.int(x), 48));
-		var shy: Int = Utils.iAbs(Utils.safeMod(Std.int(y), 48));
+
 		var offset: Float = z - Std.int(z);
 		var alpha: Float = 1 - offset;
+		var shx: Int = Utils.iAbs(Utils.safeMod(Std.int(x-24+offset*48+5+4), 48));
+		var shy: Int = Utils.iAbs(Utils.safeMod(Std.int(y-24+offset*48+5+4), 48));
 		mcPlayerShadow.alpha = alpha;
 		clearShadow();
-		surfaceShadow.copyPixels (bdShadow, new Rectangle(0,0,48,48), new Point (offset*48, offset*48)
-			//, insurf, new Point(shx, shy), false
+		surfaceShadow.copyPixels (bdShadow, new Rectangle(0,0,48,48), new Point (offset*48+5, offset*48+5)
+			, insurf, new Point(shx, shy), false
 			);
+		//surfaceShadow.copyPixels (insurf, new Rectangle(0, 0, 150, 150), new Point (60, 0));
+		//surfaceShadow.setPixel32 (Std.int(shx + 60), Std.int(shy), 0xff00ffff);
 	}
 	
 	public function clearShadow()
@@ -229,8 +232,8 @@ class Player
 	
 	public function moveToShadow(X: Float, Y: Float)
 	{
-		mcPlayerShadow.x = X+5;
-		mcPlayerShadow.y = Y+5;
+		mcPlayerShadow.x = X;
+		mcPlayerShadow.y = Y;
 	}
 	
 	public function setColorTransformRGBA(rgba: RGBA)

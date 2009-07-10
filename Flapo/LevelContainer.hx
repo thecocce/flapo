@@ -102,7 +102,7 @@ class LevelContainer
 				tiles = new TileSet (screen);
 				tiles.init (new Clouds1Info ());
 				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
-					0.5, 0.5, true, 1.0, 0.6));
+					0.5, 0.5, true, 1.0, 0.3));
 					
 				++numlayer;
 				scale = scalefactor * numlayer + scaleoffset;
@@ -125,7 +125,7 @@ class LevelContainer
 				tiles = new TileSet (screen);
 				tiles.init (new Clouds1Info ());
 				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
-					0.5, 0.5, true, 1.0, 0.6));
+					0.5, 0.5, true, 1.0, 0.5));
 					
 				++numlayer;
 				scale = scalefactor * numlayer + scaleoffset;
@@ -143,7 +143,7 @@ class LevelContainer
 				tiles = new TileSet (screen);
 				tiles.init (new Clouds1Info ());
 				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
-					0.5, 0.5, true, 2.0, 0.6));
+					0.5, 0.5, true, 2.0, 0.2));
 			case 3:
 				retval = new Level(screen);
 				tiles = new TileSet (screen);
