@@ -3,6 +3,8 @@
 #if flash9
 	import flash.net.LocalConnection;
 #end
+import flash.display.Sprite;
+import flash.display.BitmapData;
 
 class Utils
 {
@@ -69,7 +71,60 @@ class Utils
 		else
 			return (randSeed1 % n);
 	}
+
+    public static function drawCircle(mc:Sprite, x:Float, y:Float, r:Float) {
+      mc.graphics.beginFill(0xE5E5E5,100);
+      mc.graphics.moveTo(x+r, y);
+      mc.graphics.curveTo(r+x, Math.tan(Math.PI/8)*r+y, Math.sin(Math.PI/4)*r+x,
+      Math.sin(Math.PI/4)*r+y);
+      mc.graphics.curveTo(Math.tan(Math.PI/8)*r+x, r+y, x, r+y);
+      mc.graphics.curveTo(-Math.tan(Math.PI/8)*r+x, r+y, -Math.sin(Math.PI/4)*r+x,
+      Math.sin(Math.PI/4)*r+y);
+      mc.graphics.curveTo(-r+x, Math.tan(Math.PI/8)*r+y, -r+x, y);
+      mc.graphics.curveTo(-r+x, -Math.tan(Math.PI/8)*r+y, -Math.sin(Math.PI/4)*r+x,
+      -Math.sin(Math.PI/4)*r+y);
+      mc.graphics.curveTo(-Math.tan(Math.PI/8)*r+x, -r+y, x, -r+y);
+      mc.graphics.curveTo(Math.tan(Math.PI/8)*r+x, -r+y, Math.sin(Math.PI/4)*r+x,-Math.sin(Math.PI/4)*r+y);
+      mc.graphics.curveTo(r+x, -Math.tan(Math.PI/8)*r+y, r+x, y);
+      mc.graphics.endFill();
+    }
+       /* draw an filled arc with center at x,y and radius r, clockwise with 0<=hour<=12
+    */
+	  public static function drawArc(mc:Sprite, x:Float, y:Float, r:Float, hour:Int) {
+      mc.graphics.beginFill(0xC0C0C0,0.6);
+      var i:Int;
+      var alpha : Float;
+      var beta : Float;
+      var delta: Float;
+      var maxVal;// :Int = 12;
+      maxVal = 30;
+      i=0;
+      alpha = Math.PI;
+      //delta = Math.PI/6;
+      delta = Math.PI*2/maxVal;
+      mc.graphics.moveTo(x,y);
+      mc.graphics.lineTo(x+Math.sin(alpha)*r,y+Math.cos(alpha)*r);
+      if(hour<0){
+        hour=0;
+      }else if(hour>maxVal){
+        hour=maxVal;
+      }
+      while(i<hour){
+        beta = alpha - delta/2;
+        alpha = alpha - delta;
+        mc.graphics.curveTo(
+          x+Math.sin(beta)*r,y+Math.cos(beta)*r,
+          x+Math.sin(alpha)*r,y+Math.cos(alpha)*r);
+        i++;
+      }
+      mc.graphics.lineTo(x,y);
+      mc.graphics.endFill();
+    }
 	
+	static function drawThing(mc: Sprite)
+	{
+	
+	}
 	
 #if flash9	
 	public static function gc ()

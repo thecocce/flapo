@@ -168,14 +168,23 @@ class TileSet
 		return new Rectangle (tileX * tileW, tileY * tileH, tileW, tileH);
 	}
 
+	public function drawHour(surface: BitmapData, x: Int, y: Int, hour: Int)
+	{
+		var Sp:Sprite = new Sprite();
+		Utils.drawArc( Sp, x+24, y+24, 20, hour);
+		surface.draw( Sp );
+	}
+	
 	public function drawTile (surface: BitmapData, x: Int, y: Int, n: Int, m: Int,
 		?maskn: Int = -1 )
 	{
-		if (maskn >= 0)
+		if ((maskn>>8)-1 >= 0)
 			surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y),
-				bitmap[m], getTileRect(maskn).topLeft, false);
+				bitmap[m], getTileRect((maskn>>8)-1).topLeft, false);
 		else
 			surface.copyPixels (bitmap[m], getTileRect (n), new Point (x, y));
+		if ((maskn & 0x000000FF) > 0)	
+			drawHour(surface, x, y, maskn & 0x000000FF);
 	}
 
 	public function drawShadow (surface: BitmapData, x: Int, y: Int, n: Int, m: Int)

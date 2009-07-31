@@ -10,7 +10,7 @@
       <bitmap id="New" name="New" import=".\gfx\New.png"/>
       <!--<bitmap id="Simplepatterned" name="Simplepatterned" import=".\gfx\Simplepatterned.png"/>-->
       <bitmap id="Ball" name="Ball" import=".\gfx\Ball.png"/>
-      <bitmap id="MicroTiles" name="MicroTiles" import=".\gfx\MicroTiles.png"/>
+      <bitmap id="MicroTiles" name="MicroTiles" import=".\gfx\MicroTiles3.png"/>
 
       <bitmap id="Winback" name="Winback" import=".\Winback.png"/>
       <sound id="Block_disappear_wav" import=".\snd\block_disappear_01.mp3"/>
@@ -22,7 +22,7 @@
       <sound id="Win_wav" import=".\snd\win_03.mp3"/>
       <!--<sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />-->
       <!--<clip id="swf" import =".\xrayConnector_1.6.2.swf"/>-->
-      <clip id="swf" import =".\lib.swf"/>		  
+      <!--<clip id="swf" import =".\lib.swf"/>-->
     </library>
   </frame> 
 </movie>
