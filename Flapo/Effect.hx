@@ -50,7 +50,7 @@ class Effect
 	public function update()
 	{
 		++timeCounter;
-		if (timeCounter == changeState)
+		if (timeCounter >= changeState)
 			state = endState;
 	}
 	

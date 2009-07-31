@@ -25,6 +25,8 @@ import modplay.ModPlayer;
 import nl.demonsters.debugger.MonsterDebugger;
 #end
 
+import flash.filters.BlurFilter;
+
 import flapo.Savegame;
 import flash.display.MovieClip;
 import flash.filters.GlowFilter;
@@ -124,11 +126,12 @@ class GameLogic extends Sprite
 	public static inline var KEY_T  	=  84;
 	public static inline var KEY_S  	=  83;
 	public static inline var KEY_L  	=  76;
+	public static inline var KEY_N		=  78;
 
 	public var KeyTrepeat: Bool;
 	
 	public var player: Player;
-	public var dbg: Player;
+	//public var dbg: Player;
 	public var plX: Int;
 	public var plY: Int;
 	public var plZ: Int;
@@ -139,12 +142,16 @@ class GameLogic extends Sprite
 	var ct50: ColorTransform;
 //	public var snd: ScrollSnd;
 	
+	var slowdownMult: Float;
+	var slowdownZMult: Float;
+	var accelerateMult: Float;
+
 	public inline static var accelerate  =  1.5;//1.8;
 	public inline static var slowdown  =  0.5;//
 	public inline static var maxspeed = 6;
 
 	public inline static var accelerateZ  =  0.08;//0.11;
-	public inline static var slowdownZ  =  0.04;//0.08;
+	public inline static var slowdownZ  =  0.05;//0.08;
 	public inline static var maxspeedZ = 0.8;// 1.0;
 
 	var scale: Float;
@@ -175,7 +182,7 @@ class GameLogic extends Sprite
 		public static var curBlocks: Int;
 		public static var mode: Int;
 		
-		public static var levelnum: Int = 0;
+		public static var levelnum: Int = 9;
 		public static var infomode: Bool = false;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
@@ -222,6 +229,7 @@ class GameLogic extends Sprite
 	function textInit()
 	{
 		mcText = screen;
+
 		//Strings
 		defaultFont="Times New Roman";
 		//decompose_string("Anne-Laure & Fabrice");
@@ -286,6 +294,7 @@ class GameLogic extends Sprite
 		tsBlocks.color = 0xaaaaff;
 		tfBlocks = new TextField();
 		tfBlocks.height = 40;
+		tfBlocks.width = 250;
 		tfBlocks.appendText("n/a");
 		tfBlocks.setTextFormat(tsBlocks);
 		tfBlocks.x = Def.STAGE_W / 2 - 50;
@@ -494,7 +503,17 @@ class GameLogic extends Sprite
 		mp = new ModPlayer();
 		mp.play("Test.mod");
 		mp.onProgress = function(prg:Int) { setProgress(prg); }
-#end		
+#end
+/*
+		//blurtest
+		var blur:BlurFilter = new BlurFilter(10, 10, 2);
+		screen.addEventListener(MouseEvent.MOUSE_MOVE, function(event:flash.events.MouseEvent) {
+				// Moving the pointer to the center of the Stage sets the blurX and blurY properties to 0%. 
+				blur.blurX = Math.abs(screen.stage.mouseX - (Def.STAGE_W/2)) / Def.STAGE_W * 2 * 100;
+				blur.blurY = Math.abs(screen.stage.mouseY - (Def.STAGE_H/2)) / Def.STAGE_H * 2 * 100;
+				screen.filters = [blur];
+			});
+			*/
 	}
 
 	function deInit()
@@ -504,7 +523,7 @@ class GameLogic extends Sprite
 		levelwinlose.clear();
 		levelwinlose = null;
 		player.destroy();
-		dbg.destroy();
+		//dbg.destroy();
 		removeText();
 		tfMessage.visible = false;
 		tfMessage2.visible = false;
@@ -530,7 +549,7 @@ class GameLogic extends Sprite
 		player.clearEffects();
 		player.setColorTransform(playerColorTransform);
 		//flash the player for a second (30 frame)
-		var rgba: RGBA = new RGBA(1.0, 1.0, 1.0, 0.0);
+		var rgba: RGBA = new RGBA(1.0, 1.0, 1.0, 1.0);
 		player.setColorTransformRGBA(rgba);
 		//rgba = new RGBA(2.0, 2.0, 2.0, 0.5);
 		//player.changeColorTransform(rgba, 10, 2, 2);
@@ -538,7 +557,7 @@ class GameLogic extends Sprite
 		player.changeColorTransform(rgba, 20, 11, 2);
 		player.moveTo(plXscreen - po, plYscreen - po);
 		player.moveToShadow(plXscreen - po, plYscreen - po);
-		dbg = new Player(screen);
+		//dbg = new Player(screen);
 //		dbg.moveTo(plXscreen - po, plYscreen - po);
 		//dbg.draw(6);
 		//dbg.changeAlpha(0.4);
@@ -556,6 +575,9 @@ class GameLogic extends Sprite
 		removeText();
 		setTextMC( spriteText );
 		screen.addChild(spriteText);
+		slowdownMult = 1;
+		slowdownZMult = 1;
+		accelerateMult = 1;
 	} 
     
 	public function nextLevel()
@@ -568,7 +590,7 @@ class GameLogic extends Sprite
 		}
 		mode = 16; //nextlevel
 	}
-    
+	
 	// function to follow the link when clicking on the first zone
 	public function goToAnne(e:flash.events.MouseEvent): Void {
 			try {
@@ -741,12 +763,14 @@ class GameLogic extends Sprite
 			{
 				for (i in 0...9)
 					allBlocks += d.layer.countMapCode(0x10 + i);
+				for (i in 0...9)
+					allBlocks += d.layer.countMapCode(0x50 + i);
 #if Vye
 				if (d.isBackground)
 					d.layer.setVisible(false);
 #end
 			}
-		}	
+		}
 	}
 
 	static var lastrealfps: Int = 0;
@@ -845,12 +869,14 @@ class GameLogic extends Sprite
 	
 	function slowdownSpeeds()
 	{
-		if (Utils.rAbs(speedX) < slowdown) speedX = 0;
-		else speedX += speedX>0?-slowdown:slowdown;
-		if (Utils.rAbs(speedY) < slowdown) speedY = 0;
-		else speedY += speedY > 0? -slowdown:slowdown;
-		if (Utils.rAbs(speedZ) > slowdownZ)
-			speedZ += speedZ>0?-slowdownZ:slowdownZ;		
+		var actslowdown:Float = slowdown * slowdownMult;
+		var actslowdownZ:Float = slowdownZ * slowdownZMult;
+		if (Utils.rAbs(speedX) < actslowdown) speedX = 0;
+		else speedX += speedX > 0? -actslowdown:actslowdown;
+		if (Utils.rAbs(speedY) < actslowdown) speedY = 0;
+		else speedY += speedY > 0? -actslowdown:actslowdown;
+		if (Utils.rAbs(speedZ) > actslowdownZ)
+			speedZ += speedZ > 0? -actslowdownZ:actslowdownZ;		
 	}
 
 	function calculateSpeeds()
@@ -937,8 +963,6 @@ class GameLogic extends Sprite
 		for (e in effectsClearTiles)
 		{
 			e.update();
-			if (e.state == 0)
-			{
 				if (e.numLayer >= 0 && e.numLayer <= level.Layers.length - 1)
 				{
 					#if sound
@@ -946,21 +970,38 @@ class GameLogic extends Sprite
 						ScrollSnd.play(ScrollSound.Block_disappear, 0.2);
 					#end
 					var layer: Layer = level.Layers[e.numLayer].layer;
+					var curTile: Int;
+					curTile = layer.ts.getAnimationFrame (3, e.timeCounter - e.changeState)+1;
 					switch (e.type)
 					{
 					case 0:
-						var curTile: Int;
-						curTile = layer.ts.getAnimationFrame (3, e.timeCounter - e.changeState);
-						layer.writeEffectMap(
-							Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
-							Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
-							curTile);
+						if (e.state == 0)
+						{
+							layer.writeEffectMap(
+								Utils.safeMod(e.x, layer.mapW),
+								Utils.safeMod(e.y, layer.mapH),
+								curTile);
+						}
+						//break;
 					case 1:
-						var i: Float = (e.timeCounter - e.changeState) / (e.length - e.changeState);
-						//layer.ts.clearRect( e.timeCounter - e.changeState
+						if (e.state != 0)
+						{
+							var curTile: Int;
+							layer.writeEffectMap(
+								Utils.safeMod(e.x, layer.mapW),
+								Utils.safeMod(e.y, layer.mapH),
+								-1, Std.int(e.timeCounter*30/(e.changeState-1)));
+						}
+						else
+						{
+							layer.writeEffectMap(
+								Utils.safeMod(e.x, level.Layers[e.numLayer].layer.mapW),
+								Utils.safeMod(e.y, level.Layers[e.numLayer].layer.mapH),
+								curTile);
+						}
 					}
 				}
-			}
+			//}		
 			if (e.isEnd())
 			{
 				if (e.numLayer>=0 && e.numLayer<=level.Layers.length-1)
@@ -996,6 +1037,7 @@ class GameLogic extends Sprite
 			var mapX2:Int;
 			var mapY2:Int;
 			var e: MyLayer;
+			var actslowdownZ = slowdownZ * slowdownMult;
 			//trace("from:" + fromlayer + "to:" + tolayer+" speedZ:"+speedZ);
 			while (i != tolayer && i < 10 && i > -2)
 			{
@@ -1015,7 +1057,7 @@ class GameLogic extends Sprite
 						//if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
 							//trace("rossz");
 						//visszapattan
-						speedZ = speedZ * 0.9;
+						speedZ = speedZ * 0.8;
 						#if sound
 						if (Utils.rAbs(speedZ) > slowdownZ)
 						{
@@ -1089,17 +1131,39 @@ class GameLogic extends Sprite
 						{
 							effect = new Effect(mapX2, mapY2,
 								i, 0, 30);
-							effect.setState(1, 0, 19);
+							effect.setState(1, 0, 20);
 							effectsClearTiles.add( effect );
-							//level.Layers[i].layer.writeMap(
-							//	mapX2,
-							//	mapY2,-2); 
 							++curBlocks;
 							if (curBlocks >= allBlocks)
 								mode = 7; //cleared all blocks
 						}
 					}
 				}
+				if (curCode >= 0x50 && curCode < 0x60)
+				{
+					//rombolhato tile, idore eltuno
+					var c: Int = curCode - 0x50;
+					if (c == playerColor)
+					{
+						//megkeresni
+						var found: Effect = null;
+						found = findEffectInXYZ(effectsClearTiles,
+							mapX2,
+							mapY2,
+							i);
+						if (found == null)
+						{
+							effect = new Effect(mapX2, mapY2,
+								i, 1, 100);
+							effect.setState(1, 0, 90);
+							effectsClearTiles.add( effect );
+							++curBlocks;
+							if (curBlocks >= allBlocks)
+								mode = 7; //cleared all blocks
+						}
+					}
+				}
+
 				if (curSeq == 4)
 				{
 					//jump
@@ -1139,6 +1203,12 @@ class GameLogic extends Sprite
 						#end
 					}
 				}
+				if (curCode >= 0x40 && curCode < 0x50)
+				{
+					slowdownMult = 0.1;
+				}
+				else
+					slowdownMult = 1.0;
 				//trace(curCode + " " + curTile);
 			}
 
@@ -1160,6 +1230,19 @@ class GameLogic extends Sprite
 		{
 			nextLevel();
 		}
+#if debug
+		a = Keys.keyIsDown (KEY_N);
+		if (a && !KeyTrepeat)
+		{
+			curBlocks = allBlocks;
+			mode = 9;
+			nextLevel();
+			KeyTrepeat = true;
+		}
+		else
+			KeyTrepeat = false;
+#end
+
 /*		else
 		if (a)
 		{
@@ -1194,7 +1277,7 @@ class GameLogic extends Sprite
 			}
 		}*/
 		var b : Bool = Keys.keyIsDown (KEY_T);
-		if (b)
+		if (b && !KeyTrepeat)
 		{
 			if (!KeyTrepeat)
 				++balltexture;
@@ -1204,12 +1287,17 @@ class GameLogic extends Sprite
 			KeyTrepeat = false;
 
 		if (Keys.keyIsDown (KEY_S))
+		{
 			if (!KeyTrepeat)
 			{
 				trace("Saving game");
 				savegame.saveScore(curBlocks);
 				trace("Game saved");
 			}
+			KeyTrepeat = true;
+		}
+		else
+			KeyTrepeat = false;
 		if (Keys.keyIsDown (KEY_L))
 		{
 			//Save
@@ -1360,7 +1448,7 @@ class GameLogic extends Sprite
 
 		var i:Int;
 		i = Std.int(z);
-		dbg.update();
+		//dbg.update();
 /*
 		if (i >= 0 && i <= level.Layers.length - 1)
 			//dbg.draw(level.Layers[i].layer.getCurTile(Utils.safeDiv (plX,48), Utils.safeDiv (plY,48)));
@@ -1377,6 +1465,7 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 			scale = scalefactor * z + scaleoffset;
 			var scaleShadow:Float = scalefactor * Std.int(z) + scaleoffset;
 			player.changeScale(scale);
+			player.setCTmult(new RGBA(scale, scale, scale, 1));
 			//dbg.changeScale(scale);
 			if (i >= 0)
 			{
@@ -1391,7 +1480,7 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 		if (!(mpprg == 100 || mpprg <= 0))
 		
 		{
-			tfBlocks.text = Std.string(mpprg) + "%";
+			tfBlocks.text = "Music Loading:" + Std.string(mpprg) + "%";
 			tfBlocks.setTextFormat(tsBlocks);
 		}
 		else

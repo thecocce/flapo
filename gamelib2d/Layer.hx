@@ -200,7 +200,7 @@ class Layer
 			ins = new Array<Int>();
 			effectMapData.insert(i, ins);
 			for (j in 0 ... data.mapW)
-				effectMapData[i].insert(j, 0 << 8);
+				effectMapData[i].insert(j, 0);
 		}
 		//effectMapData[2][2] = 2;
 		
@@ -984,7 +984,7 @@ class Layer
 
 								if (curTile != 0)
 								{
-									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m, (effectMapData[Utils.safeMod(y, mapH)][Utils.safeMod(x, mapW)] >> 8) - 1);
+									ts.drawTile (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m, (effectMapData[Utils.safeMod(y, mapH)][Utils.safeMod(x, mapW)]));
 									//ts.drawShadow (surface, bufx * ts.tileW, bufy * ts.tileH, curTile - 1, m);
 								}
 								else

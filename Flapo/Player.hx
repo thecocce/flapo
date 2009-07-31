@@ -25,19 +25,23 @@ class Player
 
 		//player
 	public var surfaceShadow: BitmapData;
+	public var surfaceShade: BitmapData;
 	public var surface: BitmapData;
 	#if flash9
 		private var mcContainer: Sprite;
 		public var mcPlayer: Sprite;
 		public var mcPlayerShadow: Sprite;
+		public var mcPlayerShade: Sprite;
 		public var mcPlayer2: Sprite;
 	#elseif flash8
 		private var mcContainer: MovieClip;
 		public var mcPlayer: MovieClip;
 	#end
 	public var bdShadow: BitmapData;
+	public var bdShade: BitmapData;
 	public var bitmap: Bitmap;
 	public var bitmapShadow: Bitmap;
+	public var bitmapShade: Bitmap;
 	public var playertiles: TileSet;
 	public var plX: Int; //Draw here (screen coordinates)
 	public var plY: Int;
@@ -53,6 +57,8 @@ class Player
 	public var EffectsRemove: List<Effect>;
 	public var colortransform: ColorTransform;
 	public var rball: RotatedBall;
+	public var offsetRGBA: RGBA;
+	public var currRGBA: RGBA;
 	
 	public function calcShadow( r: Int, center: Int )
 	{
@@ -60,17 +66,20 @@ class Player
 	  var iy: Int;
 	  var iz: Int;
 	  var alpha: Int;
+	  var rr:Int = r * r;
+	  var xxyy:Int;
 	  
 	  for(ix in -r ... r+1)
 	  for(iy in -r ... r+1)
 	  {
-		if (ix*ix+iy*iy<=r*r) //bent van e a korben
+		xxyy = ix * ix + iy * iy;
+		if (xxyy<=rr) //bent van e a korben
 		{
 			iz = Std.int(Math.sqrt(1 * 1 - ix * ix - iy * iy + r * r) / 3 + 1);
 			alpha = (iz * 20);
 			if (alpha > 255) alpha = 255;
 			if (alpha < 0) alpha = 0;
-			bdShadow.setPixel32(ix+center, iy+center, alpha << 24); //alpha
+			bdShadow.setPixel32(ix + center, iy + center, alpha << 24); //alpha
 		}
 		else //ha nincs, akkor marad
 		{
@@ -78,6 +87,40 @@ class Player
 		}
 	  }
 	}
+
+	public function calcShade( r: Int, center: Int )
+	{
+	  var ix: Int;
+	  var iy: Int;
+	  var iz: Int;
+	  var alpha: Int;
+	  var shade: Int;
+	  var rr:Int = r * r;
+	  var xxyy:Int;
+	  
+	  for(ix in -r ... r+1)
+	  for(iy in -r ... r+1)
+	  {
+		xxyy = ix * ix + iy * iy;
+		if (xxyy<=rr) //bent van e a korben
+		{
+			iz = Std.int(Math.sqrt(1 * 1 - ix * ix - iy * iy + r * r) / 3 + 1);
+			alpha = 255 - iz * 33;
+			if (alpha > 255) alpha = 255;
+			if (alpha < 0) alpha = 0;
+			shade =  128 - Std.int( (ix + iy ) * 128 / (r));
+			if (shade > 255) shade = 255;
+			if (shade < 0) shade = 0;
+			bdShade.setPixel32(ix + center, iy + center,
+			(alpha << 24) + (shade << 16) + (shade << 8) + shade );
+		}
+		else //ha nincs, akkor marad
+		{
+			bdShade.setPixel32(ix+center, iy+center, 0x0);
+		}
+	  }
+	}
+
 	
 	public function new(screen) 
 	{
@@ -87,15 +130,19 @@ class Player
 		mcContainer = screen;
 		surface = new BitmapData (400, 400, true, 0x0);
 		surfaceShadow = new BitmapData (400, 400, true, 0x0);
+		surfaceShade = new BitmapData (400, 400, true, 0x0);
 
 	//	#if flash9
 			mcPlayerShadow = new Sprite();
 			mcPlayer2 = new Sprite ();
+			mcPlayerShade = new Sprite ();
 			mcPlayer = new Sprite ();
 			bitmap = new Bitmap(surface, AUTO, true);
 			bitmapShadow = new Bitmap(surfaceShadow, AUTO, true);
+			bitmapShade = new Bitmap(surfaceShade, AUTO, true);
 			mcPlayerShadow.addChild (bitmapShadow);
 			mcPlayer2.addChild (bitmap);
+			mcPlayer2.addChild (bitmapShade);
 			mcPlayer.addChild(mcPlayerShadow);
 			mcPlayer.addChild(mcPlayer2);
 			mcContainer.addChild (mcPlayer);
@@ -114,7 +161,11 @@ class Player
 		rball = new RotatedBall( 48 );
 		rball.tabfill(3, 20);
 		bdShadow = new BitmapData(200, 200, true, 0x0);
-		calcShadow(20,24);
+		bdShade = new BitmapData(200, 200, true, 0x0);
+		calcShadow(20, 24);
+		calcShade(20, 24);
+		surfaceShade.copyPixels (bdShade, new Rectangle(0,0,48,48), new Point (0, 0));
+		offsetRGBA = new RGBA(0, 0, 0, 0);
 	}
 
 	public function clear()
@@ -212,7 +263,7 @@ class Player
 	public function clearShadow()
 	{
 		surfaceShadow.fillRect(new Rectangle(0, 0, 200, 200), 0x0);
-	}	
+	}
 	
 	public function moveTo(X: Float, Y: Float)
 	{
@@ -240,11 +291,16 @@ class Player
 	{
 		if (colortransform != null)
 		{
-			colortransform.redMultiplier = rgba.r;
-			colortransform.greenMultiplier = rgba.g;
-			colortransform.blueMultiplier = rgba.b;
-			colortransform.alphaMultiplier = rgba.a;
+			colortransform.redMultiplier = rgba.r*offsetRGBA.r;
+			colortransform.greenMultiplier = rgba.g*offsetRGBA.g;
+			colortransform.blueMultiplier = rgba.b*offsetRGBA.b;
+			colortransform.alphaMultiplier = rgba.a*offsetRGBA.a;
 			setColorTransform(colortransform);
+			setColorTransformShade(new ColorTransform(
+				offsetRGBA.r, offsetRGBA.g, offsetRGBA.b, offsetRGBA.a
+				)
+			);
+			currRGBA = rgba;
 		}
 	}
 	
@@ -268,7 +324,7 @@ class Player
 			case 2:
 				if (e.isChange())
 				{
-					rgba = flapo.RGBA.getRGBAFromCT(colortransform);
+					rgba = currRGBA; // flapo.RGBA.getRGBAFromCT(colortransform);
 					e.startRGBA = rgba;
 				}
 				if (e.timeCounter > e.changeState)
@@ -320,6 +376,7 @@ class Player
 	public function changeAlpha(galpha: Float)
 	{
 		mcPlayer2.alpha = galpha;
+		mcPlayerShadow.alpha = galpha;
 	}
 	
 	public function changeAlphaShadow(galpha: Float)
@@ -356,23 +413,30 @@ class Player
 		mcPlayer.addChild (mcPlayerShadow);
 		mcPlayer.addChild (mcPlayer2);
 	}
-	
 	public function setColorTransform(ct: ColorTransform)
 	{
 		bitmap.transform.colorTransform = ct;
 		colortransform = ct;
+		currRGBA = flapo.RGBA.getRGBAFromCT(colortransform);
+	}
+	
+	public function setColorTransformShade(ct: ColorTransform)
+	{
+		bitmapShade.transform.colorTransform = ct;
 	}
 	
 	public function destroy()
 	{
 		mcPlayerShadow.removeChild(bitmapShadow);
 		mcPlayer2.removeChild(bitmap);
+		mcPlayer2.removeChild(bitmapShade);
 		mcPlayer.removeChild (mcPlayerShadow);
 		mcPlayer.removeChild (mcPlayer2);
 		mcPlayer2 = null;
 		mcPlayerShadow = null;
 		bitmap = null;
 		bitmapShadow = null;
+		bitmapShade = null;
 	}
 	
 	public function changexyz(gx: Float, gy: Float, ?gz: Float)
@@ -393,12 +457,18 @@ class Player
 		Effects.clear();
 	}
 	
+	public function setCTmult(rgba:RGBA)
+	{
+		offsetRGBA = rgba;
+		setColorTransformRGBA(currRGBA);
+	}
+	
 	public function changeColorTransform(rgba: RGBA, length: Int,
 		?change: Int = 0, ?type: Int = 1)
 	{
 		var e: Effect;
 		if (colortransform == null) return;
-		var fromRGBA:RGBA = flapo.RGBA.getRGBAFromCT(colortransform);
+		var fromRGBA:RGBA = currRGBA; // flapo.RGBA.getRGBAFromCT(colortransform);
 		if (type == 1)
 		{
 			e = findEffectType(1);
