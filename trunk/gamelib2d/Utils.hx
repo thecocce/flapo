@@ -90,8 +90,9 @@ class Utils
     }
        /* draw an filled arc with center at x,y and radius r, clockwise with 0<=hour<=12
     */
-	  public static function drawArc(mc:Sprite, x:Float, y:Float, r:Float, hour:Int) {
-      mc.graphics.beginFill(0xC0C0C0,0.6);
+	  public static function drawArc(mc:Sprite, x:Float, y:Float, r:Float, hour:Int, alpha: Float = 0.8) {
+      mc.graphics.beginFill(0x000000, alpha);
+	  trace("drawarc");
       var i:Int;
       var alpha : Float;
       var beta : Float;

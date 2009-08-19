@@ -20,7 +20,7 @@ class LevelContainer
 	
 	public function new() 
 	{
-		maxLevel = 14;
+		maxLevel = 15;
 		//var l: Int;
 		//LevelDatas = new Array<LevelData>();
 		//l = 0;
@@ -436,6 +436,32 @@ class LevelContainer
 				tiles = new TileSet (screen);
 				tiles.init (new MicroTilesInfo ());
 				retval.addMyLayer(addNewLayer(false, screen, tiles, new MicroTilesm6l1Info(),
+					8 / 10, 8 / 10, true, scale, 1.0, scale)); 
+			case 15:
+							retval = new Level(screen);
+				tiles = new TileSet (screen);
+				tiles.init (new Abstract1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Abstract1m5Info(), 0.5, 0.5, false));
+
+				++numlayer;		
+				tiles = new TileSet (screen);
+				tiles.init (new Clouds1Info ());
+				retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back2Info(),
+					0.5, 0.5, true, 0.4, 0.1));
+					
+				//++numlayer;		
+				//retval.addMyLayer(addNewLayer(true, screen, tiles, new Clouds1back1Info(),
+					//0.5, 0.5, true, 1.0, 0.2));
+				
+				++numlayer;		
+				scale = scalefactor * numlayer + scaleoffset;
+				tiles = new TileSet (screen);
+				tiles.init (new MicroTilesInfo ());
+				retval.addMyLayer(addNewLayer(false, screen, tiles, new MicroTilesm7l1Info(),
+					8 / 10, 8 / 10, true, scale, 1.0, scale));
+				++numlayer;		
+				scale = scalefactor * numlayer + scaleoffset;
+				retval.addMyLayer(addNewLayer(false, screen, tiles, new MicroTilesm7l2Info(),
 					8/10, 8/10, true, scale, 1.0, scale)); 
 			default:
 				retval = null;

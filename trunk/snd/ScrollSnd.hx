@@ -18,6 +18,7 @@ enum ScrollSound
   False_win;
   Jump_platform; 
   Win;
+  Ticktack;
 }
 
 #if flash9
@@ -29,12 +30,14 @@ class Falling_wav extends Sound { }
 class False_win_wav extends Sound { }
 class Jump_platform_wav extends Sound { }
 class Win_wav extends Sound { }
+class Ticktack_wav extends Sound { }
 #end
 
 class ScrollSnd
 {
   public static var enabled: Bool;
   public static var channel: SoundChannel;
+  public static var channelTicktack: SoundChannel;
 //  public static var snd_NiceNicePlaying: Bool;
   /*
 #if flash9
@@ -51,6 +54,7 @@ class ScrollSnd
   public static var snd_False_win: False_win_wav;
   public static var snd_Jump_platform: Jump_platform_wav; 
   public static var snd_Win: Win_wav;
+  public static var snd_Ticktack: Ticktack_wav;
 				
 
   public static function init ()
@@ -70,6 +74,8 @@ class ScrollSnd
 	snd_False_win = new False_win_wav ();
 	snd_Jump_platform = new Jump_platform_wav ();
 	snd_Win = new Win_wav ();
+	snd_Ticktack = new Ticktack_wav ();
+	channelTicktack = null;
   }
 
   public static function play (s: ScrollSound, ?vol: Float=1.0)
@@ -92,6 +98,12 @@ class ScrollSnd
 			channel = snd_Jump_platform.play ();
 		  case Win:
 			channel = snd_Win.play ();
+		  case Ticktack:
+			if (channelTicktack != null)
+				channelTicktack.stop();
+			channelTicktack = snd_Ticktack.play ();
+			if (channelTicktack != null)
+				channelTicktack.soundTransform = new SoundTransform(vol);
 /*#if flash9   
         case NiceNice:
 			channel = snd_NiceNice.play ();

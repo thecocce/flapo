@@ -49,7 +49,7 @@ class Main extends flash.display.Sprite
 		super();
 		//var connect:com.blitzagency.xray.util.XrayConnect = com.blitzagency.xray.util.XrayConnect.getInstance(_root, true);		
 		flash.Lib.current.addChild (this);
-		Log.setColor (0xffff00);
+		Log.setColor (0xaa0000);
 		testobj = null;
 		trace("Loaded");
 #if MDebugger

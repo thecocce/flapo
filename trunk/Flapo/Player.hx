@@ -5,6 +5,7 @@
 
 package flapo;
 
+import flash.filters.GlowFilter;
 import BlocksInfo;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
@@ -59,6 +60,8 @@ class Player
 	public var rball: RotatedBall;
 	public var offsetRGBA: RGBA;
 	public var currRGBA: RGBA;
+	public var rollx: Float;
+	public var rolly: Float;
 	
 	public function calcShadow( r: Int, center: Int )
 	{
@@ -122,11 +125,12 @@ class Player
 	}
 
 	
-	public function new(screen) 
+	public function new(screen, tiles: TileSet) 
 	{
 		//player init
-		playertiles = new TileSet (screen);
-		playertiles.init (new BallInfo ());
+		//playertiles = new TileSet (screen);
+		//playertiles.init (new BallInfo ());
+		playertiles = tiles;
 		mcContainer = screen;
 		surface = new BitmapData (400, 400, true, 0x0);
 		surfaceShadow = new BitmapData (400, 400, true, 0x0);
@@ -235,10 +239,11 @@ class Player
 		playertiles.drawTile(texture, 200, 200, t, 0);
 		rball.len(surface, texture,
 			new Point(
-				100 + 200 - Utils.iAbs(Utils.safeMod(Std.int(x), 200)),
-				100 + 200 - Utils.iAbs(Utils.safeMod(Std.int(y), 200))
+				100 + 200 - Utils.iAbs(Utils.safeMod(Std.int(rollx), 200)),
+				100 + 200 - Utils.iAbs(Utils.safeMod(Std.int(rolly), 200))
 			)
 		);
+		//surface.copyPixels (texture, new Rectangle(0, 0, 250, 250), new Point (0, 0));
 		
 	}
 
@@ -249,15 +254,18 @@ class Player
 
 		var offset: Float = z - Std.int(z);
 		var alpha: Float = 1 - offset;
-		var shx: Int = Utils.iAbs(Utils.safeMod(Std.int(x-24+offset*48+5+4), 48));
-		var shy: Int = Utils.iAbs(Utils.safeMod(Std.int(y-24+offset*48+5+4), 48));
+		if (x < 0) --x;
+		if (y < 0) --y;
+		var shx: Int = Utils.iAbs(Utils.safeMod(Std.int(x - 24 + offset * 48 + 5 + 4), 48));
+		var shy: Int = Utils.iAbs(Utils.safeMod(Std.int(y - 24 + offset * 48 + 5 + 4), 48));
 		mcPlayerShadow.alpha = alpha;
 		clearShadow();
 		surfaceShadow.copyPixels (bdShadow, new Rectangle(0,0,48,48), new Point (offset*48+5, offset*48+5)
 			, insurf, new Point(shx, shy), false
 			);
 		//surfaceShadow.copyPixels (insurf, new Rectangle(0, 0, 150, 150), new Point (60, 0));
-		//surfaceShadow.setPixel32 (Std.int(shx + 60), Std.int(shy), 0xff00ffff);
+		//surfaceShadow.setPixel32 (Std.int(shx + 60), Std.int(shy), 0xffff00ff);
+		//surfaceShadow.setPixel32 (Std.int(shx + 60+48), Std.int(shy+48), 0xffff00ff);
 	}
 	
 	public function clearShadow()
@@ -445,6 +453,17 @@ class Player
 		y = gy;
 		if (gz != null) z = gz;
 	}
+
+	public function changez(gz: Float)
+	{
+		z = gz;
+	}
+	
+	public function changerollxy(gx: Float, gy: Float)
+	{
+		rollx = gx;
+		rolly = gy;
+	}
 	
 	public function addEffect(e: Effect)
 	{
@@ -498,5 +517,17 @@ class Player
 			}	
 		}
 		return null;
+	}
+	
+	public function setFilter(offs: Int, strength: Float)
+	{
+		mcPlayer2.filters = [
+			new GlowFilter(0x6666ff, 0.5, offs, offs, strength, 3, false, false)
+		];
+	}
+	
+	public function deleteFilter()
+	{
+		mcPlayer2.filters = null;
 	}
 }
