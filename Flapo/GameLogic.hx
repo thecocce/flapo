@@ -2,7 +2,7 @@
  * ...
  * @author Bence Dobos
  */
-//"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
+//"$(ToolsDir)\swfmill\swfmill2\swfmill.exe" simple Res.xml Res.swf
 //-swf-lib Res.swf -D debug -D ModPlayer -D MochiBot -D Kongregate -D showfps -D MonsterDebugger
 //-swf-lib Res.swf -D debug -D fdb
 //-swf-lib Res.swf -D debug -D ModPlayer -D sound -D MochiBot -D Kongregate
@@ -25,11 +25,13 @@ import modplay.ModPlayer;
 import nl.demonsters.debugger.MonsterDebugger;
 #end
 
+import flapo.LevelSelector;
+
 import flash.filters.BlurFilter;
+import flash.filters.GlowFilter;
 
 import flapo.Savegame;
 import flash.display.MovieClip;
-import flash.filters.GlowFilter;
 import flash.geom.ColorTransform;
 import flash.text.TextFormat;
 import gamelib2d.Def;
@@ -130,6 +132,7 @@ class GameLogic extends Sprite
 
 	public var KeyTrepeat: Bool;
 	
+	public var playerTileSet: TileSet;
 	public var player: Player;
 	//public var dbg: Player;
 	public var plX: Int;
@@ -182,7 +185,7 @@ class GameLogic extends Sprite
 		public static var curBlocks: Int;
 		public static var mode: Int;
 		
-		public static var levelnum: Int = 9;
+		public static var levelnum: Int = 15;
 		public static var infomode: Bool = false;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
@@ -190,6 +193,8 @@ class GameLogic extends Sprite
 		var tfInfowinWinner: TextField;
 		var tsInfowinWinner: TextFormat;
 
+		public static var levelSelector: LevelSelector;
+		
 		public static var playerColor: Int; //0 - white
 		public static var playerColorTransform: ColorTransform;
 		public static var playerColors: Array<RGBA>;
@@ -330,7 +335,7 @@ class GameLogic extends Sprite
 		tfMessage2 = new TextField();
 		tfMessage2.width = 400;
 		tfMessage2.height = 40;
-		tfMessage2.appendText("Destroy all bright tiles before enter the exit tile!");
+		tfMessage2.appendText("Destroy all round tiles before entering the exit tile!");
 		tfMessage2.setTextFormat(ts);
 		tfMessage2.x = Def.STAGE_W / 2 - 190;
 		tfMessage2.y = Def.STAGE_H / 2 - 70;
@@ -360,12 +365,11 @@ class GameLogic extends Sprite
 		tfInfowin.width = 250;
 		tfInfowin.wordWrap = true;
 		tfInfowin.multiline = true;
-		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo</b></p></font><br>" +
-			"<font color='#aaaaff'>Control the ball trough multilevel mazes. Destroy all bright tiles then enter the exit tile. Use jump pads to access higher levels<br><br>" +
+		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo 2</b></p></font><br>" +
+			"<font color='#aaaaff'>Control the ball trough multilevel mazes. Destroy all round tiles before entering the exit tile. You can destroy tiles which colors match your ball`s color. Use jump pads to access higher levels><br><br>" +
 			"Written by <a href='http://dobosbence.extra.hu'><font color='#ccccFF'>Bence Dobos</font></a><br>" +
-			"Music by <a href='http://nicenice.net'><font color='#ccccFF'>Nice Nice</font></a><br>" +
-			"Idea by Microshark/Damage<br>" +
-			"Special thanks to Strato<br>" +
+			"Music and sfx by <a href='http://www.freshmindworkz.hu/vincenzo'><font color='#ccccFF'>Vincenzo</font></a><br>" +
+			"Idea and graphics by Microshark/Damage<br>" +
 			"<p align='center'>copyright 2009</p></font>";
 		//tfInfowin.appendText("n/a");
 		tfInfowin.setTextFormat(tsInfowin);
@@ -385,7 +389,7 @@ class GameLogic extends Sprite
 		tfInfowinWinner.width = 250;
 		tfInfowinWinner.wordWrap = true;
 		tfInfowinWinner.multiline = true;
-		tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo! Congratulation! I know the last level was killer, but you did it! Even I completed the last level only once!<br><br><p align='center'>Click to start over again.</p>";
+		tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo 2 techdemo! Congratulation! You can continue playing levels from Flapo 1!<br><br><p align='center'>Click to close this message.</p>";
 		//tfInfowin.appendText("n/a");
 		tfInfowinWinner.setTextFormat(tsInfowinWinner);
 		tfInfowinWinner.x = 25;
@@ -514,6 +518,8 @@ class GameLogic extends Sprite
 				screen.filters = [blur];
 			});
 			*/
+		playerTileSet = new TileSet(screen);
+		playerTileSet.init (new BallInfo ());
 	}
 
 	function deInit()
@@ -527,11 +533,25 @@ class GameLogic extends Sprite
 		removeText();
 		tfMessage.visible = false;
 		tfMessage2.visible = false;
+		effectsClearTiles.clear();
+	}
+	
+	function initLevelSelector()
+	{
+		screen.addEventListener( MouseEvent.MOUSE_DOWN, levelselectorMouseDown );
+		levelSelector = new LevelSelector(screen, playerTileSet);
+	}
+	
+	function levelselectorMouseDown(e:flash.events.MouseEvent): Void
+	{
+
+		levelSelector.down(Std.int(screen.stage.mouseX),
+							Std.int(screen.stage.mouseY));
 	}
 	
 	function init ()
 	{
-		trace(1);
+		trace(levelnum);
 		initLevel(levelnum);
 		levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
 		for (d in levelwinlose.Layers)
@@ -541,10 +561,11 @@ class GameLogic extends Sprite
 		plX = 0;
 		plY = 0;
 		plZ = 0;
+		speedZ = 0;
 		plXscreen = Std.int(Def.STAGE_W/2);
 		plYscreen = Std.int(Def.STAGE_H/2);
 		//po = Utils.safeMod(plXscreen, level.Layers[level.Layers.length - 1].layer.ts.TileW);
-		player = new Player(screen);
+		player = new Player(screen, playerTileSet);
 		playerColor = 0;
 		player.clearEffects();
 		player.setColorTransform(playerColorTransform);
@@ -618,7 +639,7 @@ class GameLogic extends Sprite
 			//	ScrollSnd.stop(ScrollSound.NiceNice);
 			//else
 			//	ScrollSnd.play(ScrollSound.NiceNice);
-			ScrollSnd.enabled = !ScrollSnd.enabled;
+			//ScrollSnd.enabled = !ScrollSnd.enabled;
 		#end
 		#if ModPlayer
 			if (mpprg == -1)
@@ -824,7 +845,14 @@ class GameLogic extends Sprite
 		{
 			//trace( -2);
 			firstInit();
-			init ();
+			mode = -2;
+			if (mode == -2)
+			{
+				initLevelSelector();
+				mode = -1;
+			}
+			else
+				init ();
 		}
 
 		var t: Int = Std.int (Date.now ().getTime () / 1000);
@@ -914,10 +942,10 @@ class GameLogic extends Sprite
 		return scalefactor * level + scaleoffset;
 	}
 	
-	function calculateNewCoordinates()
+	function calculateNewCoordinates(div : Int)
 	{
-		x += speedX;
-		y += speedY;
+		x += speedX / div;
+		y += speedY / div;
 		plX = Std.int(x)+plXscreen;
 		plY = Std.int(y)+plYscreen;		
 	}
@@ -1021,7 +1049,7 @@ class GameLogic extends Sprite
 		effectsToRemove.clear();
 	}
 	
-	function calculateNewZAndContact(fromlayer: Int, tolayer: Int)
+	function calculateNewZAndContact(fromlayer: Int, tolayer: Int, div: Int)
 	{
 		if ( fromlayer != tolayer )
 		{
@@ -1065,10 +1093,10 @@ class GameLogic extends Sprite
 							//trace(Utils.rAbs(speedZ));
 						}
 						#end
-						if (Utils.rAbs(dist) > Utils.rAbs(speedZ))
+						if (Utils.rAbs(dist) > Utils.rAbs(speedZ / div))
 							z = speedZ>0?i-0.01:i;
-						else if (Utils.rAbs(speedZ +  dist) < 1) //meg nem ugrana a kovetkezo platformra
-							z = i - (speedZ +  dist);
+						else if (Utils.rAbs(speedZ/div +  dist) < 1) //meg nem ugrana a kovetkezo platformra
+							z = i - (speedZ / div +  dist);
 						else
 						{
 							z = i - (speedZ > 0?0.9: -0.9);
@@ -1093,7 +1121,7 @@ class GameLogic extends Sprite
 			//kulonben z+=speedZ
 			if (contact == false)
 			{
-				z += speedZ;
+				z += speedZ / div;
 				if (z >= 0 && z < level.Layers.length)
 				{
 					player.setDepth2(level.Layers[Std.int(z)].playerlayer);
@@ -1154,9 +1182,12 @@ class GameLogic extends Sprite
 						if (found == null)
 						{
 							effect = new Effect(mapX2, mapY2,
-								i, 1, 100);
-							effect.setState(1, 0, 90);
+								i, 1, 120);
+							effect.setState(1, 0, 110);
 							effectsClearTiles.add( effect );
+						#if sound
+							ScrollSnd.play(ScrollSound.Ticktack, 0.4);
+						#end
 							++curBlocks;
 							if (curBlocks >= allBlocks)
 								mode = 7; //cleared all blocks
@@ -1216,7 +1247,7 @@ class GameLogic extends Sprite
 			//player.draw();
 		}
 		else
-			z += speedZ;
+			z += speedZ / div;
 	}
 	
 	function onEnterFrame (d: Dynamic)
@@ -1224,6 +1255,57 @@ class GameLogic extends Sprite
 		//Log.setColor (0xffffff);
 		//trace(0);
 		calculateFps();
+		if (mode == -1)
+		{
+			levelSelector.process();
+			levelSelector.hover(
+				Std.int(screen.stage.mouseX),
+				Std.int(screen.stage.mouseY));
+			levelSelector.draw();
+			var a : Bool = Keys.keyIsDown (KEY_S);
+			if (a)
+			{
+				savegame.saveArray(levelSelector.getStates());
+			}
+			a = Keys.keyIsDown (KEY_L);
+			if (a && !KeyTrepeat)
+			{
+				KeyTrepeat = true;
+				var arr: Array<Dynamic> = savegame.loadArray();
+				var casting: Array<LevelState> = new Array<LevelState>();
+				for (i in 0 ... arr.length)
+				{
+					var casting2: LevelState = new LevelState();
+					casting2.convert(arr[i]);
+					casting.push(casting2);
+				}
+				levelSelector.setStates(casting);
+			}
+			else
+				KeyTrepeat = false;
+			a = Keys.keyIsDown (KEY_N);
+			if (a)
+			{
+				var arr: LevelState = new LevelState();
+				savegame.saveState(arr);
+			}
+			a = Keys.keyIsDown (KEY_T);
+			if (a && !KeyTrepeat)
+			{
+				KeyTrepeat = true;
+				var arr: Dynamic = savegame.loadState();
+				trace(arr);
+				var lState: LevelState = new LevelState();
+				lState.convert(arr);
+				trace(lState);
+				//var casting: LevelState = cast(arr, LevelState);
+				//trace(casting);
+//				levelSelector.setStates(arr);
+			}
+			//else
+				//KeyTrepeat = false;				
+			return;
+		}
 		var a : Bool = Keys.keyIsDown (KEY_SPACE);
 		a = a || Keys.keyIsDown (KEY_ENTER);
 		if (tfMessage.visible == true && a)
@@ -1321,8 +1403,16 @@ class GameLogic extends Sprite
 		if (mode == 16)
 		{
 			deInit();
-			init();
-			mode = 1;
+			if (mode == -2)
+			{
+				initLevelSelector();
+				mode = -1;
+			}
+			else
+			{
+				init();
+				mode = 1;
+			}
 		}
 		if (mode < 8)
 		{
@@ -1382,8 +1472,23 @@ class GameLogic extends Sprite
 					speedY += 0.5 * ((cy - plY) > 0?-1: 1);	*/			
 			}
 		}
-		calculateNewCoordinates();
-		
+		var div: Int = 2;
+		for (i in 0 ... div)
+		{
+		//calculate new coordinates
+		calculateNewCoordinates(div);
+		var fromlayer: Int = Std.int( z );
+		var tolayer: Int = Std.int( z + speedZ / div );
+		if (speedZ > 0)
+		{
+			//jump
+			++fromlayer;
+			++tolayer;
+		}
+		if (z < 0) --fromlayer;
+		if (z + speedZ / div < 0) --tolayer;
+		calculateNewZAndContact(fromlayer, tolayer, div);
+		}
 		//var i:Int = 0;
 
 		processLevel();
@@ -1394,11 +1499,10 @@ class GameLogic extends Sprite
 		//trace("ooo");
 		//Utils.gc(); //garbage collector
 		player.update();
-		player.changexyz(plX, plY, z);
+		player.changexyz(plX, plY, z); // for shadow
+		player.changerollxy(plX, plY); // for rotating ball
 		player.drawBall(balltexture);
 		var bd:BitmapData = new BitmapData(6 * 48, 6 * 48);
-		//draw palya mask to bd
-		//bd.copyPixels();
 		var i:Int = Std.int(z);
 		if (i >= 0 && i < level.Layers.length && level.isBackground(i) == false)
 		{
@@ -1411,19 +1515,6 @@ class GameLogic extends Sprite
 		else 
 			player.clearShadow();
 		
-		var fromlayer: Int = Std.int( z );
-		var tolayer: Int = Std.int( z + speedZ );
-		if (speedZ > 0)
-		{
-			//jump
-			++fromlayer;
-			++tolayer;
-		}
-		if (z < 0)
-			--fromlayer;
-		if (z + speedZ < 0)
-			--tolayer;
-		calculateNewZAndContact(fromlayer, tolayer);
 		if (z < 1 && (mode != 9 && mode != 8))
 		{
 			player.changeAlpha((1 + z) / 2);
@@ -1434,7 +1525,6 @@ class GameLogic extends Sprite
 				#if sound
 				ScrollSnd.play(ScrollSound.Falling);
 				#end
-				//initLevel( -2);
 				//levelwinlose.Layers[0].layer.setVisible(true);
 			}
 		}

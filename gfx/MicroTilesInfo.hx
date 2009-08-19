@@ -22,8 +22,8 @@ class MicroTilesInfo extends TileSetData
     tileW = 48;
     tileH = 48;
     numTilesX = 5;
-    numTilesY = 8;
-    numTiles = 38;
+    numTilesY = 9;
+    numTiles = 43;
     numSequences = 5;
   }
 

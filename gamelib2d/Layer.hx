@@ -1063,8 +1063,8 @@ class Layer
 
 	public function getBitmapDataAtXY(s: BitmapData, x: Int, y: Int)
 	{
-		var tx:Int = (Std.int (x / ts.tileW));
-		var ty:Int = (Std.int (y / ts.tileH));
+		var tx:Int = Utils.safeDiv( Std.int (x) , ts.tileW);
+		var ty:Int = Utils.safeDiv( Std.int (y) , ts.tileH);
 		for (i in 0 ... 2)
 		 for (j in 0 ... 2)
 		 {
