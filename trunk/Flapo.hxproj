@@ -25,7 +25,7 @@
     <option mainClass="Main" />
     <option override="False" />
     <option verbose="False" />
-    <option additional="-swf-lib Res.swf" />
+    <option additional="-swf-lib Res.swf -D fdb -D debug -D MochiScores -D Vye" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -44,8 +44,7 @@
     <!-- example: <hidden path="..." /> -->
   </hiddenPaths>
   <!-- Executed before build -->
-  <preBuildCommand>"$(ToolsDir)\swfmill\swfmill2\swfmill.exe" simple Res.xml Res.swf
-</preBuildCommand>
+  <preBuildCommand>"$(ToolsDir)\swfmill\swfmill2\swfmill.exe" simple Res.xml Res.swf</preBuildCommand>
   <!-- Executed after build -->
   <postBuildCommand alwaysRun="False" />
   <!-- Other project options -->

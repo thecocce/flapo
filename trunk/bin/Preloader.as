@@ -15,11 +15,11 @@ package {
         // Substitute these for what's in the MochiAd code
         // !! Replace id with the game's id
         public static var GAME_OPTIONS:Object = {
-          id:"db35cc64b8673507",             // !update this
+          id:"c47c13357bc92452",             // !update this
           res:"550x400",         // !update this
-          background:0x6D6DFF, 
-          color:0x2424B6, 
-          outline:0x2424B6, 
+          background:0xFFFFC9, 
+          color:0xFF8A00, 
+          outline:0xD58B3C, 
           no_bg:false
         };
 

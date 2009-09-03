@@ -1,0 +1,179 @@
+<html> <head> <title>Mochi API 3.02 for haXe</title> </head> <body> 
+<h1>Mochi API 3.02 beta 1 for haXe</h1> by <a 
+href='http://www.badsectoracula.com/'>Kostas Michalopoulos</a> <hr> 
+
+<h2>Introduction</h2>
+
+<p>This is the <a href='http://www.haxe.org/'>haXe</a> conversion of the 
+<a href='http://www.mochiads.com/'>MochiAds</a> Mochi API version 3.02. 
+This is an independent conversion done by myself and is unrelated with 
+Mochi Media. It might (and possibly) contain bugs that might break your 
+game - so make sure you test the provided functionality well! And if you 
+find any bug, please <a href='mailto:badsector@slashstone.com'>contact 
+me</a> (but first <a 
+href='http://www.badsectoracula.com/projects/mochihaxe'> check to see if 
+there is a new version</a>).
+
+<p>This haXe conversion provides everything that the ActionScript 3 
+version of the Mochi API 3.02 provides. If something is missing, then 
+consider it as a bug and report it to the email address mentioned 
+above.</p>
+
+<p>If you report any bug or missing feature, please include source code 
+so i can test the issue faster.</p>
+
+<h2>Using the Mochi API</h2>
+
+<p>To use the Mochi API you should make the <tt>mochi.haxe</tt> package 
+available to your program. This can be done in a variety of ways, but 
+the easiest one is to drop the <tt>mochi</tt> directory in your 
+project's source code directory. An alternative method is to put the 
+<tt>mochi</tt> directory inside the <tt>std</tt> directory of your haXe 
+installation. This will make the <tt>mochi.haxe</tt> package available 
+to all haXe programs.</p>
+
+<h3>Differences between haXe and AS3</h3>
+
+<p>Most of the AS3 code for Mochi API is the same for haXe. The major 
+difference is the package name which is set to <tt>mochi.haxe</tt> 
+instead of <tt>mochi.as3</tt> so calls to 
+<tt>mochi.as3.MochiAd.blah</tt> are <tt>mochi.haxe.MochiAd.blah</tt> (or 
+just add a <tt>import mochi.haxe;</tt> line and use 
+<tt>MochiAd.blah</tt>).</p>
+
+<p>Another difference is that in haXe you <i>must</i> provide a custom 
+<tt>MovieClip</tt>, like:
+<blockquote><pre>
+var mc:MovieClip = new MovieClip();
+flash.Lib.current.addChild(mc);
+MochiAd.showPreGameAd({clip:mc, id:"xxxxxx", res:"512x384"});
+</pre></blockquote>
+or else the ads won't be shown.
+
+<p>Of course other differences lie on the language type system. In Mochi 
+API where <tt>Object</tt> is required <tt>Dynamic</tt> should be used 
+and where a direct field is assigned (like <tt>mc.something = foo;</tt>) 
+the <tt>Reflect</tt> methods should be used (like 
+<tt>Reflect.setField(mc, "something", foo);</tt> to write and 
+<tt>Reflect.field(mc, "something");</tt> to read).</p>
+
+<h2>The Mochi API</h2>
+
+<p><a href='docs/README.html'>Read the official readme file</a> for more 
+information about the API itself.</p>
+
+<h2>Leaderboard code</h2>
+
+<p>When using Leaderboards, Mochi provides some code to call it. This 
+code is incompatible with haXe, so i'll explain how to convert it to 
+haXe code from the ActionScript 3 code provided by Mochi. The code 
+provided usually looks like this:</p>
+
+<blockquote><pre>
+var o:Object = { n: [&lt;<i>a bunch of numbers</i>&gt;] },
+    f: function (i:Number,s:String):String {
+        if (s.length == 16) return s;
+        return this.f(i+1,s + this.n[i].toString(16));}};
+var boardID:String = o.f(0,"");
+MochiScores.showLeaderboard({boardID: boardID, score: playerscore});
+</pre></blockquote>
+
+<p>This code needs some modifications to be usable in haXe. First of 
+all, <tt>this</tt> has not the same meaning in haXe and AS3, so you 
+cannot use it. To access the object in haXe from the local function you 
+have to define the variable <tt>o</tt> before the function is defined 
+<i>and</i> assign it a default value so the compiler won't complain 
+about using uninitialized values. So</p>
+
+<blockquote><pre>
+var o:<b>Dynamic</b> = null;
+</pre></blockquote>
+
+<p>See that <tt>Dynamic</tt> there? This is the AS3-to-haXe conversion i 
+mentioned above. We also assigned a <tt>null</tt> to it so it has 
+something to reference to. Next we need to define the object. The object 
+definition is done the same way as in AS3, but we have to replace 
+<tt>Number</tt> with <tt>Int</tt> (<i>usually</i> <tt>Number</tt> is replaced 
+with <tt>Float</tt> but here what the code does actually requires 
+<tt>Int</tt>, not <tt>Float</tt>). Also we replace all references to 
+<tt>this</tt> with references to <tt>o</tt>. So</p>
+
+<blockquote><pre>
+o = { n: [&lt;<i>the same bunch of numbers</i>&gt;],
+    f: function(i:<b>Int</b>,s:String):String {
+        if (s.length == 16) return s;
+        return <b>o</b>.f(i+1,s + <b>o</b>.n[i].toString(16));
+    }
+};
+</pre></blockquote>
+
+<p>The rest is the same</p>
+
+<blockquote><pre>
+var boardID:String = o.f(0,"");
+MochiScores.showLeaderboard({boardID: boardID, score: playerscore});
+</pre></blockquote>
+
+<p>So the final code is</p>
+
+<blockquote><pre>
+var o:Dynamic = null;
+o = { n: [&lt;<i>the same bunch of numbers</i>&gt;],
+    f: function(i:Int,s:String):String {
+        if (s.length == 16) return s;
+        return o.f(i+1,s + o.n[i].toString(16));
+    }
+};
+var boardID:String = o.f(0,"");
+MochiScores.showLeaderboard({boardID: boardID, score: playerscore});
+</pre></blockquote>
+
+<h2>Debugging</h2>
+
+<p>The <tt>trace</tt> function behaves differently in haXe and Flash - in 
+haXe the trace messages are displayed in the Flash movie. So we cannot keep 
+them around. However this also means that the messages that would normally 
+been displayed by Mochi API are not displayed. To avoid losing these 
+messages, i simply commented out all calls to trace. So if your code does not 
+seem to work, the first step would be to uncomment the calls to trace in the 
+<tt>mochi/haxe/*.hx</tt> files. Note that in some cases i added empty 
+brackets like
+<blockquote><pre>
+if (something)
+{}//trace("error...");
+</pre></blockquote>
+these brackets should be removed with the comment, so the above line will be
+<blockquote><pre>
+if (something)
+    trace("error...");
+</pre></blockquote>
+
+<h3>Leaderboards warning traces</h3>
+
+<p>Note that the warning traces for leaderboard IDs are <b>not</b> commented
+out. This is done in purpose: if you provide an invalid leaderboard ID you
+*do* want to see the traces no matter what.</p>
+
+<h2>That's all folks</h2>
+
+<p>So far at least. I don't know if i'll keep updating this conversion 
+forever or even for each new version of the official Mochi API. Of course i 
+accept contributions, although the best move would be for Mochi Media to take 
+over it and make sure it stays in sync with the AS2/AS3 version. The code and 
+directory layout is kept almost the same so it can be a fit-in with the 
+layout used in the released zip files.</p>
+
+<p><b>A note</b>: in the source code there is some documentation in a 
+JavaDOC-like format. I have a tool called <a 
+href='http://www.badsectoracula.com/projects/slashdoc'>SlashDOC</a> which 
+creates JavaDOC-like API documentation and these days i hacked some haXe 
+support. However i didn't added default argument values and it chokes with 
+the current code. So i left the comments in until i add support for default 
+argument values in SlashDOC.</p>
+
+<p>For anything <a href='mailto:badsector@slashstone.com'>contact me</a>.</p>
+
+<p>Kostas "<i>Bad Sector</i>" Michalopoulos</p>
+</body>
+</html>
+

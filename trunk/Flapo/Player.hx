@@ -521,9 +521,12 @@ class Player
 	
 	public function setFilter(offs: Int, strength: Float)
 	{
+#if Vye
+#else
 		mcPlayer2.filters = [
 			new GlowFilter(0x6666ff, 0.5, offs, offs, strength, 3, false, false)
 		];
+#end
 	}
 	
 	public function deleteFilter()
