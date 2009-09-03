@@ -7,6 +7,8 @@ package flapo;
 
 import flapo.Player;
 import flapo.LevelState;
+import flash.display.Sprite;
+import flash.geom.ColorTransform;
 
 class LevelPlayer 
 {
@@ -30,15 +32,26 @@ class LevelPlayer
 		rollspeedX = 0;
 		rollspeedY = 0;
 		needRedraw = true;
-		rollX = 0;
-		rollY = 0;
+		rollX = -35;
+		rollY = 70;
+		//rollX = -20;
+		//rollY = -45;
 	}
 	
 	public function draw()
 	{
 		if (needRedraw)
 		{
-			player.drawBall(3 + (state.lock?0:1) + state.medal);
+			if (state.lock)
+			{
+				player.drawBall(5);
+			}
+			else
+			if (state.score == 0)
+				player.drawBall(6);
+			else
+				player.drawBall(7 + state.medal);
+			//player.drawBall(13);
 			needRedraw = false;
 		}
 	}
@@ -54,7 +67,7 @@ class LevelPlayer
 			rollspeedY = 0
 		else
 			rollspeedY += rollspeedY > 0? -rollslowdown:rollslowdown;
-		if (rollspeedX != 0 && rollspeedY != 0)
+		if (rollspeedX != 0 || rollspeedY != 0)
 		{
 			rollX += rollspeedX;
 			rollY += rollspeedY;
@@ -106,10 +119,38 @@ class LevelPlayer
 	public function roll(rx: Float, ry: Float)
 	{
 		rollspeedX += rx;
-		rollspeedY += ry;
+		//rollspeedY += ry;
 		if (gamelib2d.Utils.rAbs(rollspeedX) > 100 * rollslowdown)
 			rollspeedX = (rollspeedX > 0?1: -1) * 100 * rollslowdown;
 		if (gamelib2d.Utils.rAbs(rollspeedY) > 100 * rollslowdown)
 			rollspeedY = (rollspeedY > 0?1: -1) * 100 * rollslowdown;
+	}
+	
+	public function changeMC(newContainer: Sprite)
+	{
+		player.setDepth2(newContainer);
+	}
+	
+	public function setCTbyState()
+	{
+		if (state.lock)
+		{
+			player.setColorTransform(new ColorTransform(1, 1, 1));
+		}
+		else
+		switch (state.medal)
+		{
+			case 0:
+			if (state.score==0)
+				player.setColorTransform(new ColorTransform(0.5, 0.5, 1.0));
+			else
+				player.setColorTransform(new ColorTransform(0.3, 1.0, 0.3));
+			case 1:
+				player.setColorTransform(new ColorTransform(1.0, 0.7, 0.7));
+			case 2:
+				player.setColorTransform(new ColorTransform(0.8, 0.8, 0.8));
+			case 3:
+				player.setColorTransform(new ColorTransform(1, 1, 0.5));
+		}
 	}
 }

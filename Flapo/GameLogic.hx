@@ -13,6 +13,14 @@ package flapo;
 import apis.mochi.MochiBot;
 #end
 
+#if MochiScores
+import mochi.haxe.MochiScores;
+#end
+
+#if MochiScores2
+import mochi.as3.MochiScores;
+#end
+
 #if Kongregate
 import apis.kongregate.CKongregate;
 #end
@@ -34,6 +42,7 @@ import flapo.Savegame;
 import flash.display.MovieClip;
 import flash.geom.ColorTransform;
 import flash.text.TextFormat;
+import flapo.Dict;
 import gamelib2d.Def;
 import gamelib2d.TileSetData;
 import gamelib2d.Utils;
@@ -68,6 +77,7 @@ import flash.events.MouseEvent;
 import flash.text.TextField;
 import flash.text.AntiAliasType;
 import flapo.RotatedBall;
+import flapo.TextObj;
 /*
 class Winback extends BitmapData
 {
@@ -77,7 +87,7 @@ class Winback extends BitmapData
 	}
 }*/
 
-class GameLogic extends Sprite
+class GameLogic extends MovieClip //Sprite
 {
 
 #if ModPlayer
@@ -96,6 +106,7 @@ class GameLogic extends Sprite
 #end
 	//static var lc : Main_loadConnector;
 	public var testobj: Dynamic;
+	static var dict: Dict;
 	static var screen: Sprite;
 	static var frame: Int = -1;
 	
@@ -194,6 +205,8 @@ class GameLogic extends Sprite
 		var tsInfowinWinner: TextFormat;
 
 		public static var levelSelector: LevelSelector;
+		public static var islevelSelector: Bool;
+		public static var textLevelSelector: Array<TextObj>;
 		
 		public static var playerColor: Int; //0 - white
 		public static var playerColorTransform: ColorTransform;
@@ -202,6 +215,9 @@ class GameLogic extends Sprite
 		public var balltexture: Int;
 		
 		public var savegame: Savegame;
+		
+		public var timeStartLevel: Int;
+		public var timeEndLevel: Int;
 		
 	public function new ()
 	{
@@ -213,6 +229,7 @@ class GameLogic extends Sprite
 #end
 		screen = this;
 		screen = new Sprite ();
+		//screen = new MovieClip();
 		screen.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 	}
 	
@@ -224,6 +241,7 @@ class GameLogic extends Sprite
 		if (kg==null || kg.loaded==false || kg.type<2)
 			kg = new CKongregate(testobj);
 #end		
+
 	}
 	
 //	private function doComplete()
@@ -237,36 +255,16 @@ class GameLogic extends Sprite
 
 		//Strings
 		defaultFont="Times New Roman";
-		//decompose_string("Anne-Laure & Fabrice");
-		//apply_animation();
-		var ts = new flash.text.TextFormat();
-		ts.font=defaultFont;
-		ts.size = 12;
-		ts.color = 0xaaaaff;
-		szoveg = new flash.text.TextField();
-		szoveg.height = 40;
-		szoveg.appendText("dobosbence.extra.hu");
-		//szoveg.appendText(" Click");
-		szoveg.setTextFormat(ts);
-		szoveg.x = Def.STAGE_W - 100;
-		szoveg.y = Def.STAGE_H - 15;
-		szoveg.filters = [
-			new GlowFilter(0x6666ff, 0.5, 2, 2, 2, 3, false, false)
-		];
-		szoveg.addEventListener(MouseEvent.MOUSE_OVER,this.highlightFab);
-		szoveg.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightFab);
-		szoveg.addEventListener(flash.events.MouseEvent.CLICK,this.goToAnne);
-		mcText.addChild(szoveg);
 		
-		ts = new flash.text.TextFormat();
+		var ts: TextFormat = new flash.text.TextFormat();
 		ts.font = defaultFont;
 		ts.size = 30;
 		ts.color = 0xaaaaff;
 		tfZene = new TextField();
 		tfZene.height = 40;
-		tfZene.appendText("Music");
+		tfZene.appendText(dict.get(1));
 		tfZene.setTextFormat(ts);
-		tfZene.x = Def.STAGE_W - 80;
+		tfZene.x = 80;
 		tfZene.filters = [
 			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
 		];
@@ -281,10 +279,10 @@ class GameLogic extends Sprite
 		ts.color = 0xaaaaff;
 		tfInfo = new TextField();
 		tfInfo.height = 40;
-		tfInfo.appendText("Info");
+		tfInfo.appendText(dict.get(2));
 		tfInfo.setTextFormat(ts);
 		tfInfo.x = 0;
-		tfInfo.y = Def.STAGE_H - 40;
+		tfInfo.y = 0;//Def.STAGE_H - 40;
 		tfInfo.filters = [
 			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
 		];
@@ -308,6 +306,21 @@ class GameLogic extends Sprite
 		];
 		mcText.addChild(tfBlocks);
 		
+		szoveg = new flash.text.TextField();
+		szoveg.width = 150;
+		szoveg.height = 40;
+		szoveg.appendText("More games");
+		szoveg.setTextFormat(ts);
+		szoveg.x = Def.STAGE_W - 150;
+		szoveg.y = 0;
+		szoveg.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		szoveg.addEventListener(MouseEvent.MOUSE_OVER,this.highlightFab);
+		szoveg.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightFab);
+		szoveg.addEventListener(flash.events.MouseEvent.CLICK,this.goToAnne);
+		mcText.addChild(szoveg);
+		
 		ts = new flash.text.TextFormat();
 		ts.font=defaultFont;
 		ts.size = 30;
@@ -315,7 +328,7 @@ class GameLogic extends Sprite
 		tfMessage = new TextField();
 		tfMessage.width = 150;
 		tfMessage.height = 40;
-		tfMessage.appendText("Continue");
+		tfMessage.appendText(dict.get(3));
 		tfMessage.setTextFormat(ts);
 		tfMessage.x = Def.STAGE_W / 2 - 50;
 		tfMessage.y = Def.STAGE_H / 2 - 20;
@@ -335,7 +348,8 @@ class GameLogic extends Sprite
 		tfMessage2 = new TextField();
 		tfMessage2.width = 400;
 		tfMessage2.height = 40;
-		tfMessage2.appendText("Destroy all round tiles before entering the exit tile!");
+		//tfMessage2.appendText("Destroy all round tiles before entering the exit tile!");
+		tfMessage2.appendText(dict.get(4));
 		tfMessage2.setTextFormat(ts);
 		tfMessage2.x = Def.STAGE_W / 2 - 190;
 		tfMessage2.y = Def.STAGE_H / 2 - 70;
@@ -365,12 +379,14 @@ class GameLogic extends Sprite
 		tfInfowin.width = 250;
 		tfInfowin.wordWrap = true;
 		tfInfowin.multiline = true;
-		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo 2</b></p></font><br>" +
+/*		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo 2</b></p></font><br>" +
 			"<font color='#aaaaff'>Control the ball trough multilevel mazes. Destroy all round tiles before entering the exit tile. You can destroy tiles which colors match your ball`s color. Use jump pads to access higher levels><br><br>" +
 			"Written by <a href='http://dobosbence.extra.hu'><font color='#ccccFF'>Bence Dobos</font></a><br>" +
 			"Music and sfx by <a href='http://www.freshmindworkz.hu/vincenzo'><font color='#ccccFF'>Vincenzo</font></a><br>" +
 			"Idea and graphics by Microshark/Damage<br>" +
-			"<p align='center'>copyright 2009</p></font>";
+			"<p align='center'>copyright 2009</p></font>";*/
+		tfInfowin.htmlText = dict.get(5);
+
 		//tfInfowin.appendText("n/a");
 		tfInfowin.setTextFormat(tsInfowin);
 		tfInfowin.x = 25;
@@ -389,8 +405,8 @@ class GameLogic extends Sprite
 		tfInfowinWinner.width = 250;
 		tfInfowinWinner.wordWrap = true;
 		tfInfowinWinner.multiline = true;
-		tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo 2 techdemo! Congratulation! You can continue playing levels from Flapo 1!<br><br><p align='center'>Click to close this message.</p>";
-		//tfInfowin.appendText("n/a");
+		//tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo 2 techdemo! Congratulation! You can continue playing levels from Flapo 1!<br><br><p align='center'>Click to close this message.</p>";
+		tfInfowinWinner.htmlText = dict.get(6); //TODO
 		tfInfowinWinner.setTextFormat(tsInfowinWinner);
 		tfInfowinWinner.x = 25;
 		tfInfowinWinner.y = 25;
@@ -399,15 +415,21 @@ class GameLogic extends Sprite
 			new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)
 		];
 		infowin.addChild(tfInfowinWinner);
+		
+		textLevelSelector = new Array<TextObj>();
+		var text: TextObj = new TextObj(levelSelector.mc, dict, 14, 200, 380, 300, 100,
+			ts, true, [new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)]
+		);
+		textLevelSelector.push(text);
 	}
 	
 	function removeText()
 	{
 		if (mcText == null)
 			return;
-		mcText.removeChild(szoveg);
 		mcText.removeChild(tfZene);
 		mcText.removeChild(tfBlocks);
+		mcText.removeChild(szoveg);
 		mcText.removeChild(tfMessage);
 		mcText.removeChild(tfMessage2);
 		mcText.removeChild(tfInfo);
@@ -419,9 +441,9 @@ class GameLogic extends Sprite
 	{
 
 		mcText = gmc;
-		mcText.addChild(szoveg);
 		mcText.addChild(tfZene);
 		mcText.addChild(tfBlocks);
+		mcText.addChild(szoveg);
 		mcText.addChild(tfMessage);
 		mcText.addChild(tfMessage2);
 		mcText.addChild(tfInfo);
@@ -446,6 +468,15 @@ class GameLogic extends Sprite
 		} catch (e:Dynamic) {
             trace (e);
         }
+#end
+#if MochiScores
+	var mc:MovieClip = new MovieClip();
+	flash.Lib.current.addChild(mc);
+	//MochiAd.showPreGameAd({clip:mc, id:"xxxxxx", res:"512x384"});
+		mochi.haxe.MochiServices.connect("c47c13357bc92452", flash.Lib.current);
+#end
+#if MochiScores2
+	mochi.as3.MochiServices.connect("c47c13357bc92452",  flash.Lib.current);
 #end
 		//doComplete();
 		flash.Lib.current.addChild (screen);
@@ -485,6 +516,12 @@ class GameLogic extends Sprite
 
 		effectsClearTiles = new List<Effect>();
 		effectsToRemove = new List<Effect>();
+		dict = new Dict(DICT_ENG);
+		playerTileSet = new TileSet(screen);
+		playerTileSet.init (new BallInfo ());
+		levelSelector = new LevelSelector(screen, playerTileSet, dict);
+		islevelSelector = false;
+		levelSelector.hide();
 		textInit();
 		playerColorTransform = new ColorTransform(1, 1, 1);
 		playerColors = new Array<RGBA>();
@@ -496,7 +533,7 @@ class GameLogic extends Sprite
 		playerColors.push(new RGBA(1.0, 0.5, 1.0));
 		playerColors.push(new RGBA(0.5, 1.0, 1.0));
 		playerColors.push(new RGBA(0.5, 0.5, 0.5));		
-		balltexture = 7;
+		balltexture = 1;
 		savegame = new Savegame();
 #if sound		
 		ScrollSnd.init();
@@ -518,8 +555,6 @@ class GameLogic extends Sprite
 				screen.filters = [blur];
 			});
 			*/
-		playerTileSet = new TileSet(screen);
-		playerTileSet.init (new BallInfo ());
 	}
 
 	function deInit()
@@ -538,15 +573,48 @@ class GameLogic extends Sprite
 	
 	function initLevelSelector()
 	{
-		screen.addEventListener( MouseEvent.MOUSE_DOWN, levelselectorMouseDown );
-		levelSelector = new LevelSelector(screen, playerTileSet);
+		trace("initLevelSelector");
+		var mc: Sprite = new Sprite();
+		mc.addEventListener( MouseEvent.MOUSE_DOWN, levelselectorMouseDown );
+		levelSelector.changeMC(mc);
+		levelSelector.show();
+		islevelSelector = true;
+		for (text in textLevelSelector)
+		{
+			text.setMC(mc);
+		}
+		var spriteText : Sprite = new Sprite();
+		removeText();
+		//setTextMC( spriteText );
+		setTextMC( levelSelector.mc);
+		screen.addChild(spriteText);
+	}
+	
+	function deinitLevelSelector()
+	{
+		trace("deinitLevelSelector");
+		levelSelector.hide();
+		screen.removeEventListener( MouseEvent.MOUSE_DOWN, levelselectorMouseDown );
+		islevelSelector = false;
+		for (text in textLevelSelector)
+		{
+			text.removeMC();
+		}
 	}
 	
 	function levelselectorMouseDown(e:flash.events.MouseEvent): Void
 	{
-
-		levelSelector.down(Std.int(screen.stage.mouseX),
+		var rv: Int =
+			levelSelector.down(Std.int(screen.stage.mouseX),
 							Std.int(screen.stage.mouseY));
+		if (rv != -1)
+		{
+			levelnum = rv;
+			trace("selected level: " + rv);
+			curBlocks = allBlocks;
+			mode = 9;
+			nextLevel();
+		}
 	}
 	
 	function init ()
@@ -599,6 +667,7 @@ class GameLogic extends Sprite
 		slowdownMult = 1;
 		slowdownZMult = 1;
 		accelerateMult = 1;
+		timeStartLevel = Std.int (Date.now().getTime());
 	} 
     
 	public function nextLevel()
@@ -615,7 +684,7 @@ class GameLogic extends Sprite
 	// function to follow the link when clicking on the first zone
 	public function goToAnne(e:flash.events.MouseEvent): Void {
 			try {
-					flash.Lib.getURL(new flash.net.URLRequest("http://dobdob.metacortex.hu"),"_top");
+					flash.Lib.getURL(new flash.net.URLRequest("http://internetjatek.hu"),"_top");
 			} catch (e:Dynamic) {
 					trace (e);
 			}
@@ -691,7 +760,7 @@ class GameLogic extends Sprite
         public function highlightFab(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
                 ts.font=defaultFont;
-                ts.size = 12;
+                ts.size = 30;
                 ts.color=0xffffff;
                 var i=0;
                 szoveg.setTextFormat(ts);
@@ -700,7 +769,7 @@ class GameLogic extends Sprite
         public function unhighlightFab(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
                 ts.font=defaultFont;
-                ts.size = 12;
+                ts.size = 30;
                 ts.color=0xaaaaff;
                 szoveg.setTextFormat(ts);
         }
@@ -762,7 +831,7 @@ class GameLogic extends Sprite
 		public function procMessage(e:MouseEvent) {
 					nextLevel();
 		}
-	
+				
 	public function initLevel(levelnum:Int)
 	{
 		scalefactor = 0.2;
@@ -1209,6 +1278,7 @@ class GameLogic extends Sprite
 					if (curBlocks >= allBlocks)
 					{
 						mode = 9;
+						timeEndLevel = Std.int (Date.now ().getTime ());
 					}
 					else
 					{
@@ -1257,10 +1327,11 @@ class GameLogic extends Sprite
 		calculateFps();
 		if (mode == -1)
 		{
-			levelSelector.process();
+
 			levelSelector.hover(
 				Std.int(screen.stage.mouseX),
 				Std.int(screen.stage.mouseY));
+			levelSelector.process();				
 			levelSelector.draw();
 			var a : Bool = Keys.keyIsDown (KEY_S);
 			if (a)
@@ -1302,8 +1373,14 @@ class GameLogic extends Sprite
 				//trace(casting);
 //				levelSelector.setStates(arr);
 			}
-			//else
-				//KeyTrepeat = false;				
+			a = Keys.keyIsDown (KEY_SPACE);
+			if (a && !KeyTrepeat)
+			{
+
+				flapo.Score.submitScore(0);
+			}
+
+
 			return;
 		}
 		var a : Bool = Keys.keyIsDown (KEY_SPACE);
@@ -1400,19 +1477,21 @@ class GameLogic extends Sprite
 	#end
 	//	if (checkSkipFrame())
 	//		return;
-		if (mode == 16)
+		if (mode == 15) //play to LevelSelector
 		{
 			deInit();
-			if (mode == -2)
-			{
-				initLevelSelector();
-				mode = -1;
-			}
+			initLevelSelector();
+			mode = -1;
+		}
+			
+		if (mode == 16)
+		{
+			if (islevelSelector)
+				deinitLevelSelector();
 			else
-			{
-				init();
-				mode = 1;
-			}
+				deInit();
+			init();
+			mode = 1;
 		}
 		if (mode < 8)
 		{

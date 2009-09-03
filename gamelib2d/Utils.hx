@@ -88,11 +88,24 @@ class Utils
       mc.graphics.curveTo(r+x, -Math.tan(Math.PI/8)*r+y, r+x, y);
       mc.graphics.endFill();
     }
+	
+    public static function drawBubble(mc:Sprite, x:Float, y:Float, r:Float, width: Int, height: Int) {
+		//mc.graphics.lineStyle(0.3, 0x000000, 1);
+	  mc.graphics.beginFill(0xFFFFFF, 1);
+	  mc.graphics.drawRoundRect(x - width / 2, y - height-r, width, height, r);
+	  mc.graphics.endFill();
+	  mc.graphics.moveTo(x - r, y - r);
+	  mc.graphics.beginFill(0xFFFFFF, 1);
+	  mc.graphics.lineTo(x, y);
+	  mc.graphics.lineTo(x + r, y - r);
+	  //mc.graphics.lineStyle(0.3, 0xFFFFFF, 1);
+	  mc.graphics.endFill();
+    }
+	
        /* draw an filled arc with center at x,y and radius r, clockwise with 0<=hour<=12
     */
 	  public static function drawArc(mc:Sprite, x:Float, y:Float, r:Float, hour:Int, alpha: Float = 0.8) {
       mc.graphics.beginFill(0x000000, alpha);
-	  trace("drawarc");
       var i:Int;
       var alpha : Float;
       var beta : Float;
@@ -120,12 +133,7 @@ class Utils
       }
       mc.graphics.lineTo(x,y);
       mc.graphics.endFill();
-    }
-	
-	static function drawThing(mc: Sprite)
-	{
-	
-	}
+    }	
 	
 #if flash9	
 	public static function gc ()

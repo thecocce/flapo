@@ -49,7 +49,7 @@ class Main extends flash.display.Sprite
 		super();
 		//var connect:com.blitzagency.xray.util.XrayConnect = com.blitzagency.xray.util.XrayConnect.getInstance(_root, true);		
 		flash.Lib.current.addChild (this);
-		Log.setColor (0xaa0000);
+		Log.setColor (0xFFFFFF);
 		testobj = null;
 		trace("Loaded");
 #if MDebugger
@@ -87,11 +87,11 @@ class Main extends flash.display.Sprite
 		 testobj.traceCallback();
       }
       catch (e : flash.Error) {
-         trace("Could not call prent...traceCallback() from Haxe. Maybe not preloaded?");
+         trace("Could not call parent...traceCallback() from Haxe. Maybe not preloaded?");
          trace("Error was: " + e.message);
       }
 
-      trace("Example brought to you by Mindless Labs");
+      //trace("Example brought to you by Mindless Labs");
 	  game.setParent(testobj);
    }
 
