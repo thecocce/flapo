@@ -23,10 +23,8 @@ class LevelPlayer
 	public var rollY: Float;
 	public var needRedraw: Bool;
 	
-	public function new(p: Player, s: LevelState) 
+	public function init()
 	{
-		player = p;
-		state = s;
 		timer = 0;
 		glowstrength = 0;
 		rollspeedX = 0;
@@ -34,8 +32,14 @@ class LevelPlayer
 		needRedraw = true;
 		rollX = -35;
 		rollY = 70;
-		//rollX = -20;
-		//rollY = -45;
+		player.setFilter(glowstrength, glowstrength/5);
+	}
+	
+	public function new(p: Player, s: LevelState) 
+	{
+		player = p;
+		state = s;
+		init();
 	}
 	
 	public function draw()
@@ -152,5 +156,12 @@ class LevelPlayer
 			case 3:
 				player.setColorTransform(new ColorTransform(1, 1, 0.5));
 		}
+		needRedraw = true;
+	}
+	
+	public function setCompleted(gscore: Int, ?gmedal: Int = -1)
+	{
+		state.setCompleted(gscore, gmedal);
+		setCTbyState();
 	}
 }

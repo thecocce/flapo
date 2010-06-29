@@ -95,7 +95,7 @@ class Player
 	{
 	  var ix: Int;
 	  var iy: Int;
-	  var iz: Int;
+	  var iz: Float;
 	  var alpha: Int;
 	  var shade: Int;
 	  var rr:Int = r * r;
@@ -107,11 +107,12 @@ class Player
 		xxyy = ix * ix + iy * iy;
 		if (xxyy<=rr) //bent van e a korben
 		{
-			iz = Std.int(Math.sqrt(1 * 1 - ix * ix - iy * iy + r * r) / 3 + 1);
-			alpha = 255 - iz * 33;
+			iz = Math.sqrt(1 * 1 - ix * ix - iy * iy + r * r) / 3 + 1;
+			alpha = Std.int(255 - iz * 33);
 			if (alpha > 255) alpha = 255;
 			if (alpha < 0) alpha = 0;
-			shade =  128 - Std.int( (ix + iy ) * 128 / (r));
+			//shade =  128 - Std.int( (ix + iy ) * 128 / (r));
+			shade =  128 - Std.int( (ix + iy ) * 256 / (r));
 			if (shade > 255) shade = 255;
 			if (shade < 0) shade = 0;
 			bdShade.setPixel32(ix + center, iy + center,
@@ -254,6 +255,7 @@ class Player
 
 		var offset: Float = z - Std.int(z);
 		var alpha: Float = 1 - offset;
+		//trace("alpha: " + alpha + " offset: " + offset);
 		if (x < 0) --x;
 		if (y < 0) --y;
 		var shx: Int = Utils.iAbs(Utils.safeMod(Std.int(x - 24 + offset * 48 + 5 + 4), 48));
@@ -384,7 +386,7 @@ class Player
 	public function changeAlpha(galpha: Float)
 	{
 		mcPlayer2.alpha = galpha;
-		mcPlayerShadow.alpha = galpha;
+		//mcPlayerShadow.alpha = galpha;
 	}
 	
 	public function changeAlphaShadow(galpha: Float)

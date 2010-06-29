@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<shx:resources version="9" compress="false"
+   xmlns:shx="http://mindless-labs.com/samhaxe"
+   xmlns:snd="http://mindless-labs.com/samhaxe/modules/Sound"
+   xmlns:font="http://mindless-labs.com/samhaxe/modules/Font"
+   xmlns:img="http://mindless-labs.com/samhaxe/modules/Image">
+   
+  <shx:frame>
+      <img:image class="Clouds1" genclass="symbolOnly" import=".\gfx\Clouds1.png"/>
+      <img:image class="New" genclass="symbolOnly" import=".\gfx\New.png"/>
+      <img:image class="Ball" genclass="symbolOnly" import=".\gfx\Ball.png"/>
+      <img:image class="MicroTiles" genclass="symbolOnly" import=".\gfx\MicroTilesb.png"/>
+      <img:image class="Backgr100" genclass="symbolOnly" import=".\gfx\Backgr100.png"/>
+      <img:image class="Backgr50" genclass="symbolOnly" import=".\gfx\Backgr50.png"/>
+      <img:image class="Backgr150" genclass="symbolOnly" import=".\gfx\Backgr150.png"/>
+      <img:image class="Kottatile" genclass="symbolOnly" import=".\gfx\Kottatile.png"/>
+
+      <img:image class="EarthImgBlue" genclass="symbolOnly" import=".\gfx\earthbl.png"/>
+      <img:image class="EarthImg" genclass="symbolOnly" import=".\gfx\earth.png"/>
+      <img:image class="LogoText1" genclass="symbolOnly" import=".\gfx\logo1.png"/>
+      <img:image class="LogoText2" genclass="symbolOnly" import=".\gfx\logo2.png"/>
+      <img:image class="LogoText3" genclass="symbolOnly" import=".\gfx\logo3.png"/>
+	  
+      <img:image class="Winback" genclass="symbolOnly" import=".\Winback.png"/>
+      <img:image class="Background" genclass="symbolOnly" import=".\flapo2_background.png"/>
+      <img:image class="Flag_hu" genclass="symbolOnly" import=".\flag_hu.png"/>
+      <img:image class="Flag_en" genclass="symbolOnly" import=".\flag_en2.png"/>
+
+      <snd:sound class="Block_disappear_wav" import=".\snd\block_disappear_01.mp3"/>
+      <snd:sound class="Bump_wav" import=".\snd\bump_03.mp3"/>
+      <snd:sound class="Color_change_wav" import=".\snd\colorchange_v2_01.mp3"/>
+      <snd:sound class="Falling_wav" import=".\snd\falling_01.mp3"/>
+      <snd:sound class="False_win_wav" import=".\snd\False_win_01.mp3"/>
+      <snd:sound class="Jump_platform_wav" import=".\snd\jump_platform_02.mp3"/>
+      <snd:sound class="Win_wav" import=".\snd\win_03.mp3"/>
+      <snd:sound class="Ticktack_wav" import=".\snd\ticktack_01.mp3"/>
+      <snd:sound class="Peace_mp3" import=".\snd\peace.mp3"/>
+
+      <font:ttf import=".\ARIALN.TTF" name="ArialNarrow">
+         <font:characters>
+            <font:include range="a..z"/>
+            <font:include range="A..Z"/>
+            <font:include range="0..9"/>
+            <font:include characters=" ,.:!?'-()/-áéíóóöőúüűÁÉÍÓÖŐÚÜÚ"/>
+         </font:characters>
+      </font:ttf>
+      <font:ttf import=".\ARIALNB.TTF" name="ArialNarrowBold">
+         <font:characters>
+            <font:include range="a..z"/>
+            <font:include range="A..Z"/>
+            <font:include range="0..9"/>
+            <font:include characters=" ,.:!?'-()/-áéíóóöőúüűÁÉÍÓÖŐÚÜÚ"/>
+         </font:characters>
+      </font:ttf>      
+
+<!--	  <font name="ArialNarrow" import=".\ARIALN.TTF" 
+glyphs="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&#x2605;&#x2606;&#x2613;&#x2620;&#x2713;&#x2714;&#x2715;&#x2716;&#x2717;&#x2718;&#x2764;"/>
+	  <font name="ArialNarrowBold" import=".\ARIALNB.TTF"/> -->
+  </shx:frame> 
+</shx:resources>

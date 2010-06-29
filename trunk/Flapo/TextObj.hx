@@ -29,14 +29,19 @@ class TextObj
 		tf = new TextField ();
 		tf.width = width;
 		tf.height = height;
-		tf.setTextFormat(ts);
+		//tf.setTextFormat(ts);
 		if (isHTML)
 			tf.htmlText = dict.get(textnum);
 		else
 			tf.text = dict.get(textnum);
+		if (ts != null)
+			tf.setTextFormat(ts);
 		tf.x = x;
 		tf.y = y;
 		tf.visible = visible;
+		tf.selectable = false;
+		if (ts != null)
+			tf.embedFonts = true;
 #if Vye
 #else
 		if (filters != null)
@@ -68,10 +73,16 @@ class TextObj
 	
 	public function setText(text: String, ?isHTML: Bool = false)
 	{
-		tf.setTextFormat(ts);
+		//tf.setTextFormat(ts);
 		if (isHTML)
+		{
 			tf.htmlText = text;
+		}
 		else
-			tf.text = text;
+		{
+			tf.text = text ;
+		}
+		if (ts != null)
+			tf.setTextFormat(ts);
 	}
 }

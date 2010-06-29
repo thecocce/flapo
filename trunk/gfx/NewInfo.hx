@@ -21,9 +21,9 @@ class NewInfo extends TileSetData
     name = "New";
     tileW = 48;
     tileH = 48;
-    numTilesX = 3;
+    numTilesX = 4;
     numTilesY = 1;
-    numTiles = 3;
+    numTiles = 4;
     numSequences = 0;
   }
 

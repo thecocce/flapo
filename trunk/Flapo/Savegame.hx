@@ -12,6 +12,10 @@ class Savegame {
 			//trace(prop+": "+localInfo.data[prop]);
 		//}
 	}
+
+    public function saveMoreTexture(moreTexture: Bool) {
+    	localInfo.data.moretext = moreTexture;
+    }	
 	
     public function saveScore(score: Int) {
     	localInfo.data.score = score;
@@ -19,6 +23,7 @@ class Savegame {
 
 	public function saveArray(a: Array<LevelState> ) {
 		trace("save array");
+		trace (a);
     	localInfo.data.a = a.copy();
 		localInfo.flush();
     }
@@ -38,6 +43,14 @@ class Savegame {
 		trace(localInfo.data.b);
 		return localInfo.data.b;
     }
+	
+	public function loadMoreTexture(def: Bool)
+	{
+		if (localInfo.data.moretext == null/*undefined*/) {
+			return def;
+		}
+		return localInfo.data.moretext;
+	}	
 	
 	public function loadScore(def: Int)
 	{
