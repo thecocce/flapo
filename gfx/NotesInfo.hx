@@ -23,7 +23,7 @@ class NotesInfo extends TileSetData
     tileH = 48;
     numTilesX = 5;
     numTilesY = 3;
-    numTiles = 14;
+    numTiles = 13;
     numSequences = 0;
   }
 

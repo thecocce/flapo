@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="iso-8859-1"?>
+<movie width="550" height="400" framerate="30">
+  <background color="#000000"/>
+  <frame>
+    <library>
+      <bitmap id="EarthImgBlue" name="EarthImgBlue" import=".\lib\earthbl.png"/>
+      <bitmap id="EarthImg" name="EarthImg" import=".\lib\earth.png"/>
+      <bitmap id="LogoText1" name="LogoText1" import=".\lib\logo1.png"/>
+      <bitmap id="LogoText2" name="LogoText2" import=".\lib\logo2.png"/>
+      <bitmap id="LogoText3" name="LogoText3" import=".\lib\logo3.png"/>
+    </library>
+  </frame> 
+</movie>

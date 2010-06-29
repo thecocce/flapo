@@ -13,6 +13,9 @@ import mochi.haxe.MochiScores;
 import mochi.as3.MochiScores;
 #end
 
+#if MindJolt
+import apis.mindjolt.MindJolt;
+#end
 
 class Score 
 {
@@ -79,6 +82,54 @@ class Score
 //				MochiScores.showLeaderboard({boardID: boardID, score: playerscore});
 		MochiScores.showLeaderboard({boardID: boardID});
 #end
+#if MindJolt
+	if (MindJolt.MindJoltAPI)
+	{
+			var board:Int = gboard + 1;
+			MindJolt.MindJoltAPI.service.submitScore(gscore > 0?gscore:null, "Level" + gboard);
+			trace("MINDJOLT score submit" + "Level" + board);
+	}
+#end
 	}
 	
+	public static function convertTime(gtime: Int, bMS: Bool=false, MSDigits: Int = 2): String
+	{
+		var t: Int=gtime;
+		var hour: Int=Std.int(t/1000/60/60);
+		t=t-hour*1000*60*60;
+		var min: Int=Std.int(t/1000/60);
+		t=t-min*1000*60;
+		var sec: Int=Std.int(t/1000);
+		t = t - sec * 1000;
+		var res: String = "";
+		if (hour > 0)
+		{
+			if (hour < 10) res = "0"+hour;
+			else res = "" + hour;
+			res = res + ":";
+		}
+		if (min < 10) res = res + "0" + min;
+		else res = res + min;
+		res = res + "'";
+		if (sec < 10) res = res + "0" + sec;
+		else res = res + sec;
+		if (bMS)
+		{
+			var ms: String = "";
+			var substract: Int = 0;
+			trace (t);
+			for (i in 0 ... MSDigits)
+			{
+				var digit: Int = Std.int( (t - substract) / Math.pow(10, 2 - i));
+				trace(digit);
+				substract += Std.int(digit * Math.pow(10, 2 - i));
+				trace(substract);
+				ms = ms + digit;
+				trace(ms);
+			}
+			return res + "." + ms;
+		}
+		else
+			return res;
+	}
 }

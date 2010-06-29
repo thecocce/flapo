@@ -21,9 +21,9 @@ class Clouds1Info extends TileSetData
     name = "Clouds1";
     tileW = 32;
     tileH = 32;
-    numTilesX = 6;
-    numTilesY = 3;
-    numTiles = 18;
+    numTilesX = 7;
+    numTilesY = 5;
+    numTiles = 33;
     numSequences = 0;
   }
 

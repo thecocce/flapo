@@ -13,12 +13,17 @@ class LevelState implements Dynamic<Int>
 	public var score: Int;
 	public var medal: Int; //0-none, 1-bronze, 2-silver, 3-gold
 	
-	public function new() 
+	public function reset()
 	{
 		lock = true;
 		completed = false;
 		score = 0;
-		medal = 0;
+		medal = 0;		
+	}
+	
+	public function new() 
+	{
+		reset();
 	}
 
 	public function convert(d: Dynamic)
@@ -49,11 +54,17 @@ class LevelState implements Dynamic<Int>
 		lock = true;
 	}
 	
+	public function isLocked(): Bool
+	{
+		return lock;
+	}
+	
 	public function setCompleted(gscore: Int, ?gmedal: Int = -1)
 	{
 		lock = false;
 		completed = true;
 		score = gscore;
+		trace("setting score to " + gscore);
 		if (gmedal >= 0)
 			medal = gmedal;
 	}

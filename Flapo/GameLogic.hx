@@ -2,15 +2,22 @@
  * ...
  * @author Bence Dobos
  */
+//"$(ToolsDir)\swfmill\swfmill.exe" simple Res.xml Res.swf
 //"$(ToolsDir)\swfmill\swfmill2\swfmill.exe" simple Res.xml Res.swf
 //-swf-lib Res.swf -D debug -D ModPlayer -D MochiBot -D Kongregate -D showfps -D MonsterDebugger
 //-swf-lib Res.swf -D debug -D fdb
-//-swf-lib Res.swf -D debug -D ModPlayer -D sound -D MochiBot -D Kongregate
+//-swf-lib Res.swf -D debug -D ModPlayer -D sound -D MochiBot -D Kongregate -D MochiScores
+//-swf-lib ResSameHaxe.swf --no-traces -D sound -D mp3Music -D MochiBot -D MochiScores -D Logo
+//-D Kongregate
+//-D MindJolt (de akkor nem kell MochiScores)
+
 package flapo;
 
 //APIs
 #if MochiBot
 import apis.mochi.MochiBot;
+import flash.text.Font;
+import flash.utils.Dictionary;
 #end
 
 #if MochiScores
@@ -21,12 +28,19 @@ import mochi.haxe.MochiScores;
 import mochi.as3.MochiScores;
 #end
 
+#if MindJolt
+import apis.mindjolt.MindJolt;
+#end
+
+import flapo.Score;
+
 #if Kongregate
 import apis.kongregate.CKongregate;
 #end
 
 #if ModPlayer
 import modplay.ModPlayer;
+import ModMusicData;
 #end
 
 #if MonsterDebugger
@@ -78,6 +92,7 @@ import flash.text.TextField;
 import flash.text.AntiAliasType;
 import flapo.RotatedBall;
 import flapo.TextObj;
+import flapo.SiteLock;
 /*
 class Winback extends BitmapData
 {
@@ -86,6 +101,9 @@ class Winback extends BitmapData
 		super(0,0);
 	}
 }*/
+class ArialNarrow extends flash.text.Font { }
+class ArialNarrowBold extends flash.text.Font { }
+
 
 class GameLogic extends MovieClip //Sprite
 {
@@ -99,6 +117,11 @@ class GameLogic extends MovieClip //Sprite
 #if Kongregate
 	static var kg: CKongregate;
 #end
+
+#if MindJolt
+	static var mj: MindJolt;
+#end
+
 #if MonsterDebugger
 		// Variable to hold the debugger
 		// This is needed to explore your live application
@@ -117,11 +140,11 @@ class GameLogic extends MovieClip //Sprite
 	static var foregroundLayer: Layer;
 	static var foregroundLayer2: Layer;
 	static var level: Level;
-	static var levelwinlose: Level;
+	//static var levelwinlose: Level;
 	static var levelcontainer: LevelContainer;
 
-	static var winloseX: Float = 0;
-	static var winloseY: Float = 0;
+	//static var winloseX: Float = 0;
+	//static var winloseY: Float = 0;
 	
 	static var x: Float = 0;
 	static var y: Float = 0;
@@ -142,6 +165,7 @@ class GameLogic extends MovieClip //Sprite
 	public static inline var KEY_N		=  78;
 
 	public var KeyTrepeat: Bool;
+	public var KeyNrepeat: Bool;
 	
 	public var playerTileSet: TileSet;
 	public var player: Player;
@@ -151,10 +175,6 @@ class GameLogic extends MovieClip //Sprite
 	public var plZ: Int;
 	public var plXscreen: Int;
 	public var plYscreen: Int;
-	
-	var ct100: ColorTransform;
-	var ct50: ColorTransform;
-//	public var snd: ScrollSnd;
 	
 	var slowdownMult: Float;
 	var slowdownZMult: Float;
@@ -181,6 +201,7 @@ class GameLogic extends MovieClip //Sprite
 	//String
 		var mcText: Sprite;
         var szoveg:TextField;
+		var texts: Array<TextObj>;
 
         // the font to use for the letters
         var defaultFont:String;
@@ -189,6 +210,7 @@ class GameLogic extends MovieClip //Sprite
 		var tsBlocks: TextFormat;
 		var tfMessage: TextField;
 		var tfMessage2: TextField;
+		var tfBack: TextField;
 		static var msg2Timeout : Int = 0;
 		var tfInfo: TextField;
 		
@@ -197,12 +219,15 @@ class GameLogic extends MovieClip //Sprite
 		public static var mode: Int;
 		
 		public static var levelnum: Int = 15;
-		public static var infomode: Bool = false;
+		public static var infomode: Int = 0;
 		public static var infowin: Sprite;
 		var tfInfowin: TextField;
 		var tsInfowin: TextFormat;
 		var tfInfowinWinner: TextField;
 		var tsInfowinWinner: TextFormat;
+		public static var flag_hu: Sprite;
+		public static var flag_en: Sprite;
+		public static var background: Sprite;
 
 		public static var levelSelector: LevelSelector;
 		public static var islevelSelector: Bool;
@@ -216,10 +241,20 @@ class GameLogic extends MovieClip //Sprite
 		
 		public var savegame: Savegame;
 		
+		public var LevelStarted: Bool;
 		public var timeStartLevel: Int;
 		public var timeEndLevel: Int;
 		
-	public function new ()
+		public var MochiScoresStatus: Int;
+		
+		public var globalscale: Float;
+		
+		var levelTime: Int;
+		var bestTime: Int;
+		static var medalTimes = { gold: -1, silver: -1, bronze: -1 };
+		static var moreTexturesUnlocked: Bool;
+		
+	public function new (back: Sprite)
 	{
 		super();
 		testobj = null;
@@ -227,9 +262,13 @@ class GameLogic extends MovieClip //Sprite
 #if Kongregate
 		kg = new CKongregate(null);
 #end
+#if MindJolt
+		//mj = new MindJolt(null);
+#end
 		screen = this;
 		screen = new Sprite ();
 		//screen = new MovieClip();
+		background = back;
 		screen.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 	}
 	
@@ -241,7 +280,10 @@ class GameLogic extends MovieClip //Sprite
 		if (kg==null || kg.loaded==false || kg.type<2)
 			kg = new CKongregate(testobj);
 #end		
-
+#if MindJolt
+		if (mj==null || mj.loaded==false || mj.type<2)
+			mj = new MindJolt(testobj);
+#end
 	}
 	
 //	private function doComplete()
@@ -249,21 +291,38 @@ class GameLogic extends MovieClip //Sprite
 //		flash.external.ExternalInterface.call("s = function(){document.getElementById('"+this.id+"').focus(); }");
 //	}		
 
+    private function buildAscii( s_:String ):String
+    {
+        var ascii:  String  = '';
+        var i:      Int     = 0;
+        while( i < s_.length )
+        {
+            ascii += '&#' + s_.charCodeAt( i ) + ';'; 
+            i++;   
+        }
+        return ascii;
+    }
+
 	function textInit()
 	{
 		mcText = screen;
 
 		//Strings
-		defaultFont="Times New Roman";
-		
+		//defaultFont = "Times New Roman";
+		//defaultFont="Arial Narrow Bold";
+		defaultFont = "ArialNarrowBold";
+	
 		var ts: TextFormat = new flash.text.TextFormat();
 		ts.font = defaultFont;
 		ts.size = 30;
 		ts.color = 0xaaaaff;
 		tfZene = new TextField();
+		tfZene.selectable = false;
 		tfZene.height = 40;
+		tfZene.width = 200;
 		tfZene.appendText(dict.get(1));
 		tfZene.setTextFormat(ts);
+		tfZene.embedFonts = true;
 		tfZene.x = 80;
 		tfZene.filters = [
 			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
@@ -278,7 +337,10 @@ class GameLogic extends MovieClip //Sprite
 		ts.size = 30;
 		ts.color = 0xaaaaff;
 		tfInfo = new TextField();
+		tfInfo.selectable = false;
+		tfInfo.embedFonts = true;
 		tfInfo.height = 40;
+		tfInfo.width = 70;
 		tfInfo.appendText(dict.get(2));
 		tfInfo.setTextFormat(ts);
 		tfInfo.x = 0;
@@ -296,22 +358,26 @@ class GameLogic extends MovieClip //Sprite
 		tsBlocks.size = 30;
 		tsBlocks.color = 0xaaaaff;
 		tfBlocks = new TextField();
+		tfBlocks.selectable = false;
+		tfBlocks.embedFonts = true;
 		tfBlocks.height = 40;
 		tfBlocks.width = 250;
-		tfBlocks.appendText("n/a");
+		tfBlocks.appendText("");
 		tfBlocks.setTextFormat(tsBlocks);
-		tfBlocks.x = Def.STAGE_W / 2 - 50;
+		tfBlocks.x = Def.STAGE_W / 2 - 70;
 		tfBlocks.filters = [
 			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
 		];
 		mcText.addChild(tfBlocks);
 		
 		szoveg = new flash.text.TextField();
-		szoveg.width = 150;
+		szoveg.selectable = false;
+		szoveg.embedFonts = true;
+		szoveg.width = 200;
 		szoveg.height = 40;
-		szoveg.appendText("More games");
+		szoveg.htmlText = dict.get(22);
 		szoveg.setTextFormat(ts);
-		szoveg.x = Def.STAGE_W - 150;
+		szoveg.x = Def.STAGE_W - 200;
 		szoveg.y = 0;
 		szoveg.filters = [
 			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
@@ -326,11 +392,13 @@ class GameLogic extends MovieClip //Sprite
 		ts.size = 30;
 		ts.color = 0xaaaaff;
 		tfMessage = new TextField();
+		tfMessage.selectable = false;
+		tfMessage.embedFonts = true;
 		tfMessage.width = 150;
 		tfMessage.height = 40;
 		tfMessage.appendText(dict.get(3));
 		tfMessage.setTextFormat(ts);
-		tfMessage.x = Def.STAGE_W / 2 - 50;
+		tfMessage.x = Def.STAGE_W / 2 - 150;
 		tfMessage.y = Def.STAGE_H / 2 - 20;
 		tfMessage.visible = false;
 		tfMessage.filters = [
@@ -340,18 +408,38 @@ class GameLogic extends MovieClip //Sprite
 		tfMessage.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightMessage);
 		tfMessage.addEventListener(flash.events.MouseEvent.CLICK, this.procMessage);
 		mcText.addChild(tfMessage);
+		
+		tfBack = new TextField();
+		tfBack.selectable = false;
+		tfBack.embedFonts = true;
+		tfBack.width = 150;
+		tfBack.height = 40;
+		tfBack.appendText(dict.get(19));
+		tfBack.setTextFormat(ts);
+		tfBack.x = Def.STAGE_W / 2 + 50;
+		tfBack.y = Def.STAGE_H / 2 - 20;
+		tfBack.visible = false;
+		tfBack.filters = [
+			new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false)
+		];
+		tfBack.addEventListener(MouseEvent.MOUSE_OVER,this.highlightBack);
+		tfBack.addEventListener(MouseEvent.MOUSE_OUT,this.unhighlightBack);
+		tfBack.addEventListener(flash.events.MouseEvent.CLICK, this.procBack);
+		mcText.addChild(tfBack);
 
 		ts = new flash.text.TextFormat();
 		ts.font=defaultFont;
 		ts.size = 20;
 		ts.color = 0xffffff;
 		tfMessage2 = new TextField();
-		tfMessage2.width = 400;
+		tfMessage2.selectable = false;
+		tfMessage2.embedFonts = true;
+		tfMessage2.width = 420;
 		tfMessage2.height = 40;
 		//tfMessage2.appendText("Destroy all round tiles before entering the exit tile!");
 		tfMessage2.appendText(dict.get(4));
 		tfMessage2.setTextFormat(ts);
-		tfMessage2.x = Def.STAGE_W / 2 - 190;
+		tfMessage2.x = Def.STAGE_W / 2 - 200;
 		tfMessage2.y = Def.STAGE_H / 2 - 70;
 		tfMessage2.visible = false;
 		tfMessage2.filters = [
@@ -371,23 +459,18 @@ class GameLogic extends MovieClip //Sprite
 		mcText.addChild(infowin);
 		
 		tsInfowin = new flash.text.TextFormat();
-		tsInfowin.font=defaultFont;
+		tsInfowin.font = defaultFont;
+		tsInfowin.leading = -2;
 		tsInfowin.size = 17;
 		//tsInfowin.color = 0xaaaaff;
 		tfInfowin = new TextField();
+		tfInfowin.selectable = false;
+		tfInfowin.embedFonts = true;
 		tfInfowin.height = 250;
 		tfInfowin.width = 250;
 		tfInfowin.wordWrap = true;
 		tfInfowin.multiline = true;
-/*		tfInfowin.htmlText = "<font color='#FFFFFF'><p align='center'><b>Flapo 2</b></p></font><br>" +
-			"<font color='#aaaaff'>Control the ball trough multilevel mazes. Destroy all round tiles before entering the exit tile. You can destroy tiles which colors match your ball`s color. Use jump pads to access higher levels><br><br>" +
-			"Written by <a href='http://dobosbence.extra.hu'><font color='#ccccFF'>Bence Dobos</font></a><br>" +
-			"Music and sfx by <a href='http://www.freshmindworkz.hu/vincenzo'><font color='#ccccFF'>Vincenzo</font></a><br>" +
-			"Idea and graphics by Microshark/Damage<br>" +
-			"<p align='center'>copyright 2009</p></font>";*/
 		tfInfowin.htmlText = dict.get(5);
-
-		//tfInfowin.appendText("n/a");
 		tfInfowin.setTextFormat(tsInfowin);
 		tfInfowin.x = 25;
 		tfInfowin.y = 25;
@@ -398,15 +481,16 @@ class GameLogic extends MovieClip //Sprite
 		
 		tsInfowinWinner = new flash.text.TextFormat();
 		tsInfowinWinner.font=defaultFont;
-		tsInfowinWinner.size = 20;
+		tsInfowinWinner.size = 18;
 		tsInfowinWinner.color = 0xFFFFFF;
 		tfInfowinWinner = new TextField();
+		tfInfowinWinner.selectable = false;
+		tfInfowinWinner.embedFonts = true;
 		tfInfowinWinner.height = 250;
 		tfInfowinWinner.width = 250;
 		tfInfowinWinner.wordWrap = true;
 		tfInfowinWinner.multiline = true;
-		//tfInfowinWinner.htmlText = "<p align='center'><b>You win!</b></p><br></center>You beat Flapo 2 techdemo! Congratulation! You can continue playing levels from Flapo 1!<br><br><p align='center'>Click to close this message.</p>";
-		tfInfowinWinner.htmlText = dict.get(6); //TODO
+		tfInfowinWinner.htmlText = dict.get(6);
 		tfInfowinWinner.setTextFormat(tsInfowinWinner);
 		tfInfowinWinner.x = 25;
 		tfInfowinWinner.y = 25;
@@ -417,10 +501,84 @@ class GameLogic extends MovieClip //Sprite
 		infowin.addChild(tfInfowinWinner);
 		
 		textLevelSelector = new Array<TextObj>();
-		var text: TextObj = new TextObj(levelSelector.mc, dict, 14, 200, 380, 300, 100,
-			ts, true, [new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)]
+		var tfClearTable: TextObj = new TextObj(levelSelector.mc, dict, 18,
+			Def.STAGE_W - 150, Def.STAGE_H - 30, 150, 100,
+			ts, true, [new GlowFilter(0xFF6666, 0.8, 3, 3, 3, 3, false, false)]
 		);
-		textLevelSelector.push(text);
+		tfClearTable.tf.addEventListener(MouseEvent.MOUSE_DOWN,this.clearTableEvent);
+		tfClearTable.tf.addEventListener(MouseEvent.MOUSE_OVER,this.clearTableOver);
+		tfClearTable.tf.addEventListener(MouseEvent.MOUSE_OUT,this.clearTableOut);
+		textLevelSelector.push(tfClearTable);
+		
+							var ts = new flash.text.TextFormat();
+							ts.font=defaultFont;
+							ts.size = 20;
+							ts.color = 0xFFFFFF;
+							var gf:GlowFilter = new GlowFilter(0x6666ff, 1.0, 3, 3, 3, 3, false, false);
+							
+							texts = new Array<TextObj>();
+							var text: TextObj = new TextObj(infowin, dict, 8, 10, 30, 280, 40,
+								ts, true, 
+								[gf],
+								false);
+							texts.push(text);
+							//high
+							var text: TextObj = new TextObj(infowin, dict, 17, 10, 70, 280, 40,
+								ts, true, 
+								[gf],
+								false);
+							texts.push(text);
+							//medal
+							text = new TextObj(infowin, dict, 9,
+								10, 110, 280, 30,
+								ts, true,
+								[gf],
+								false); 
+							texts.push(text);
+							//send
+							ts = new flash.text.TextFormat();
+							ts.font=defaultFont;
+							ts.size = 20;
+							//ts.color = 0x804020;
+							text = new TextObj(infowin, dict, 13, 10, 250, 140, 30,
+								ts, true,
+								[new GlowFilter(0xFFFFFF, 1.0, 3, 3, 3, 3, false, false)],
+								false); //no visible
+							text.tf.addEventListener(MouseEvent.MOUSE_DOWN,this.submitScoreEvent);
+							text.tf.addEventListener(MouseEvent.MOUSE_OVER,this.submitScoreOver);
+							text.tf.addEventListener(MouseEvent.MOUSE_OUT,this.submitScoreOut);
+							texts.push(text);
+							//show
+						#if !MindJolt
+							text = new TextObj(infowin, dict, 14, 150, 250, 140, 30,
+								ts, true,
+								[new GlowFilter(0xFFFFFF, 1.0, 3, 3, 3, 3, false, false)],
+								false); //no visible
+							text.tf.addEventListener(MouseEvent.MOUSE_DOWN,this.showScoreEvent);
+							text.tf.addEventListener(MouseEvent.MOUSE_OVER,this.showScoreOver);
+							text.tf.addEventListener(MouseEvent.MOUSE_OUT,this.showScoreOut);
+							texts.push(text);
+						#end
+							
+		flag_en = new Sprite();
+		var oEng:Flag_en_Info = new Flag_en_Info();
+		var bitmap: Bitmap = oEng.getBitmap();
+		flag_en.addChild(bitmap);
+		flag_en.x = 5;
+		flag_en.y = (Def.STAGE_H) - 20;
+		flag_en.addEventListener(flash.events.MouseEvent.CLICK, this.SwitchLangEng);
+		mcText.addChild(flag_en);
+
+		flag_hu = new Sprite();
+		var oHun:Flag_hu_Info = new Flag_hu_Info();
+		var bitmap: Bitmap = oHun.getBitmap();
+		flag_hu.addChild(bitmap);
+		flag_hu.x = 25;
+		flag_hu.y = (Def.STAGE_H) - 20;
+		flag_hu.addEventListener(flash.events.MouseEvent.CLICK, this.SwitchLangHun);
+		mcText.addChild(flag_hu);
+		
+
 	}
 	
 	function removeText()
@@ -431,9 +589,13 @@ class GameLogic extends MovieClip //Sprite
 		mcText.removeChild(tfBlocks);
 		mcText.removeChild(szoveg);
 		mcText.removeChild(tfMessage);
+		mcText.removeChild(tfBack);
 		mcText.removeChild(tfMessage2);
 		mcText.removeChild(tfInfo);
 		mcText.removeChild(infowin);
+		mcText.removeChild(flag_en);
+		mcText.removeChild(flag_hu);
+		//screen.removeChild(mcText);
 		mcText = null;
 	}
 	
@@ -445,13 +607,17 @@ class GameLogic extends MovieClip //Sprite
 		mcText.addChild(tfBlocks);
 		mcText.addChild(szoveg);
 		mcText.addChild(tfMessage);
+		mcText.addChild(tfBack);
 		mcText.addChild(tfMessage2);
 		mcText.addChild(tfInfo);
 		mcText.addChild(infowin);
+		mcText.addChild(flag_hu);
+		mcText.addChild(flag_en);
 	}
  
 	function firstInit ()
-	{
+	{		
+		nodeinit = false;
 		trace("firstinit");
 #if MonsterDebugger
 		// Init the debugger
@@ -469,46 +635,79 @@ class GameLogic extends MovieClip //Sprite
             trace (e);
         }
 #end
+		MochiScoresStatus = 0;
 #if MochiScores
-	var mc:MovieClip = new MovieClip();
-	flash.Lib.current.addChild(mc);
-	//MochiAd.showPreGameAd({clip:mc, id:"xxxxxx", res:"512x384"});
-		mochi.haxe.MochiServices.connect("c47c13357bc92452", flash.Lib.current);
+		MochiScoresStatus = 1;
+		mochi.haxe.MochiServices.connect("c47c13357bc92452", flash.Lib.current, MochiError);
 #end
 #if MochiScores2
-	mochi.as3.MochiServices.connect("c47c13357bc92452",  flash.Lib.current);
+		mochi.as3.MochiServices.connect("c47c13357bc92452",  flash.Lib.current);
 #end
 		//doComplete();
 		flash.Lib.current.addChild (screen);
-		//Def.STAGE_W = 480;
-		//Def.STAGE_H = 360;
-		Def.STAGE_W = screen.stage.stageWidth;
-		Def.STAGE_H = screen.stage.stageHeight;
-		if (Def.STAGE_W > 1400)
+		Def.STAGE_W = 550;
+		Def.STAGE_H = 400;
+		var w:Int = screen.stage.stageWidth;
+		var h:Int = screen.stage.stageHeight;
+		globalscale = 1;
+		if (Def.STAGE_W != w && Def.STAGE_H != h)
 		{
-			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 4);
-			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 4);
-			screen.scaleX = 4;
-			screen.scaleY = 4;
+			var ratio: Float = h / w;
+			globalscale = w / Def.STAGE_W;
+			Def.STAGE_H = Std.int(ratio * Def.STAGE_W);
+			screen.scaleX = globalscale;
+			screen.scaleY = globalscale;
 		}
-		else if (Def.STAGE_W > 1000)
-		{
-			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 3);
-			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 3);
-			screen.scaleX = 3;
-			screen.scaleY = 3;
-		}
-		else if (Def.STAGE_W > 650)
-		{
-			Def.STAGE_W = Utils.safeDiv (Def.STAGE_W , 2);
-			Def.STAGE_H = Utils.safeDiv (Def.STAGE_H , 2);
-			screen.scaleX = 2;
-			screen.scaleY = 2;
-		}
+
 		//screen.stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
+
+		var lang = null;
+		
+		var glang:String = flapo.SiteLock.getBrowserLanguage();
+		if (glang != null)
+		{
+			if (glang == "hu")
+				lang = DICT_HUN;
+			if (glang == "en")
+				lang = DICT_ENG;
+		}
+		
+		var domain:String = flapo.SiteLock.getDomain();
+		if (domain != null && lang == null)
+		{
+			var LastDot:Int = domain.lastIndexOf(".")+1;
+			var domEnd:Int = domain.lastIndexOf(".", LastDot)+1;
+			var countrycode = domain.substr(LastDot);
+			if (countrycode != null)
+			{
+				if (countrycode == "hu")
+					lang = DICT_HUN;
+			}
+		}
+
+		dict = new Dict(lang);
+		/*
+		if (SiteLock.check() == false)
+		{
+			//SiteLock check failed, game is stolen
+			mode = -999;
+			pleasewait = new Sprite();
+			pleasewait.graphics.beginFill(0x00007b);
+			pleasewait.graphics.drawRoundRect(Def.STAGE_W / 2 - 200, Def.STAGE_H / 2 - 20, 400, 40, 25, 25);
+			pleasewait.graphics.endFill();
+			pleasewait.alpha = 0.5;
+			defaultFont="ArialNarrowBold";
+			var ts: TextFormat = new flash.text.TextFormat();
+			ts.font = defaultFont;
+			ts.size = 23;
+			ts.color = 0x6BECE9;
+			var to: TextObj = new TextObj(pleasewait, dict, 21, Def.STAGE_W / 2 - 200, Def.STAGE_H / 2 - 15, 400, 40, ts, true);
+			screen.addChild(pleasewait);
+			screen.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+			return;
+		}
+		*/	
 		levelcontainer = new LevelContainer();
-		ct100 = new ColorTransform(1, 1, 1, 1, 0, 0, 0, 0);
-		ct50 = new ColorTransform(1, 1, 1, 0.5, 0, 0, 0, 0);
 		Keys.init ();
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_DOWN, onKeyDown);
 		flash.Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyUp);
@@ -516,7 +715,6 @@ class GameLogic extends MovieClip //Sprite
 
 		effectsClearTiles = new List<Effect>();
 		effectsToRemove = new List<Effect>();
-		dict = new Dict(DICT_ENG);
 		playerTileSet = new TileSet(screen);
 		playerTileSet.init (new BallInfo ());
 		levelSelector = new LevelSelector(screen, playerTileSet, dict);
@@ -527,23 +725,28 @@ class GameLogic extends MovieClip //Sprite
 		playerColors = new Array<RGBA>();
 		playerColors.push(new RGBA(1, 1, 1));
 		playerColors.push(new RGBA(1.0, 0.5, 0.5));
-		playerColors.push(new RGBA(0.5, 0.5, 1.0));
 		playerColors.push(new RGBA(0.5, 1.0, 0.5));
+		playerColors.push(new RGBA(0.5, 0.5, 1.0));
 		playerColors.push(new RGBA(1.0, 1.0, 0.5));
 		playerColors.push(new RGBA(1.0, 0.5, 1.0));
 		playerColors.push(new RGBA(0.5, 1.0, 1.0));
 		playerColors.push(new RGBA(0.5, 0.5, 0.5));		
 		balltexture = 1;
+		moreTexturesUnlocked = false;
 		savegame = new Savegame();
 #if sound		
 		ScrollSnd.init();
 		ScrollSnd.enabled = true;
-		//ScrollSnd.play(ScrollSound.NiceNice);
+#if mp3Music
+		ScrollSnd.play(ScrollSound.Peace);
+#end
 #end
 #if ModPlayer
 		mp = new ModPlayer();
-		mp.play("Test.mod");
-		mp.onProgress = function(prg:Int) { setProgress(prg); }
+	#if MochiScores
+	#else
+		mp.playBytes(ModMusicData.getByteArray());
+	#end
 #end
 /*
 		//blurtest
@@ -557,18 +760,37 @@ class GameLogic extends MovieClip //Sprite
 			*/
 	}
 
+	function MochiError(errorCode:String):Void
+	{
+		trace(errorCode);
+		MochiScoresStatus = -1;
+//		mochi.haxe.MochiServices.connect("c47c13357bc92452", flash.Lib.current, MochiError);
+	}
+	
 	function deInit()
 	{
-		level.clear();
-		level = null;
-		levelwinlose.clear();
-		levelwinlose = null;
+		if (level != null)
+		{
+			level.clear();
+			level = null;
+		}
+		//levelwinlose.clear();
+		//levelwinlose = null;
 		player.destroy();
 		//dbg.destroy();
 		removeText();
 		tfMessage.visible = false;
+		tfBack.visible = false;
 		tfMessage2.visible = false;
 		effectsClearTiles.clear();
+		for (t in texts)
+		{
+			t.tf.visible = false;
+		}
+		infowin.visible = false;
+		infomode = 0;
+		if (ScrollSnd.channelTicktack != null)
+			ScrollSnd.channelTicktack.stop();		
 	}
 	
 	function initLevelSelector()
@@ -585,9 +807,11 @@ class GameLogic extends MovieClip //Sprite
 		}
 		var spriteText : Sprite = new Sprite();
 		removeText();
-		//setTextMC( spriteText );
-		setTextMC( levelSelector.mc);
+		setTextMC( spriteText );
 		screen.addChild(spriteText);
+		setTextMC( levelSelector.mc);
+		tfBlocks.text = "";
+		tfBlocks.setTextFormat(tsBlocks);
 	}
 	
 	function deinitLevelSelector()
@@ -600,19 +824,20 @@ class GameLogic extends MovieClip //Sprite
 		{
 			text.removeMC();
 		}
+		removeText();
 	}
 	
 	function levelselectorMouseDown(e:flash.events.MouseEvent): Void
 	{
 		var rv: Int =
-			levelSelector.down(Std.int(screen.stage.mouseX),
-							Std.int(screen.stage.mouseY));
+			levelSelector.down(Std.int(screen.stage.mouseX*globalscale),
+							Std.int(screen.stage.mouseY*globalscale));
 		if (rv != -1)
 		{
 			levelnum = rv;
 			trace("selected level: " + rv);
 			curBlocks = allBlocks;
-			mode = 9;
+			mode = 8;
 			nextLevel();
 		}
 	}
@@ -621,9 +846,9 @@ class GameLogic extends MovieClip //Sprite
 	{
 		trace(levelnum);
 		initLevel(levelnum);
-		levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
-		for (d in levelwinlose.Layers)
-			d.layer.setVisible(false);
+		//levelwinlose = levelcontainer.getLevel( -1, screen, 1.0, 0);
+		//for (d in levelwinlose.Layers)
+		//	d.layer.setVisible(false);
 		//for (d in level.Layers)
 		//	d.layer.setVisible(false);
 		plX = 0;
@@ -667,12 +892,76 @@ class GameLogic extends MovieClip //Sprite
 		slowdownMult = 1;
 		slowdownZMult = 1;
 		accelerateMult = 1;
-		timeStartLevel = Std.int (Date.now().getTime());
+		timeStartLevel = -1;
+		LevelStarted = false;
+		//timeStartLevel = Std.int (Date.now().getTime());
+		for (t in texts)
+		{
+			t.tf.visible = false;
+		}
+		infowin.visible = false;
+		infomode = 0;
 	} 
     
+	public function allTextRenew()
+	{
+		for (t in texts)
+		{
+			t.renewText();
+		}
+
+		texts[0].setText(dict.get(8) + flapo.Score.convertTime(levelTime, true), true);
+		texts[1].setText(dict.get(17) +
+			flapo.Score.convertTime(
+				levelSelector.players[levelnum].state.score, true),
+			true);
+		//medal
+		texts[2].setText(dict.get(9 + levelSelector.players[levelnum].state.medal),
+			true); 		
+		
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font = defaultFont;
+		ts.size = 30;
+		ts.color = 0xaaaaff;
+		tfZene.text = dict.get(1);
+		tfZene.setTextFormat(ts);
+
+		tfInfo.text = dict.get(2);
+		tfInfo.setTextFormat(ts);
+		
+		szoveg.htmlText = dict.get(22);
+		szoveg.setTextFormat(ts);
+		if (mode == 108)
+			tfMessage.text = dict.get(23);
+		else
+			tfMessage.text = dict.get(3);
+		tfMessage.setTextFormat(ts);
+
+		tfBack.text = dict.get(19);
+		tfBack.setTextFormat(ts);
+		
+		ts = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		ts.color = 0xffffff;
+		tfMessage2.text = dict.get(4);
+		tfMessage2.setTextFormat(ts);
+		
+		tfInfowin.htmlText = dict.get(5);
+		tfInfowin.setTextFormat(tsInfowin);
+		
+		tfInfowinWinner.htmlText = dict.get(6);
+		tfInfowinWinner.setTextFormat(tsInfowinWinner);
+		
+		textLevelSelector[0].renewText();
+		levelSelector.initBubbles();
+		levelSelector.submitScoreOut(null); //renew text: submit
+		levelSelector.showScoreOut(null); //renew text: show
+	}
+	
 	public function nextLevel()
 	{
-		if (mode == 9)
+		if (mode == 109)
 		{
 			levelnum++;
 			if (levelnum > levelcontainer.maxLevel)
@@ -684,7 +973,7 @@ class GameLogic extends MovieClip //Sprite
 	// function to follow the link when clicking on the first zone
 	public function goToAnne(e:flash.events.MouseEvent): Void {
 			try {
-					flash.Lib.getURL(new flash.net.URLRequest("http://internetjatek.hu"),"_top");
+					flash.Lib.getURL(new flash.net.URLRequest("http://internetjatek.hu"),"_blank");
 			} catch (e:Dynamic) {
 					trace (e);
 			}
@@ -694,21 +983,33 @@ class GameLogic extends MovieClip //Sprite
     static function setProgress(prg:Int)
     {
 		mpprg = prg;
-		if (mpprg == 100)
-			mpPlay = true;
+		//if (mpprg == 100)
+		//	mpPlay = true;
 		trace(prg+"% loaded");
 	//	trace("...............");
     }
 #end
-	
+
+		public function SwitchLangEng(e:flash.events.MouseEvent): Void {
+			dict.change(DICT_ENG);
+			allTextRenew();
+		}
+
+
+		public function SwitchLangHun(e:flash.events.MouseEvent): Void {
+			dict.change(DICT_HUN);
+			allTextRenew();
+		}
 		
 		public function togleZene(e:flash.events.MouseEvent): Void {
 		#if sound
-			//if (ScrollSnd.snd_NiceNicePlaying)
-			//	ScrollSnd.stop(ScrollSound.NiceNice);
-			//else
-			//	ScrollSnd.play(ScrollSound.NiceNice);
+		#if mp3Music
+			if (ScrollSnd.snd_PeacePlaying)
+				ScrollSnd.stop(ScrollSound.Peace);
+			else
+				ScrollSnd.play(ScrollSound.Peace);
 			//ScrollSnd.enabled = !ScrollSnd.enabled;
+		#end
 		#end
 		#if ModPlayer
 			if (mpprg == -1)
@@ -722,37 +1023,55 @@ class GameLogic extends MovieClip //Sprite
 				mpPlay = false;
 			}
 			else
+			{
 				mp.play("Test.mod");
+				mpPlay = true;
+			}
 		#end
 		}
 		
 		public function togleInfo(e:flash.events.MouseEvent): Void {
-			if (infomode)
+			if (infomode == 1)
 			{
-				infomode = false;
+				infomode = 0;
 				infowin.visible = false;
 				tfInfowin.visible = true;
 				tfInfowinWinner.visible = false;
 			}
-			else
+			else if (infomode == 0)
 			{
-				infomode = true;
+				infomode = 1;
 				infowin.visible = true;
+				tfInfowin.visible = true;				
+				tfInfowinWinner.visible = false;
+				for (t in texts)
+				{
+					t.tf.visible = false;
+				}	
 			}
 		}
         
 		public function togleInfowin(e:flash.events.MouseEvent): Void {
-			if (infomode)
+			if (infomode == 2)
 			{
-				infomode = false;
+				infomode = 3;
+				tfInfowinWinner.visible = false;
+				for (t in texts)
+				{
+					t.tf.visible = true;
+				}
+			}
+			else
+			if (infomode == 1)
+			{
+				infomode = 0;
 				infowin.visible = false;
 				tfInfowin.visible = true;
 				tfInfowinWinner.visible = false;
-			}
-			else
-			{
-				infomode = true;
-				infowin.visible = true;
+				for (t in texts)
+				{
+					t.tf.visible = false;
+				}				
 			}
 		}
 		
@@ -792,7 +1111,6 @@ class GameLogic extends MovieClip //Sprite
                 tfZene.setTextFormat(ts);
         }
 
-        // function to highlight the letters 0 to 9
         public function highlightInfo(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
                 ts.font=defaultFont;
@@ -801,7 +1119,6 @@ class GameLogic extends MovieClip //Sprite
                 tfInfo.setTextFormat(ts);
         }
         
-        // function to un-highlight the letters 0 to 9
         public function unhighlightInfo(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
                 ts.font=defaultFont;
@@ -810,7 +1127,6 @@ class GameLogic extends MovieClip //Sprite
                 tfInfo.setTextFormat(ts);
         }		
 		
-		        // function to highlight the letters 0 to 9
         public function highlightMessage(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
                 ts.font=defaultFont;
@@ -819,7 +1135,6 @@ class GameLogic extends MovieClip //Sprite
                 tfMessage.setTextFormat(ts);
         }
         
-        // function to un-highlight the letters 0 to 9
         public function unhighlightMessage(e:MouseEvent) {
                 var ts = new flash.text.TextFormat();
                 ts.font=defaultFont;
@@ -831,12 +1146,35 @@ class GameLogic extends MovieClip //Sprite
 		public function procMessage(e:MouseEvent) {
 					nextLevel();
 		}
-				
+
+        public function highlightBack(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xffffff;
+                tfBack.setTextFormat(ts);
+        }
+        
+        public function unhighlightBack(e:MouseEvent) {
+                var ts = new flash.text.TextFormat();
+                ts.font=defaultFont;
+                ts.size = 30;
+                ts.color=0xaaaaff;
+                tfBack.setTextFormat(ts);
+        }		
+
+		public function procBack(e:MouseEvent) {
+			mode = -2;
+		}		
+		
 	public function initLevel(levelnum:Int)
 	{
 		scalefactor = 0.2;
 		scaleoffset = 1 - (4 -1) * scalefactor;		
 		level = levelcontainer.getLevel(levelnum, screen, scalefactor, scaleoffset);
+		speedX = 0;
+		speedY = 0;
+		speedZ = 0;
 
 		if (level != null)
 		{
@@ -861,6 +1199,7 @@ class GameLogic extends MovieClip //Sprite
 #end
 			}
 		}
+		levelSelector.getMedalTimes(levelnum, medalTimes);
 	}
 
 	static var lastrealfps: Int = 0;
@@ -871,6 +1210,9 @@ class GameLogic extends MovieClip //Sprite
 	static var skipframecumulative: Float = 0;
 	public inline static var maxfps = 27;
 	public static var lastfps: Int;
+	private var nodeinit: Bool;
+	private var pleasewait: Sprite;
+	private static var waitingformusicloading: Bool = false;
 	
 #if debug
 #if showfps
@@ -914,14 +1256,30 @@ class GameLogic extends MovieClip //Sprite
 		{
 			//trace( -2);
 			firstInit();
-			mode = -2;
-			if (mode == -2)
-			{
-				initLevelSelector();
-				mode = -1;
-			}
-			else
-				init ();
+			if (mode == -999)
+				return;
+			mode = -6;
+			//if (mode == -2)
+			//{
+				//LOAD STATE
+				var arr: Array<Dynamic> = savegame.loadArray();
+				var casting: Array<LevelState> = new Array<LevelState>();
+				if (arr != null)
+				{
+					for (i in 0 ... arr.length)
+					{
+						var casting2: LevelState = new LevelState();
+						casting2.convert(arr[i]);
+						casting.push(casting2);
+					}
+					levelSelector.setStates(casting);
+				}
+				moreTexturesUnlocked = savegame.loadMoreTexture(false);
+			//	initLevelSelector();
+			//	mode = -1;
+			//}
+			//else
+			//	init ();
 		}
 
 		var t: Int = Std.int (Date.now ().getTime () / 1000);
@@ -972,14 +1330,26 @@ class GameLogic extends MovieClip //Sprite
 		else speedX += speedX > 0? -actslowdown:actslowdown;
 		if (Utils.rAbs(speedY) < actslowdown) speedY = 0;
 		else speedY += speedY > 0? -actslowdown:actslowdown;
-		if (Utils.rAbs(speedZ) > actslowdownZ)
-			speedZ += speedZ > 0? -actslowdownZ:actslowdownZ;		
+		if (Utils.rAbs(speedZ) < actslowdownZ)
+		{
+			if (mode > 100) //win or lose
+				speedZ = 0;
+		}
+		else
+			speedZ += speedZ > 0? -actslowdownZ:actslowdownZ;
 	}
 
 	function calculateSpeeds()
 	{
 		speedX += (Utils.boolToInt (Keys.keyIsDown (KEY_RIGHT)) - Utils.boolToInt (Keys.keyIsDown (KEY_LEFT))) * accelerate;
 		speedY += (Utils.boolToInt (Keys.keyIsDown (KEY_DOWN)) - Utils.boolToInt (Keys.keyIsDown (KEY_UP))) * accelerate;
+		if (LevelStarted == false && (speedX != 0 || speedY != 0))
+		{
+			trace("START");
+			timeStartLevel = Std.int (Date.now().getTime());
+			LevelStarted = true;
+			trace(timeStartLevel);
+		}
 	#if debug
 		speedZ += -accelerateZ;// + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
 	#else
@@ -1029,18 +1399,32 @@ class GameLogic extends MovieClip //Sprite
 				if (level.isBackground(i) == false)
 				{
 					if (z < i)
-						level.Layers[i].setAlpha( 0.5 );
+						if (i-z>2.5)
+							level.Layers[i].setAlpha( 0.1 );
+						else
+						if (i-z>1.5)
+							level.Layers[i].setAlpha( 0.2 );
+						else
+							level.Layers[i].setAlpha( 0.35 );
 					else
 						level.Layers[i].setAlpha( 1.0 );
 				}
 				d.layer.update ();
 				scale = scalefactor * i + scaleoffset;
-				d.layer.moveTo ((x*scale - ( Def.STAGE_W/2 * (1 - scale) )), (y*scale - ( Def.STAGE_H/2 * (1 - scale) )));
+				var newx:Float = x * scale - ( Def.STAGE_W / 2 * (1 - scale) );
+				var newy:Float = y * scale - ( Def.STAGE_H / 2 * (1 - scale) );
+				if (level.isBackground(i))
+				{
+					newx += level.Layers[i].xscroll * frame * scale;
+					newy += level.Layers[i].yscroll * frame * scale;
+				}
+				d.layer.moveTo (newx, newy);
 
 				d.layer.draw ();
 			}
 			++i;
 		}
+		/*
 		if (mode == 9 || mode == 8)
 		{
 			for (d in levelwinlose.Layers)
@@ -1052,7 +1436,7 @@ class GameLogic extends MovieClip //Sprite
 					d.layer.draw ();
 				}
 			}
-		}
+		}*/
 	}
 	
 	function ProcessEffectsClearTiles()
@@ -1178,6 +1562,8 @@ class GameLogic extends MovieClip //Sprite
 							z = i;
 							contact2 = true;
 						}
+						if (z < i)
+							speedZ = speedZ * 0.1;
 						//z = platform szintje - maradek mozgas (speed - dist)
 						break;
 					}
@@ -1192,8 +1578,8 @@ class GameLogic extends MovieClip //Sprite
 			{
 				z += speedZ / div;
 				if (z >= 0 && z < level.Layers.length)
-				{
 					player.setDepth2(level.Layers[Std.int(z)].playerlayer);
+				{
 					player.changeScaleShadow(scalefactor * Std.int(z) + scaleoffset);
 					//dbg.setDepth2(level.Layers[Std.int(z)].playerlayer);
 				}
@@ -1267,7 +1653,7 @@ class GameLogic extends MovieClip //Sprite
 				if (curSeq == 4)
 				{
 					//jump
-					speedZ += 1;
+					speedZ += 0.8;
 					#if sound
 					ScrollSnd.play(ScrollSound.Jump_platform);
 					#end
@@ -1279,6 +1665,7 @@ class GameLogic extends MovieClip //Sprite
 					{
 						mode = 9;
 						timeEndLevel = Std.int (Date.now ().getTime ());
+						levelTime = timeEndLevel - timeStartLevel;
 					}
 					else
 					{
@@ -1325,23 +1712,119 @@ class GameLogic extends MovieClip //Sprite
 		//Log.setColor (0xffffff);
 		//trace(0);
 		calculateFps();
+		if (mode == -999)
+			return;
+#if ModPlayer
+	if (mpprg == 0)
+	{
+	#if MochiScores
+			if (MochiScoresStatus > 0 && !mochi.haxe.MochiServices.connected)
+			{
+				waitingformusicloading = true;
+			}
+			else if (mpPlay == false)
+			{
+				//mp.play("Test.mod");
+				mp.playBytes(ModMusicData.getByteArray());
+				mp.onProgress = setProgress;
+				mpPlay = true;
+				waitingformusicloading = true;
+			}
+	#end
+	}
+#end
+		if (mode == -10)
+		{
+			//logo
+		}
+		if (mode == -6)
+		{
+			//title screen init
+			nodeinit = true;
+#if ModPlayer
+			pleasewait = new Sprite();
+			pleasewait.graphics.beginFill(0x00007b);
+			pleasewait.graphics.drawRoundRect(Def.STAGE_W / 2 - 100, Def.STAGE_H / 2 - 20, 200, 40, 25, 25);
+			pleasewait.graphics.endFill();
+			pleasewait.alpha = 0.5;
+			defaultFont="ArialNarrowBold";
+			var ts: TextFormat = new flash.text.TextFormat();
+			ts.font = defaultFont;
+			ts.size = 30;
+			ts.color = 0x6BECE9;
+			var to: TextObj = new TextObj(pleasewait, dict, 20, Def.STAGE_W / 2 - 100, Def.STAGE_H / 2 - 20, 200, 40, ts, true);
+			screen.addChild(pleasewait);
+			mode = -5;
+		}
+		if (mode == -5)
+		{
+			
+			//title screen
+			if (waitingformusicloading && (mpprg > 99 || mpprg < 0))
+			{
+				waitingformusicloading = false;
+				screen.removeChild(pleasewait);
+				pleasewait = null;
+				mode = -4;
+			}
+			else
+			{
+				pleasewait.graphics.beginFill(0x0000FF);
+				pleasewait.graphics.drawRect(Def.STAGE_W / 2 -  70, Def.STAGE_H / 2 + 15, mpprg * 1.4, 5);
+				pleasewait.graphics.endFill();
+				return;
+			}
+		}
+#else
+			mode = -4;
+		}
+#end
+		if (mode == -4)
+		{
+			//title screen deinit
+			background.alpha -= 0.01;
+			if (background.alpha <= 0.3)
+				mode = -2;
+			return;
+		}
+	#if ModPlayer
+		if (!(mpprg == 100 || mpprg <= 0) && mpPlay)
+		{
+			tfBlocks.text = dict.get(1)+ ": " + Std.string(mpprg) + "%";
+			tfBlocks.setTextFormat(tsBlocks);
+		}
+		else if (mode <= 0)
+		{
+			tfBlocks.text = "";
+		}
+	#end
+		
+		if (mode == -2)
+		{
+			if (nodeinit == false)
+				deInit();
+			else nodeinit = false;
+			initLevelSelector();
+			mode = -1;
+		}
 		if (mode == -1)
 		{
 
 			levelSelector.hover(
-				Std.int(screen.stage.mouseX),
-				Std.int(screen.stage.mouseY));
+				Std.int(screen.stage.mouseX*globalscale),
+				Std.int(screen.stage.mouseY*globalscale));
 			levelSelector.process();				
 			levelSelector.draw();
+#if debug
 			var a : Bool = Keys.keyIsDown (KEY_S);
 			if (a)
 			{
 				savegame.saveArray(levelSelector.getStates());
 			}
+
 			a = Keys.keyIsDown (KEY_L);
-			if (a && !KeyTrepeat)
+			if (a)
 			{
-				KeyTrepeat = true;
 				var arr: Array<Dynamic> = savegame.loadArray();
 				var casting: Array<LevelState> = new Array<LevelState>();
 				for (i in 0 ... arr.length)
@@ -1353,33 +1836,19 @@ class GameLogic extends MovieClip //Sprite
 				levelSelector.setStates(casting);
 			}
 			else
-				KeyTrepeat = false;
 			a = Keys.keyIsDown (KEY_N);
 			if (a)
 			{
 				var arr: LevelState = new LevelState();
 				savegame.saveState(arr);
 			}
-			a = Keys.keyIsDown (KEY_T);
-			if (a && !KeyTrepeat)
-			{
-				KeyTrepeat = true;
-				var arr: Dynamic = savegame.loadState();
-				trace(arr);
-				var lState: LevelState = new LevelState();
-				lState.convert(arr);
-				trace(lState);
-				//var casting: LevelState = cast(arr, LevelState);
-				//trace(casting);
-//				levelSelector.setStates(arr);
-			}
 			a = Keys.keyIsDown (KEY_SPACE);
-			if (a && !KeyTrepeat)
+			if (a)
 			{
 
 				flapo.Score.submitScore(0);
 			}
-
+#end
 
 			return;
 		}
@@ -1391,85 +1860,40 @@ class GameLogic extends MovieClip //Sprite
 		}
 #if debug
 		a = Keys.keyIsDown (KEY_N);
-		if (a && !KeyTrepeat)
+		if (a && !KeyNrepeat)
 		{
 			curBlocks = allBlocks;
-			mode = 9;
+			mode = 109;
 			nextLevel();
-			KeyTrepeat = true;
+			KeyNrepeat = true;
 		}
 		else
-			KeyTrepeat = false;
-#end
-
-/*		else
-		if (a)
-		{
-			var mapX: Int;
-			var mapY: Int;
-			var e: MyLayer;
-			var mapX2: Int;
-			var mapY2: Int;
-			var found: Effect;
-			var i: Int = 2;
-			mapX = Utils.safeDiv (plX, 48);
-			mapY = Utils.safeDiv (plY, 48);
-			e = level.Layers[i];
-			mapX2 = Utils.safeMod(mapX, e.layer.mapW);
-			mapY2 = Utils.safeMod(mapY, e.layer.mapH);
-			found = findEffectInXYZ(effectsClearTiles,
-				mapX2,
-				mapY2,
-				i);
-			if (found == null)
-			{
-				effect = new Effect(mapX2, mapY2,
-					i, 1, 30);
-				effect.setState(1, 0, 19);
-				effectsClearTiles.add( effect );
-				//level.Layers[i].layer.writeMap(
-				//	mapX2,
-				//	mapY2,-2); 
-				++curBlocks;
-				if (curBlocks >= allBlocks)
-					mode = 7; //cleared all blocks
-			}
-		}*/
-		var b : Bool = Keys.keyIsDown (KEY_T);
-		if (b && !KeyTrepeat)
-		{
-			if (!KeyTrepeat)
-				++balltexture;
-			KeyTrepeat = true;
-		}
-		else
-			KeyTrepeat = false;
-
+			KeyNrepeat = false;
 		if (Keys.keyIsDown (KEY_S))
 		{
-			if (!KeyTrepeat)
-			{
-				trace("Saving game");
-				savegame.saveScore(curBlocks);
-				trace("Game saved");
-			}
-			KeyTrepeat = true;
+			trace("Saving game");
+			savegame.saveScore(curBlocks);
+			trace("Game saved");
 		}
-		else
-			KeyTrepeat = false;
 		if (Keys.keyIsDown (KEY_L))
 		{
-			//Save
-			if (!KeyTrepeat)
-			{
-				trace("Loading game");
-				curBlocks = savegame.loadScore(0);
-				trace("Game loaded");
-			}
-			KeyTrepeat = true;
+			trace("Loading game");
+			curBlocks = savegame.loadScore(0);
+			trace("Game loaded");
 		}
-		else
-			KeyTrepeat = false;
+#end
+		if (moreTexturesUnlocked)
+		{
+			var b : Bool = Keys.keyIsDown (KEY_T);
+			if (b && !KeyTrepeat)
+			{
+				++balltexture;
+				balltexture = balltexture % 3+1;
+				KeyTrepeat = true;
+			}
+			else
+				KeyTrepeat = false;
+		}
 	#if debug
 	#if showfps
 		showFPS ();
@@ -1477,12 +1901,6 @@ class GameLogic extends MovieClip //Sprite
 	#end
 	//	if (checkSkipFrame())
 	//		return;
-		if (mode == 15) //play to LevelSelector
-		{
-			deInit();
-			initLevelSelector();
-			mode = -1;
-		}
 			
 		if (mode == 16)
 		{
@@ -1505,41 +1923,92 @@ class GameLogic extends MovieClip //Sprite
 		{
 			if (player.mcPlayer.alpha == 0)
 			{
+				/*
 				//trace (99999999);
 				winloseX += maxspeed /3;
 				winloseY += maxspeed /3;
+				*/
 			}
 			else
 			{
 				if (player.mcPlayer.alpha <= 0.2)
 				{
 					player.mcPlayer.alpha = 0;
-					if (mode == 8)
-						levelwinlose.Layers[1].layer.setVisible(true);
+					mode += 100;
+					var ts: TextFormat = new flash.text.TextFormat();
+					ts.font = defaultFont;
+					ts.size = 30;
+					ts.color = 0xaaaaff;
+					if (mode == 108)
+					{
+						tfMessage.text = dict.get(23);
+						tfMessage.setTextFormat(ts);
+						tfMessage.y = Def.STAGE_H / 2 - 20;
+						tfBack.y = Def.STAGE_H / 2- 20;
+					}
+						//levelwinlose.Layers[1].layer.setVisible(true);
 					else
 					{
-						levelwinlose.Layers[0].layer.setVisible(true);
-						if (levelnum >= levelcontainer.maxLevel)
-						{
+						//levelwinlose.Layers[0].layer.setVisible(true);
+
+//						else
+//						{
+							levelSelector.unlock(levelnum); //debug leptetesnel elofordul, hogy nincs meg nyitva
+							bestTime = levelSelector.players[levelnum].state.score;
+							if (bestTime == 0 || bestTime > levelTime) 
+								levelSelector.setCompleted(levelnum, levelTime);
+							levelSelector.unlock(levelnum + 1);
+							savegame.saveArray(levelSelector.getStates());
+						#if Kongregate
+							if (kg != null) kg.SubmitStat("LevelCompleted", levelnum);
+							if (levelnum==8)
+								if (kg != null) kg.SubmitStat("First10LevelCompleted", 1);
+							if (levelnum==18)
+								if (kg != null) kg.SubmitStat("Second10LevelCompleted", 1);
+						#end
+							tfMessage.text = dict.get(3);
+							tfMessage.setTextFormat(ts);
+							tfMessage.y = Def.STAGE_H - 40;
+							tfBack.y = Def.STAGE_H - 40;
 							infowin.visible = true;
-							infomode = true;
+							tfInfowin.visible = false;
+							tfInfowinWinner.visible = false;
+							
+							texts[0].setText(dict.get(8) + flapo.Score.convertTime(levelTime, true), true);
+							texts[1].setText(dict.get(17) +
+								flapo.Score.convertTime(
+									levelSelector.players[levelnum].state.score, true),
+								true);
+							//medal
+							texts[2].setText(dict.get(9 + levelSelector.players[levelnum].state.medal),
+								true); 
+//						}
+						if (levelnum >= levelcontainer.maxLevel && infomode == 0)
+						{
+							//infowin.visible = true;
+							infomode = 2;
 							tfInfowin.visible = false;
 							tfInfowinWinner.visible = true;
+							moreTexturesUnlocked = true;
+							savegame.saveMoreTexture(moreTexturesUnlocked);
 						#if Kongregate
-							if (kg!=null) kg.SubmitStat("AllLevelCompleted", 1);
+							if (kg!=null) kg.SubmitStat("LastLevelCompleted", 1);
 						#end
 						}
 						else
 						{
-						#if Kongregate
-							if (kg!=null) kg.SubmitStat("LevelCompleted", levelnum);
-						#end
+							infomode = 3;
+							for (t in texts)
+							{
+								t.tf.visible = true;
+							}
 						}
 						#if sound
 						ScrollSnd.play(ScrollSound.Win);
 						#end
 					}
 					tfMessage.visible = true;
+					tfBack.visible = true;
 				}
 				else
 					player.mcPlayer.alpha -= 0.1;
@@ -1594,20 +2063,20 @@ class GameLogic extends MovieClip //Sprite
 		else 
 			player.clearShadow();
 		
-		if (z < 1 && (mode != 9 && mode != 8))
+		if (z < 1 && mode < 8)
 		{
 			player.changeAlpha((1 + z) / 2);
-			//dbg.changeAlpha((1 + z) / 2 * 0.4);
-			//if (mode != 9 && mode != 8)
 			{
 				mode = 8; //fallen
 				#if sound
 				ScrollSnd.play(ScrollSound.Falling);
 				#end
+				timeEndLevel = Std.int (Date.now ().getTime ());
+				levelTime = timeEndLevel - timeStartLevel;
 				//levelwinlose.Layers[0].layer.setVisible(true);
 			}
 		}
-		else if (mode != 9 && mode != 8)
+		else if (mode < 8)
 		{
 			player.changeAlpha(1.0);
 			//dbg.changeAlpha(0.4);			
@@ -1646,16 +2115,59 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 		}
 
 #if ModPlayer
-		if (!(mpprg == 100 || mpprg <= 0))
-		
+		if (!(mpprg == 100 || mpprg <= 0) && mpPlay)
 		{
-			tfBlocks.text = "Music Loading:" + Std.string(mpprg) + "%";
-			tfBlocks.setTextFormat(tsBlocks);
 		}
 		else
 #end
 		{
-			tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks);
+			var score: Int;
+
+			if (mode < 8)
+				score = Std.int (Date.now().getTime()) - timeStartLevel;
+			else
+				score = levelTime;
+			
+			if (LevelStarted == false)
+			{
+				score = 0;
+				if (Utils.safeMod(frame, 300) < 250)
+				{
+					tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks) +
+						"   " +
+						flapo.Score.convertTime( score );
+				}
+				else
+				{
+					tfBlocks.text = dict.get(24);
+				}
+			}
+			else
+				tfBlocks.text = Std.string(curBlocks) + "/" + Std.string(allBlocks) +
+					"   " +
+					flapo.Score.convertTime( score );
+
+			var medal;
+			if (score <= medalTimes.gold)
+				medal = 3;
+			else if (score <= medalTimes.silver)
+				medal = 2;
+			else if (score <= medalTimes.bronze)
+				medal = 1;
+			else
+				medal = 0;
+			switch (medal)
+			{
+				case 0:
+					tsBlocks.color = 0xAAAAFF; //  0.5, 0.5, 1.0));
+			//		tsBlocks.color = 0x44FF44; //0.3, 1.0, 0.3));
+				case 1:
+					tsBlocks.color = 0xFF9999; //1.0, 0.7, 0.7));
+				case 2:
+					tsBlocks.color = 0xDDDDDD; //0.8, 0.8, 0.8));
+				case 3:
+					tsBlocks.color = 0xFFFF77; //1, 1, 0.5));
+			}
 			tfBlocks.setTextFormat(tsBlocks);
 		}
 
@@ -1691,10 +2203,70 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 		}
 		return null;
 	}
-}
+	public function submitScoreEvent(e:MouseEvent) {
+		Score.submitScore(levelnum, levelSelector.players[levelnum].state.score);
+	}
+	public function showScoreEvent(e:MouseEvent) {
+		Score.submitScore(levelnum);
+	}
+	public function clearTableEvent(e:MouseEvent) {
+		levelSelector.reset();
+		moreTexturesUnlocked = false;
+		savegame.saveMoreTexture(moreTexturesUnlocked);
+	}
+	
+	public function submitScoreOver(e:MouseEvent) {
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		//ts.color = 0x5090F0;
+		texts[3].tf.htmlText = dict.get(15);
+		texts[3].tf.setTextFormat(ts);
+	}	
+	public function submitScoreOut(e:MouseEvent) {
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		//ts.color = 0x804020;
+		texts[3].tf.htmlText = dict.get(13);
+		texts[3].tf.setTextFormat(ts);
 
-/*
-map amiben a tile-ok kodjai vannak
-egy fv, amimplements a kodot rarakja a tileokra (write code)
-de jobb lenne nelkule a tutorial szovegek miatt
-*/
+	}	
+	public function showScoreOver(e:MouseEvent) {
+#if !MindJolt
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		//ts.color = 0x5090F0;
+		texts[4].tf.htmlText = dict.get(16);
+		texts[4].tf.setTextFormat(ts);
+#end		
+	}
+	
+	public function showScoreOut(e:MouseEvent) {
+#if !MindJolt		
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		//ts.color = 0x804020;
+		texts[4].tf.htmlText = dict.get(14);
+		texts[4].tf.setTextFormat(ts);
+#end		
+	}	
+	public function clearTableOver(e:MouseEvent) {
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		ts.color = 0xff8888;
+		textLevelSelector[0].tf.setTextFormat(ts);
+	}
+	
+	public function clearTableOut(e:MouseEvent) {
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		ts.color = 0xFFFFFF;
+		textLevelSelector[0].tf.setTextFormat(ts);
+	}	
+
+}

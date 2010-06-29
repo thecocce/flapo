@@ -23,7 +23,7 @@ public function tabfill(d: Int, r: Int)
 {
   var x: Int;
   var y: Int;
-  var z: Int;
+  var z: Float;
   		transtab = new Array < Array < Point >> ();
 		var ins: Array<Point>;
 		for (i in 0 ... 2*LENRAD)
@@ -39,7 +39,7 @@ public function tabfill(d: Int, r: Int)
   {
     if (x*x+y*y<=r*r) //bent van e a korben
     {
-      z = Std.int(Math.sqrt(d*d-x*x-y*y+r*r)/5+1);
+      z = Math.sqrt(d*d-x*x-y*y+r*r)/5+1;
       transtab[Std.int(x + LENRAD)][Std.int(y + LENRAD)].x = Std.int((x * d) / (z + d) * 4 + LENRAD);
       transtab[Std.int(x + LENRAD)][Std.int(y + LENRAD)].y = Std.int((y * d) / (z + d) * 4 + LENRAD);
     }

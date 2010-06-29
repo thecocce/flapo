@@ -1,19 +1,30 @@
 ﻿<?xml version="1.0" encoding="iso-8859-1"?>
-<movie width="640" height="400" framerate="100">
+<movie width="550" height="400" framerate="30">
   <background color="#000000"/>
   <frame>
     <library>
-      <!--<bitmap id="Background" name="Background" import=".\gfx\Background.png"/>-->
-      <bitmap id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/>
+<!--      <bitmap id="Blocks" name="Blocks" import=".\gfx\Blocks.png"/> -->
       <bitmap id="Clouds1" name="Clouds1" import=".\gfx\Clouds1.png"/>
-      <bitmap id="Abstract1" name="Abstract1" import=".\gfx\Abstract1.png"/>
+<!--      <bitmap id="Abstract1" name="Abstract1" import=".\gfx\Abstract1.png"/> -->
       <bitmap id="New" name="New" import=".\gfx\New.png"/>
-      <!--<bitmap id="Simplepatterned" name="Simplepatterned" import=".\gfx\Simplepatterned.png"/>-->
       <bitmap id="Ball" name="Ball" import=".\gfx\Ball.png"/>
-      <bitmap id="MicroTiles" name="MicroTiles" import=".\gfx\MicroTiles3b.png"/>
+      <bitmap id="MicroTiles" name="MicroTiles" import=".\gfx\MicroTilesb.png"/>
+      <bitmap id="Backgr100" name="Backgr100" import=".\gfx\Backgr100.png"/>
+      <bitmap id="Backgr50" name="Backgr50" import=".\gfx\Backgr50.png"/>
+      <bitmap id="Backgr150" name="Backgr150" import=".\gfx\Backgr150.png"/>
+      <bitmap id="Kottatile" name="Kottatile" import=".\gfx\Kottatile.png"/>
 
+      <bitmap id="EarthImgBlue" name="EarthImgBlue" import=".\gfx\earthbl.png"/>
+      <bitmap id="EarthImg" name="EarthImg" import=".\gfx\earth.png"/>
+      <bitmap id="LogoText1" name="LogoText1" import=".\gfx\logo1.png"/>
+      <bitmap id="LogoText2" name="LogoText2" import=".\gfx\logo2.png"/>
+      <bitmap id="LogoText3" name="LogoText3" import=".\gfx\logo3.png"/>
+	  
       <bitmap id="Winback" name="Winback" import=".\Winback.png"/>
-      <sound id="Block_disappear_wav" import=".\snd\block_disappear_01.mp3"/>
+      <bitmap id="Background" name="Background" import=".\flapo2_background.png"/>
+      <bitmap id="Flag_hu" name="Flag_hu" import=".\flag_hu.png"/>
+      <bitmap id="Flag_en" name="Flag_en" import=".\flag_en2.png"/>
+   <!--   <sound id="Block_disappear_wav" import=".\snd\block_disappear_01.mp3"/>
       <sound id="Bump_wav" import=".\snd\bump_03.mp3"/>
       <sound id="Color_change_wav" import=".\snd\colorchange_v2_01.mp3"/>
       <sound id="Falling_wav" import=".\snd\falling_01.mp3"/>
@@ -21,10 +32,16 @@
       <sound id="Jump_platform_wav" import=".\snd\jump_platform_02.mp3"/>
       <sound id="Win_wav" import=".\snd\win_03.mp3"/>
       <sound id="Ticktack_wav" import=".\snd\ticktack_01.mp3"/>
+      <sound id="Peace_mp3" import=".\snd\peace.mp3"/> -->
+
+	  <font name="ArialNarrow" import=".\ARIALN.TTF" 
+glyphs="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&#x2605;&#x2606;&#x2613;&#x2620;&#x2713;&#x2714;&#x2715;&#x2716;&#x2717;&#x2718;&#x2764;"/>
+	  <font name="ArialNarrowBold" import=".\ARIALNB.TTF"/>
       <!--<sound id="NiceNice_mp3" import=".\snd\NiceNice.mp3" />-->
       <!--<clip id="swf" import =".\xrayConnector_1.6.2.swf"/>-->
       <!--<clip id="swf" import =".\lib.swf"/>-->
       <!--<clip id="swf" import =".\library.swf"/>-->
+		<clip id="swf" import =".\music2.swf"/>
 
     </library>
   </frame> 

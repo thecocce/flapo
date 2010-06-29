@@ -34,7 +34,36 @@ class LevelSelector
 	var lastBubbleY: Float;
 	var bubbleHighlighted: Bool;
 	var board: Int;
+	static var goldMedalsSec: Array<Int> = 
+		[ 2, 7, 16, 7, 11, 8, 11, 23, 17, 28,
+		14, 16, 21, 21, 41, 22, 20, 13, 13, 43,
+		35, 42, 55, 40, 27, 71, 120, 35, 300, 30];
+	static var silverMult: Float = 1.1;
+	static var bronzeMult: Float = 1.3;
 	
+	public function reset()
+	{
+		for (p in players)
+		{
+			p.state.reset();
+		}
+		players[0].state.unlock();
+		players[10].state.unlock();
+		players[20].state.unlock();
+		var i: Int = 0;
+		for (p in players)
+		{
+			p.setCTbyState();
+			p.init();
+			++i;
+		}
+	}
+
+	public function initBubbles()
+	{
+		bubble.x = 100;
+		bubble.y = 100;
+	}
 	
 	public function new(screen, tileset: TileSet, gdict: Dict) 
 	{
@@ -52,27 +81,12 @@ class LevelSelector
 		{
 			p = new Player(mc, playerTileSet);
 			p.changeScale(1.0);
-			p.moveTo((i % 10) * 50+25, Std.int(i / 10) * 100+50);
+			p.moveTo((i % 10) * 50+25, Std.int(i / 10) * 100+100);
 			ls = new LevelState();
 			lp = new LevelPlayer(p, ls);
 			players.push(lp);
 		}
-		players[10].state.unlock();
-		players[11].state.unlock();
-		players[12].state.unlock();
-		players[13].state.unlock();
-		players[14].state.unlock();
-		players[15].state.unlock();
-		players[12].state.score = 1000;
-		players[13].state.medal = 1;
-		players[13].state.score = 1200;
-		players[14].state.medal = 2;
-		players[14].state.score = 1400;
-		players[15].state.medal = 3;
-		players[15].state.score = 1600;
-	
-		for (p in players)
-			p.setCTbyState();
+		reset();
 		timer = 0;
 		
 		//bubble text
@@ -81,8 +95,7 @@ class LevelSelector
 		gamelib2d.Utils.drawBubble(bubble, 0, 0, 10, 90, 45);
 		
 		mc.addChild(bubble);
-		bubble.x = 100;
-		bubble.y = 100;
+		initBubbles();
 		bubble.alpha = 0.7;
 		bubble.visible = false;
 		bubble.addEventListener(MouseEvent.MOUSE_OVER,this.highlightBubble);
@@ -90,20 +103,24 @@ class LevelSelector
 		//bubble.graphics.filters = [new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)];
 		dict = gdict;
 		texts = new Array<TextObj>();
-		var ts = new flash.text.TextFormat();
-		ts.font="Times New Roman";
-		ts.size = 10;
+		var ts;
+		//ts = null;
+		ts = new flash.text.TextFormat();
+		//ts.font = "Times New Roman";
+		ts.font = "ArialNarrowBold";
+		ts.size = 12;
 		ts.color=0x000000;
 		var text: TextObj = new TextObj(bubble, dict, 7, -45, -55, 90, 20,
 			ts, true, 
-//			[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)]
-			null,true); //no visible
+			null, //[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
+			true); //no visible
 		texts.push(text);
 		text = new TextObj(bubble, dict, 9, -45, -42, 90, 20,
 			ts, true,
-			//[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
-			null, true); //no visible
+			null, //[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
+			true); //no visible
 		texts.push(text);
+		ts = null;
 		text = new TextObj(bubble, dict, 13, -45, -28, 45, 20,
 			ts, true,
 			//[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
@@ -113,13 +130,16 @@ class LevelSelector
 		text.tf.addEventListener(MouseEvent.MOUSE_OUT,this.submitScoreOut);
 
 		texts.push(text);
+		#if !MindJolt
 		text = new TextObj(bubble, dict, 14, 0, -28, 45, 20,
 			ts, true,
 			//[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
 			null, true); //no visible
 		text.tf.addEventListener(MouseEvent.MOUSE_DOWN,this.showScoreEvent);
 		text.tf.addEventListener(MouseEvent.MOUSE_OVER,this.showScoreOver);
-		text.tf.addEventListener(MouseEvent.MOUSE_OUT,this.showScoreOut);		texts.push(text);
+		text.tf.addEventListener(MouseEvent.MOUSE_OUT, this.showScoreOut);
+		texts.push(text);
+		#end
 		bubbleCounter = 0;
 		bubbleHighlighted = false;
 		board = 0;
@@ -191,7 +211,7 @@ class LevelSelector
 							bubble.y = p.player.y+10;
 							bubble.visible = true;
 							if (p.state.score > 0)
-								texts[0].setText( dict.get(8) + p.state.score, true);
+								texts[0].setText( dict.get(8) + Score.convertTime(p.state.score), true);
 							else
 								texts[0].setText( dict.get(7), true);
 							texts[1].setText ( dict.get(9 + p.state.medal), true);
@@ -218,12 +238,11 @@ class LevelSelector
 	
 	public function down(x : Int, y : Int)
 	{
-	//players[5].activate();
 		for (p in 0 ... players.length)
 		{
-			if (players[p].hover(x, y))
+			if (players[p].state.lock == false && players[p].hover(x, y))
 			{
-				return p + 1;
+				return p;
 /*				if (p.state.lock)
 					p.state.unlock();
 				else
@@ -250,7 +269,11 @@ class LevelSelector
 			}
 		}
 		else
-			trace("ERROR: size != size");	
+			trace("ERROR: size != size");
+		for (p in players)
+		{
+			p.setCTbyState();
+		}
 	}
 	
 	public function getStates() : Array<LevelState>
@@ -299,12 +322,73 @@ class LevelSelector
 		texts[2].setText( dict.get(13), true);
 	}	
 	public function showScoreOver(e:MouseEvent) {
+#if !MindJolt
 		texts[3].setText( dict.get(16), true);
+#end
 	}	
 	public function showScoreOut(e:MouseEvent) {
+#if !MindJolt
 		texts[3].setText( dict.get(14), true);
+#end
 	}	
 	
+	//http://lists.motion-twin.com/pipermail/haxe/2006-June/003451.html
+	public function getMedalTimes(glevel: Int, obj : {gold: Int, silver: Int, bronze: Int})
+	{
+		obj.gold = goldMedalsSec[glevel] * 1000;
+		obj.silver = Std.int(obj.gold * silverMult);
+		if (Std.int(obj.silver / 1000) == Std.int(obj.gold / 1000))
+			obj.silver = Std.int(obj.gold + 1000);
+		obj.bronze = Std.int(obj.gold * bronzeMult);
+		if (Std.int(obj.bronze / 1000) <= Std.int(obj.silver / 1000))
+			obj.bronze = obj.gold + 2000;
+	}
+	
+	public function setCompleted(glevel: Int, gscore: Int, ?gmedal: Int = -1)
+	{
+		if (glevel >= players.length)
+		{
+			trace("glevel too big");
+			return;
+		}
+		if (gmedal == -1)
+		{
+			var medalTimes = { gold: -1, silver: -1, bronze: -1 };
 
-		
+			getMedalTimes(glevel, medalTimes);
+			if (gscore <= medalTimes.gold)
+				gmedal = 3;
+			else if (gscore <= medalTimes.silver)
+				gmedal = 2;
+			else if (gscore <= medalTimes.bronze)
+				gmedal = 1;
+			else
+				gmedal = 0;
+			trace("gold: " + medalTimes.gold + "silv: " + medalTimes.silver + "bronze: " + medalTimes.bronze);
+			trace("medal: " + gmedal);
+		}
+		players[glevel].setCompleted(gscore, gmedal);
+		bubbleCounter = 1;
+	}
+	
+	public function unlock(glevel: Int)
+	{
+		if (glevel >= players.length)
+		{
+			trace("glevel too big");
+			return;
+		}
+		trace("unlocking level:" + glevel);
+		players[glevel].state.unlock();
+		players[glevel].setCTbyState();
+	}
+	
+	public function unlockAll()
+	{
+		for	(p in players)	
+		{
+			p.state.unlock();
+			p.setCTbyState();
+		}
+	}
 }
