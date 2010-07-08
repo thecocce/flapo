@@ -85,9 +85,12 @@ class Score
 #if MindJolt
 	if (MindJolt.MindJoltAPI)
 	{
-			var board:Int = gboard + 1;
-			MindJolt.MindJoltAPI.service.submitScore(gscore > 0?gscore:null, "Level" + gboard);
-			trace("MINDJOLT score submit" + "Level" + board);
+			//var board:Int = gboard + 1;
+			if (gscore > 120000)
+			{
+				MindJolt.MindJoltAPI.service.submitScore(gscore >= 0?gscore:null, "Normal");
+				trace("MINDJOLT score submit: " + gscore);
+			}
 	}
 #end
 	}

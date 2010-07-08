@@ -509,6 +509,17 @@ class GameLogic extends MovieClip //Sprite
 		tfClearTable.tf.addEventListener(MouseEvent.MOUSE_OVER,this.clearTableOver);
 		tfClearTable.tf.addEventListener(MouseEvent.MOUSE_OUT,this.clearTableOut);
 		textLevelSelector.push(tfClearTable);
+#if MindJolt
+		ts.color = 0xaaaaff;
+		var tfSubmitAllScore: TextObj = new TextObj(levelSelector.mc, dict, 25,
+			100, Def.STAGE_H - 30, 150, 100,
+			ts, true, [new GlowFilter(0x6666ff, 0.8, 3, 3, 3, 3, false, false)]
+		);
+		tfSubmitAllScore.tf.addEventListener(MouseEvent.MOUSE_DOWN,this.submitScoreEvent);
+		tfSubmitAllScore.tf.addEventListener(MouseEvent.MOUSE_OVER,this.submitScoreOver);
+		tfSubmitAllScore.tf.addEventListener(MouseEvent.MOUSE_OUT,this.submitScoreOut);
+		textLevelSelector.push(tfSubmitAllScore);
+#end		
 		
 							var ts = new flash.text.TextFormat();
 							ts.font=defaultFont;
@@ -535,6 +546,7 @@ class GameLogic extends MovieClip //Sprite
 								[gf],
 								false); 
 							texts.push(text);
+						#if !MindJolt
 							//send
 							ts = new flash.text.TextFormat();
 							ts.font=defaultFont;
@@ -549,7 +561,6 @@ class GameLogic extends MovieClip //Sprite
 							text.tf.addEventListener(MouseEvent.MOUSE_OUT,this.submitScoreOut);
 							texts.push(text);
 							//show
-						#if !MindJolt
 							text = new TextObj(infowin, dict, 14, 150, 250, 140, 30,
 								ts, true,
 								[new GlowFilter(0xFFFFFF, 1.0, 3, 3, 3, 3, false, false)],
@@ -954,6 +965,9 @@ class GameLogic extends MovieClip //Sprite
 		tfInfowinWinner.setTextFormat(tsInfowinWinner);
 		
 		textLevelSelector[0].renewText();
+#if MindJolt		
+		textLevelSelector[1].renewText();
+#end
 		levelSelector.initBubbles();
 		levelSelector.submitScoreOut(null); //renew text: submit
 		levelSelector.showScoreOut(null); //renew text: show
@@ -2204,7 +2218,11 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 		return null;
 	}
 	public function submitScoreEvent(e:MouseEvent) {
+#if MindJolt
+		Score.submitScore(levelnum, levelSelector.OveralScore());
+#else
 		Score.submitScore(levelnum, levelSelector.players[levelnum].state.score);
+#end
 	}
 	public function showScoreEvent(e:MouseEvent) {
 		Score.submitScore(levelnum);
@@ -2216,21 +2234,36 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 	}
 	
 	public function submitScoreOver(e:MouseEvent) {
+#if MindJolt
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		ts.color = 0xffffff;
+		textLevelSelector[1].tf.setTextFormat(ts);
+#else
 		var ts: TextFormat = new flash.text.TextFormat();
 		ts.font=defaultFont;
 		ts.size = 20;
 		//ts.color = 0x5090F0;
 		texts[3].tf.htmlText = dict.get(15);
 		texts[3].tf.setTextFormat(ts);
-	}	
+#end
+		}	
 	public function submitScoreOut(e:MouseEvent) {
+#if MindJolt
+		var ts: TextFormat = new flash.text.TextFormat();
+		ts.font=defaultFont;
+		ts.size = 20;
+		ts.color = 0xaaaaff;
+		textLevelSelector[1].tf.setTextFormat(ts);
+#else
 		var ts: TextFormat = new flash.text.TextFormat();
 		ts.font=defaultFont;
 		ts.size = 20;
 		//ts.color = 0x804020;
 		texts[3].tf.htmlText = dict.get(13);
 		texts[3].tf.setTextFormat(ts);
-
+#end
 	}	
 	public function showScoreOver(e:MouseEvent) {
 #if !MindJolt

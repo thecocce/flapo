@@ -24,7 +24,7 @@
     <option flashStrict="False" />
     <option mainClass="Main" />
     <option forcetraces="False" />
-    <option additional="-swf-lib ResSamHaxe.swf -D sound -D mp3Music -D Logo -D MochiScores" />
+    <option additional="-swf-lib ResSamHaxe.swf -D sound -D mp3Music -D Logo -D MindJolt" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
