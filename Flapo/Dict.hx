@@ -57,7 +57,9 @@ class Dict
 				"<p align='center'><a href='http://internetjatek.hu'>Game is stolen! Click here to play!</a></p>",
 				"<p align='right'>More games</p>",
 				"Again",
-				"Move to start"
+				"Move to start",
+			//25
+				"Upload score"
 			],
 			[ 
 			//0
@@ -97,7 +99,9 @@ class Dict
 				"<p align='center'><a href='http://internetjatek.hu'>Lopott játék. Kattints ide!</a></p>",
 				"<p align='right'>Még több játék</p>",
 				"Újra",
-				"Mozdulj!"
+				"Mozdulj!",
+			//25
+				"Pontszám elküldése"				
 			]
 		]; 
 

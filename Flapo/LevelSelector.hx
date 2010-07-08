@@ -121,6 +121,7 @@ class LevelSelector
 			true); //no visible
 		texts.push(text);
 		ts = null;
+		#if !MindJolt
 		text = new TextObj(bubble, dict, 13, -45, -28, 45, 20,
 			ts, true,
 			//[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
@@ -130,7 +131,6 @@ class LevelSelector
 		text.tf.addEventListener(MouseEvent.MOUSE_OUT,this.submitScoreOut);
 
 		texts.push(text);
-		#if !MindJolt
 		text = new TextObj(bubble, dict, 14, 0, -28, 45, 20,
 			ts, true,
 			//[new GlowFilter(0xFF6666, 1.0, 3, 3, 3, 3, false, false)],
@@ -215,10 +215,12 @@ class LevelSelector
 							else
 								texts[0].setText( dict.get(7), true);
 							texts[1].setText ( dict.get(9 + p.state.medal), true);
+						#if !MindJolt
 							if (p.state.score == 0)
 								texts[2].tf.visible = false;
 							else
 								texts[2].tf.visible = true;
+						#end
 							board = i;
 						}
 					}
@@ -316,10 +318,14 @@ class LevelSelector
 	}
 	
 	public function submitScoreOver(e:MouseEvent) {
+#if !MindJolt
 		texts[2].setText( dict.get(15), true);
+#end
 	}	
 	public function submitScoreOut(e:MouseEvent) {
+#if !MindJolt
 		texts[2].setText( dict.get(13), true);
+#end
 	}	
 	public function showScoreOver(e:MouseEvent) {
 #if !MindJolt
@@ -331,6 +337,18 @@ class LevelSelector
 		texts[3].setText( dict.get(14), true);
 #end
 	}	
+	
+	public function OveralScore():Int {
+		var GrandTotal:Int=0;
+		for (pl in players)
+		{
+			if (pl.state.completed)
+				GrandTotal += pl.state.score;
+			else
+				GrandTotal += 500000;
+		}
+		return GrandTotal;
+	}
 	
 	//http://lists.motion-twin.com/pipermail/haxe/2006-June/003451.html
 	public function getMedalTimes(glevel: Int, obj : {gold: Int, silver: Int, bronze: Int})
@@ -369,6 +387,7 @@ class LevelSelector
 		}
 		players[glevel].setCompleted(gscore, gmedal);
 		bubbleCounter = 1;
+		bubble.x = -100;
 	}
 	
 	public function unlock(glevel: Int)
