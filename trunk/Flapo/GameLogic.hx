@@ -10,6 +10,8 @@
 //-swf-lib ResSameHaxe.swf --no-traces -D sound -D mp3Music -D MochiBot -D MochiScores -D Logo
 //-D Kongregate
 //-D MindJolt (de akkor nem kell MochiScores)
+//-swf-lib ResSamHaxe.swf"  --no-traces -D sound -D mp3Music-D MindJolt
+//-swf-lib ResSamHaxe.swf"  --no-traces -D sound -D mp3Music -D MochiBot -D MochiScores -D Logo -D hacked 
 
 package flapo;
 
@@ -29,7 +31,7 @@ import mochi.as3.MochiScores;
 #end
 
 #if MindJolt
-import apis.mindjolt.MindJolt;
+import apis.mindjolt.MindJoltAPI;
 #end
 
 import flapo.Score;
@@ -119,7 +121,7 @@ class GameLogic extends MovieClip //Sprite
 #end
 
 #if MindJolt
-	static var mj: MindJolt;
+	static var mj: MindJoltAPI;
 #end
 
 #if MonsterDebugger
@@ -281,8 +283,11 @@ class GameLogic extends MovieClip //Sprite
 			kg = new CKongregate(testobj);
 #end		
 #if MindJolt
-		if (mj==null || mj.loaded==false || mj.type<2)
-			mj = new MindJolt(testobj);
+//		if (mj==null || mj.loaded==false || mj.type<2)
+//			mj = new MindJolt(testobj);
+
+		//MindJoltAPI.service.connect("KODTO89E30SIL76V", this, null, testobj);
+		//MindJoltAPI.ad.showPreGameAd( { clip:this } );
 #end
 	}
 	
@@ -1366,6 +1371,8 @@ class GameLogic extends MovieClip //Sprite
 		}
 	#if debug
 		speedZ += -accelerateZ;// + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
+	#elseif hacked
+		speedZ += -accelerateZ + Utils.boolToInt (Keys.keyIsDown (KEY_SPACE)) * accelerateZ * 2;
 	#else
 		speedZ += -accelerateZ;
 	#end
@@ -1895,6 +1902,17 @@ class GameLogic extends MovieClip //Sprite
 			curBlocks = savegame.loadScore(0);
 			trace("Game loaded");
 		}
+#elseif hacked
+		a = Keys.keyIsDown (KEY_N);
+		if (a && !KeyNrepeat)
+		{
+			curBlocks = allBlocks;
+			mode = 109;
+			nextLevel();
+			KeyNrepeat = true;
+		}
+		else
+			KeyNrepeat = false;
 #end
 		if (moreTexturesUnlocked)
 		{
@@ -2219,7 +2237,7 @@ MonsterDebugger.inspect(level.Layers[i].layer.effectMapData[Utils.safeDiv (plY,4
 	}
 	public function submitScoreEvent(e:MouseEvent) {
 #if MindJolt
-		Score.submitScore(levelnum, levelSelector.OveralScore());
+		Score.submitScore(levelnum, levelSelector.OveralScore(), testobj);
 #else
 		Score.submitScore(levelnum, levelSelector.players[levelnum].state.score);
 #end
