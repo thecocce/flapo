@@ -10,7 +10,7 @@ class MindJolt
 {
 	// You'll use this variable to access the API
 	//   (make sure you can access it from wherever you will later call submitScore)
-	public static var MindJoltAPI:Dynamic;
+	public static var service:Dynamic;
 	public var type: Int; //0 - none, 1 - Local,
 						//2 - flashvar, 3 - flashvar via preloader
 	public var loaded:Bool;
@@ -28,7 +28,7 @@ class MindJolt
 	
 	public function new(testobj: Dynamic)
     {
-		MindJoltAPI = null;
+		service = null;
 		type = 0;		
         loaded = false;
 
@@ -39,7 +39,7 @@ class MindJolt
 		// get the parameters passed into the game
 		Security.allowDomain("static.mindjolt.com");
 
-        url = parameters.api_path;
+        url = parameters.mjPath;
 		if (url == null && testobj != null)
 		try {
 			trace("testobj: " + testobj);
@@ -73,9 +73,9 @@ class MindJolt
 	}
 	
 	function loadFinished (e:Event) {
-		MindJoltAPI=e.currentTarget.content;
-		if (MindJoltAPI != null) {
-		  MindJoltAPI.service.connect(postMindJoltAPIConnect);
+		service=e.currentTarget.content;
+		if (service != null) {
+		  service.service.connect(postMindJoltAPIConnect);
 		  trace ("[MindJoltAPI] service successfully loaded");
 		  loaded = true;
 		} else {

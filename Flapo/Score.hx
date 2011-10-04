@@ -14,7 +14,7 @@ import mochi.as3.MochiScores;
 #end
 
 #if MindJolt
-import apis.mindjolt.MindJolt;
+import apis.mindjolt.MindJoltAPI;
 #end
 
 class Score 
@@ -61,8 +61,11 @@ class Score
 		return GetBoardID(Board,i+1,s + o.n[Board][i].toString(16));
 	}
 	
-	public static function submitScore(gboard: Int, ?gscore: Int=0)
+	public static function submitScore(gboard: Int, ?gscore: Int=0, ?testobj:Dynamic)
 	{
+#if hacked
+		return;
+#end
 #if MochiScores
 		trace("show leaderboard");
 		var boardID:String = GetBoardID(gboard, 0, "");
@@ -83,15 +86,16 @@ class Score
 		MochiScores.showLeaderboard({boardID: boardID});
 #end
 #if MindJolt
-	if (MindJolt.MindJoltAPI)
-	{
+//	if (MindJolt.service)
+//	{
 			//var board:Int = gboard + 1;
 			if (gscore > 120000)
 			{
-				MindJolt.MindJoltAPI.service.submitScore(gscore >= 0?gscore:null, "Normal");
+				testobj.MindjoltCallback(gscore);				
+				//MindJoltAPI.service.submitScore(gscore, null, null);
 				trace("MINDJOLT score submit: " + gscore);
 			}
-	}
+//	}
 #end
 	}
 	
