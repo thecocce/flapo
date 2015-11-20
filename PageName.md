@@ -1,0 +1,47 @@
+# Introduction #
+
+Ideas from Zach to improve the game. I added comments with _Italic_ and highlighted **bold** some items.
+
+# Details #
+
+**Level designs**
+  * **Space** _nice, with decreased slowdown values and little gravity: so you can control the ball in "air"_
+  * Roman _maybe_
+  * **Egyptians** _must have, all the sand, pyramids, lots of yellow color and hieroglyphs_
+  * Japanese/Chinese _?_
+  * **Mountains** _definitely_
+  * Desert _?_
+  * **Forest** _or jungle_
+  * Circus _I don't know_
+  * Etc. _desktop?_
+
+**Ball**
+  * Beach Ball
+  * **Bowling Ball**
+  * Tennis Ball
+  * Basket Ball
+  * Baseball
+  * **Metal Ball**
+  * **Glass Ball**
+  * The Pixar Ball
+  * Etc.
+_or we can variate the ball theme along level designs, rock for the Egyptian pyramid, cocus for the oasis, glass ball for desktop theme, meteor for space?_
+**I've just added a rotated textured ball**
+
+**Changes**
+  * The word "WIN" or "LOSE" in green dots covering the screen _I'm thinking about totally change WIN and LOSE, as it's looking very unprofessional._
+  * Better Ball physics _I changed the friction, so the ball rolling little more after   released the keys_
+  * Better cursor _? I will to use W A S D, but I have no other idea about improving "cursor"_
+  * When you lose or win you can just press the "Enter/Return" key to continue or restart _You can continue with SPACE and ENTER_
+  * The Music _Currently I'm experimenting with MOD musics._
+  * The Font _Using Times new roman, which is very basic. What kind would be nice?_
+
+**New Ideas**
+  * Slopes _hard to support. However, with slopes, obstacles, it will be too similar to Gyroscope and it's clones._
+  * Obstacles:
+  * Enemies _great idea, but lot's of code, maybe next version_
+  * Color coded blocks (your ball needs to be a certain color to pass) _already done_
+  * Time Limit/Clock _Done_
+  * A Menu _Done_
+  * Level Selection _Done. There are 3-4 world (whith one theme, like forest, Egyptian, etc. each with 10-20 level, and you can freely play the first 1-3 level from each theme, then if you completed then you can play further levels or replay old levels_
+_I thinking about adding some really strange level, where the player doesn't really know what to do, as not trivial what blocks are destroyable (maybe not visually different too). Like in the Shift series, where the game sometime lie. Like: "This level has no solution", "Go left for exit" (but the fake exit tile makes nothing), "Why do you not surrend?" and so on._

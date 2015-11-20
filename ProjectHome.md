@@ -1,0 +1,1 @@
+<p align='center'><b>Flapo</b></p><br>Control the ball trough multilevel mazes. Destroy all bright tiles then enter the exit tile. Use jump pads to access higher levels<br><br>Written by Bence Dobos<br>Music by <a href='http://nicenice.net'>Nice Nice</a><br>Idea by Microshark/Damage<br>Special thanks to Strato<br><p align='center'>copyright 2009</p>
